@@ -1,0 +1,85 @@
+const api = require('../../utils/api')
+const store = require('../../utils/store')
+const { unwrap, showError } = require('../../utils/helpers')
+
+Page({
+  data: {
+    loading: false,
+    families: [],
+    familyIndex: 0,
+    currentFamily: {},
+    elders: [],
+    records: [],
+    reminders: [],
+    totalMeds: 0,
+    totalPending: 0,
+    totalRisks: 0,
+    greeting: '您好',
+  },
+
+  onLoad() { this.setGreeting() },
+  onShow() { this.load() },
+  onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()) },
+
+  setGreeting() {
+    const hour = new Date().getHours()
+    const greeting = hour < 6 ? '凌晨好' : hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好'
+    this.setData({ greeting })
+  },
+
+  async load() {
+    if (this.data.loading) return
+    this.setData({ loading: true })
+    try {
+      const families = unwrap(await api.families.list())
+      const familyId = store.getFamilyId()
+      let familyIndex = families.findIndex((item) => item.family_id === familyId)
+      if (familyIndex < 0) familyIndex = 0
+      const selectedId = families[familyIndex] ? families[familyIndex].family_id : familyId
+      store.setFamilyId(selectedId)
+      const [overview, recordsData, remindersData] = await Promise.all([
+        api.families.overview(selectedId),
+        api.records.list({ family: selectedId }),
+        api.reminders.list({ family: selectedId, status: 'pending' }),
+      ])
+      const elders = overview.elders || []
+      const records = unwrap(recordsData).slice(0, 5)
+      const reminders = unwrap(remindersData)
+      this.setData({
+        families,
+        familyIndex,
+        currentFamily: overview.family,
+        elders,
+        records,
+        reminders: reminders.slice(0, 5),
+        totalMeds: elders.reduce((sum, item) => sum + item.medication_count, 0),
+        totalPending: elders.reduce((sum, item) => sum + item.reminder_pending_count, 0),
+        totalRisks: elders.reduce((sum, item) => sum + item.contraindication_count, 0),
+      })
+    } catch (error) {
+      showError(error)
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
+  onFamilyChange(event) {
+    const familyIndex = Number(event.detail.value)
+    const family = this.data.families[familyIndex]
+    if (!family) return
+    store.setFamilyId(family.family_id)
+    this.setData({ familyIndex })
+    this.load()
+  },
+
+  openElder(event) {
+    wx.navigateTo({ url: `/pages/elder-detail/index?id=${event.currentTarget.dataset.id}` })
+  },
+
+  navigate(event) {
+    const path = event.currentTarget.dataset.path
+    const tabPaths = ['/pages/elders/index', '/pages/medication/index', '/pages/reminders/index', '/pages/risks/index']
+    if (tabPaths.includes(path)) wx.switchTab({ url: path })
+    else wx.navigateTo({ url: path })
+  },
+})

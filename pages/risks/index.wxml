@@ -1,0 +1,26 @@
+<view class="page with-safe-bottom">
+  <view wx:if="{{dashboard}}" class="hero rose">
+    <text class="hero-subtitle">⚠️ 禁忌看板 · 核心功能</text><text class="hero-title">{{dashboard.elder.name}} 的用药风险</text><text class="hero-subtitle">遍历 {{dashboard.medications.length}} 种用药 × 禁忌关系，命中 {{dashboard.stats.total}} 条</text>
+    <view class="hero-metrics three"><view class="hero-metric"><text class="hero-metric-number">{{dashboard.stats.severe}}</text><text class="hero-metric-label">严重</text></view><view class="hero-metric"><text class="hero-metric-number">{{dashboard.stats.middle}}</text><text class="hero-metric-label">中</text></view><view class="hero-metric"><text class="hero-metric-number">{{dashboard.stats.light}}</text><text class="hero-metric-label">轻</text></view></view>
+  </view>
+  <view class="card selector"><text class="field-label">选择长辈</text><picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="picker">{{elderIndex >= 0 ? elders[elderIndex].name + '（' + elders[elderIndex].relationship + '）' : '请选择'}} ▾</view></picker></view>
+
+  <block wx:if="{{dashboard}}">
+    <view wx:if="{{dashboard.elder.allergy_note && dashboard.elder.allergy_note !== '无'}}" class="allergy"><text class="allergy-title">⚠️ 过敏史警示</text><text>{{dashboard.elder.name}}：{{dashboard.elder.allergy_note}}</text></view>
+    <view class="section"><view class="section-head"><text class="section-title">当前用药组合</text><text class="tag primary">{{dashboard.medications.length}} 种</text></view><scroll-view scroll-x="true" class="med-scroll"><view class="med-row"><view wx:for="{{dashboard.medications}}" wx:key="record_id" class="med-card"><text class="tag">{{item.category_label}}</text><text class="med-name">{{item.drug_name}}</text><text class="list-subtitle">{{item.dose}} · {{item.frequency}}</text></view></view></scroll-view></view>
+    <view wx:if="{{dashboard.risks.length}}" class="section">
+      <view class="section-head"><text class="section-title">筛选风险</text></view>
+      <view class="filter-chips"><view class="choice {{!severity ? 'active' : ''}}" data-value="" bindtap="setSeverity">全部 {{dashboard.stats.total}}</view><view class="choice danger-choice {{severity === 'severe' ? 'active' : ''}}" data-value="severe" bindtap="setSeverity">严重 {{dashboard.stats.severe}}</view><view class="choice {{severity === 'middle' ? 'active' : ''}}" data-value="middle" bindtap="setSeverity">中 {{dashboard.stats.middle}}</view><view class="choice {{severity === 'light' ? 'active' : ''}}" data-value="light" bindtap="setSeverity">轻 {{dashboard.stats.light}}</view></view>
+      <view class="filter-chips type"><view class="choice {{!type ? 'active' : ''}}" data-value="" bindtap="setType">全部类型</view><view class="choice {{type === 'co_administration' ? 'active' : ''}}" data-value="co_administration" bindtap="setType">同服</view><view class="choice {{type === 'diet' ? 'active' : ''}}" data-value="diet" bindtap="setType">饮食</view><view class="choice {{type === 'disease' ? 'active' : ''}}" data-value="disease" bindtap="setType">疾病</view></view>
+    </view>
+    <block wx:for="{{riskSections}}" wx:key="key" wx:for-item="section">
+      <view wx:if="{{section.risks.length}}" class="section"><view class="risk-group-title {{section.key}}">{{section.title}} · {{section.risks.length}}</view>
+        <view wx:for="{{section.risks}}" wx:for-item="risk" wx:key="relation_id" class="list-card risk {{risk.severity}}"><view class="row between gap"><view class="risk-pair"><text>{{risk.drug_a_name}}</text><text class="times">×</text><text>{{risk.drug_b_name}}</text></view><text class="tag {{risk.severity === 'severe' ? 'danger' : risk.severity === 'middle' ? 'warning' : 'success'}}">{{risk.severity_label}}</text></view><view class="list-subtitle">{{risk.contra_type_label}} · {{risk.relevance}}</view><view class="risk-note">{{risk.note}}</view></view>
+      </view>
+    </block>
+    <view wx:if="{{!dashboard.risks.length}}" class="card empty"><text class="empty-icon">🎉</text>当前用药组合未命中禁忌风险</view>
+    <view wx:elif="{{dashboard.risks.length && !filteredRisks.length}}" class="card empty"><text class="empty-icon">🔍</text>当前筛选条件下无风险</view>
+    <view class="notice disclaimer">数据来自公开药品说明书，仅供参考，不能替代医生诊断。实际用药请遵医嘱。</view>
+  </block>
+  <view wx:if="{{loading}}" class="loading">正在分析禁忌风险…</view>
+</view>

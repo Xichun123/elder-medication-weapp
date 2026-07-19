@@ -1,0 +1,33 @@
+<view class="page with-safe-bottom">
+  <text class="page-title">药物录入</text>
+  <text class="page-subtitle">药名模糊匹配主数据，保存后自动创建提醒规则</text>
+  <view class="card form-card">
+    <view class="field"><text class="field-label required">选择老人</text><picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="picker">{{elderIndex >= 0 ? elders[elderIndex].name + '（' + elders[elderIndex].relationship + '）' : '请选择长辈'}} ▾</view></picker></view>
+    <view class="field"><text class="field-label required">输入药名</text><input class="input" value="{{keyword}}" placeholder="通用名 / 商品名 / 别名" bindinput="onKeywordInput"/></view>
+    <view wx:if="{{matching}}" class="loading mini">正在匹配主数据…</view>
+    <view wx:if="{{matchedDrugs.length}}" class="match-list">
+      <view wx:for="{{matchedDrugs}}" wx:key="drug_id" class="match-item" data-id="{{item.drug_id}}" bindtap="pickDrug">
+        <view class="row between gap"><text class="list-title">{{item.generic_name}}</text><text class="tag primary">{{item.category_label}}</text></view>
+        <view class="list-subtitle">商品名：{{item.trade_name || '—'}} · 别名：{{item.aliases || '—'}}</view>
+        <view wx:if="{{item.contraindication_note}}" class="contra">⚠️ {{item.contraindication_note}}</view>
+      </view>
+    </view>
+    <view wx:if="{{selectedDrug}}" class="selected">
+      <view class="row between"><view><text class="list-title">{{selectedDrug.generic_name}}</text><view class="list-subtitle">{{selectedDrug.drug_id}} · {{selectedDrug.category_label}}</view></view><button class="btn small" bindtap="clearDrug">重选</button></view>
+    </view>
+    <view class="field"><text class="field-label required">剂量</text><input class="input" value="{{dose}}" placeholder="如 10mg / 0.5g" bindinput="onDoseInput"/></view>
+    <view class="field"><text class="field-label">频次</text><view class="radio-row"><view wx:for="{{frequencyOptions}}" wx:key="*this" class="choice {{frequency === item ? 'active' : ''}}" data-value="{{item}}" bindtap="chooseFrequency">{{item}}</view></view></view>
+    <view class="field"><text class="field-label required">开始日期</text><picker mode="date" value="{{startDate}}" bindchange="onStartDate"><view class="picker">{{startDate}} ▾</view></picker></view>
+    <view class="field"><text class="field-label">结束日期</text><view class="row gap"><picker class="flex-1" mode="date" value="{{endDate || startDate}}" bindchange="onEndDate"><view class="picker">{{endDate || '长期 / 点击选择'}} ▾</view></picker><button wx:if="{{endDate}}" class="btn small" bindtap="clearEndDate">清空</button></view></view>
+    <view class="notice">保存后自动生成：每日1次 → 早8:00；每日2次 → 早8:00、晚20:00；每日3次 → 早8:00、午12:00、晚20:00。</view>
+    <view class="form-actions"><button class="btn" bindtap="reset">重置</button><button class="btn primary" loading="{{saving}}" bindtap="save">保存并建提醒</button></view>
+  </view>
+
+  <view wx:if="{{showResult}}" class="mask">
+    <view class="result-card">
+      <text class="page-title">✅ 保存成功</text><text class="page-subtitle">已自动生成 {{createdReminders.length}} 条提醒规则</text>
+      <view wx:for="{{createdReminders}}" wx:key="rule_id" class="result-item"><text class="tag warning">{{item.remind_time}}</text><text class="result-text">🔊 {{item.voice_text}}</text></view>
+      <view class="form-actions"><button class="btn" bindtap="closeResult">继续录入</button><button class="btn primary" bindtap="goReminders">查看提醒</button></view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,1 @@
+.relation-notice { margin: 22rpx 0; }.relation-line { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18rpx; align-items: center; }.relation-line .right { text-align: right; }.arrow { color: var(--primary); font-size: 40rpx; }.relation-tags { margin-top: 18rpx; }

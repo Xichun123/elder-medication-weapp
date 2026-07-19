@@ -1,0 +1,24 @@
+<view class="page with-safe-bottom">
+  <text class="page-title">提醒规则</text><text class="page-subtitle">可远程标记已服 / 跳过，保留语音播报文本</text>
+  <view class="status-grid">
+    <view class="status-card pending {{status === 'pending' ? 'active' : ''}}" data-value="pending" bindtap="toggleStatus"><text class="status-num">{{counts.pending}}</text><text>⏰ 待服</text></view>
+    <view class="status-card taken {{status === 'taken' ? 'active' : ''}}" data-value="taken" bindtap="toggleStatus"><text class="status-num">{{counts.taken}}</text><text>✓ 已服</text></view>
+    <view class="status-card skipped {{status === 'skipped' ? 'active' : ''}}" data-value="skipped" bindtap="toggleStatus"><text class="status-num">{{counts.skipped}}</text><text>⊘ 跳过</text></view>
+    <view class="status-card abnormal {{status === 'abnormal' ? 'active' : ''}}" data-value="abnormal" bindtap="toggleStatus"><text class="status-num">{{counts.abnormal}}</text><text>⚠ 异常</text></view>
+  </view>
+  <view class="filter-bar"><picker range="{{elderOptions}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="filter">{{elderOptions[elderIndex].name}} ▾</view></picker><view wx:if="{{status}}" class="filter">状态：{{status === 'pending' ? '待服' : status === 'taken' ? '已服' : status === 'skipped' ? '跳过' : '异常'}}</view></view>
+  <view wx:for="{{list}}" wx:key="rule_id" class="list-card reminder {{item.status}}">
+    <view class="row between gap"><view><text class="remind-time">{{item.remind_time}}</text><text class="list-title">{{item.drug_name}}</text></view><text class="tag {{item.status === 'pending' ? 'warning' : item.status === 'taken' ? 'success' : item.status === 'abnormal' ? 'danger' : ''}}">{{item.status_label}}</text></view>
+    <view class="list-subtitle">{{item.elder_name}} · 规则 {{item.rule_id}}</view>
+    <view class="voice">🔊 {{item.voice_text}}</view>
+    <view class="actions">
+      <button class="btn small" data-id="{{item.rule_id}}" bindtap="play">播报</button>
+      <button class="btn small" data-id="{{item.rule_id}}" bindtap="regenerate">重生成文本</button>
+      <button wx:if="{{item.status === 'pending'}}" class="btn success small" data-id="{{item.rule_id}}" bindtap="take">✓ 已服</button>
+      <button wx:if="{{item.status === 'pending'}}" class="btn small" data-id="{{item.rule_id}}" bindtap="skip">⊘ 跳过</button>
+      <button class="btn teal small" data-elder="{{item.elder}}" bindtap="openElderly">老人端</button>
+    </view>
+  </view>
+  <view wx:if="{{!loading && !list.length}}" class="card empty"><text class="empty-icon">⏰</text>暂无提醒规则</view>
+  <view wx:if="{{loading}}" class="loading">正在加载…</view>
+</view>

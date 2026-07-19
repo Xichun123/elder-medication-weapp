@@ -1,0 +1,4 @@
+{
+  "desc": "长辈用药台账页面索引",
+  "rules": [{ "action": "allow", "page": "*" }]
+}

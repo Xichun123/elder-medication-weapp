@@ -1,0 +1,39 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/elders/index",
+    "pages/medication/index",
+    "pages/reminders/index",
+    "pages/risks/index",
+    "pages/elder-detail/index",
+    "pages/records/index",
+    "pages/relations/index",
+    "pages/elderly/index",
+    "pages/more/index",
+    "pages/admin-drugs/index",
+    "pages/dictionary/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "长辈用药台账",
+    "navigationBarBackgroundColor": "#e87a5d",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#faf5ef",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#7a6648",
+    "selectedColor": "#e87a5d",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "概览" },
+      { "pagePath": "pages/elders/index", "text": "长辈" },
+      { "pagePath": "pages/medication/index", "text": "录入" },
+      { "pagePath": "pages/reminders/index", "text": "提醒" },
+      { "pagePath": "pages/risks/index", "text": "禁忌" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

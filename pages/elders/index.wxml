@@ -1,0 +1,34 @@
+<view class="page with-safe-bottom">
+  <view wx:if="{{!editing}}">
+    <view class="row between gap">
+      <view><text class="page-title">老人管理</text><text class="page-subtitle">维护长辈基本信息、过敏史与音色偏好</text></view>
+      <button class="btn primary small" bindtap="openCreate">＋ 新增</button>
+    </view>
+    <view class="filter-bar"><input class="search flex-1" value="{{keyword}}" placeholder="搜索姓名 / 关系" bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearch"/><button class="btn small" bindtap="onSearch">搜索</button></view>
+    <view wx:for="{{filteredList}}" wx:key="elder_id" class="list-card">
+      <view class="row gap" data-id="{{item.elder_id}}" bindtap="openDetail">
+        <view class="avatar">{{item.gender === 'male' ? '👴' : '👵'}}</view>
+        <view class="flex-1"><text class="list-title">{{item.name}}</text><view class="list-subtitle">{{item.gender_label}} · {{item.age}}岁 · {{item.relationship}}</view><view class="list-meta">{{item.elder_id}} · {{item.voice_tone_label}} · 用药 {{item.medication_count}}</view></view>
+        <text>›</text>
+      </view>
+      <view wx:if="{{item.allergy_note && item.allergy_note !== '无'}}" class="allergy">⚠️ 过敏史：{{item.allergy_note}}</view>
+      <view class="actions"><button class="btn small" data-id="{{item.elder_id}}" catchtap="openEdit">编辑</button><button class="btn danger small" data-id="{{item.elder_id}}" catchtap="remove">删除</button></view>
+    </view>
+    <view wx:if="{{!loading && !filteredList.length}}" class="card empty"><text class="empty-icon">👵</text>暂无老人数据</view>
+    <view wx:if="{{loading}}" class="loading">正在加载…</view>
+  </view>
+
+  <view wx:else>
+    <text class="page-title">{{isEdit ? '编辑老人' : '新增老人'}}</text>
+    <view class="card form-card">
+      <view class="field"><text class="field-label required">老人ID</text><input class="input" value="{{form.elder_id}}" disabled="{{isEdit}}" data-field="elder_id" bindinput="onInput"/></view>
+      <view class="field"><text class="field-label required">姓名</text><input class="input" value="{{form.name}}" placeholder="老人姓名" data-field="name" bindinput="onInput"/></view>
+      <view class="field"><text class="field-label required">年龄</text><input class="input" type="number" value="{{form.age}}" data-field="age" bindinput="onInput"/></view>
+      <view class="field"><text class="field-label required">与家属关系</text><input class="input" value="{{form.relationship}}" placeholder="如 母亲 / 父亲 / 祖母" data-field="relationship" bindinput="onInput"/></view>
+      <view class="field"><text class="field-label">性别</text><view class="radio-row"><view class="choice {{form.gender === 'female' ? 'active' : ''}}" data-field="gender" data-value="female" bindtap="choose">女</view><view class="choice {{form.gender === 'male' ? 'active' : ''}}" data-field="gender" data-value="male" bindtap="choose">男</view></view></view>
+      <view class="field"><text class="field-label">过敏史</text><textarea class="textarea" value="{{form.allergy_note}}" data-field="allergy_note" bindinput="onInput"/></view>
+      <view class="field"><text class="field-label">音色偏好</text><view class="radio-row"><view class="choice {{form.voice_tone === 'female_warm' ? 'active' : ''}}" data-field="voice_tone" data-value="female_warm" bindtap="choose">女声温和</view><view class="choice {{form.voice_tone === 'male' ? 'active' : ''}}" data-field="voice_tone" data-value="male" bindtap="choose">男声</view></view></view>
+      <view class="form-actions"><button class="btn" bindtap="closeForm">取消</button><button class="btn primary" loading="{{saving}}" bindtap="save">保存</button></view>
+    </view>
+  </view>
+</view>

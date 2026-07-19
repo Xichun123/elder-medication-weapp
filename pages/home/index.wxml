@@ -1,0 +1,61 @@
+<view class="page with-safe-bottom">
+  <view class="hero">
+    <view class="row between">
+      <view class="flex-1">
+        <text class="hero-subtitle">{{greeting}}</text>
+        <text class="hero-title">{{currentFamily.name || '家属'}}，欢迎回来</text>
+      </view>
+      <picker range="{{families}}" range-key="name" value="{{familyIndex}}" bindchange="onFamilyChange">
+        <view class="family-picker">切换家属 ▾</view>
+      </picker>
+    </view>
+    <view class="hero-metrics">
+      <view class="hero-metric"><text class="hero-metric-number">{{elders.length}}</text><text class="hero-metric-label">照护长辈</text></view>
+      <view class="hero-metric"><text class="hero-metric-number">{{totalMeds}}</text><text class="hero-metric-label">用药记录</text></view>
+      <view class="hero-metric"><text class="hero-metric-number">{{totalPending}}</text><text class="hero-metric-label">待服提醒</text></view>
+      <view class="hero-metric"><text class="hero-metric-number">{{totalRisks}}</text><text class="hero-metric-label">禁忌风险</text></view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head"><text class="section-title">快捷操作</text></view>
+    <view class="quick-grid">
+      <view class="quick" data-path="/pages/medication/index" bindtap="navigate"><text class="quick-icon">➕</text><text>录入新药</text></view>
+      <view class="quick" data-path="/pages/records/index" bindtap="navigate"><text class="quick-icon">📋</text><text>用药记录</text></view>
+      <view class="quick" data-path="/pages/risks/index" bindtap="navigate"><text class="quick-icon">⚠️</text><text>禁忌看板</text></view>
+      <view class="quick" data-path="/pages/elderly/index" bindtap="navigate"><text class="quick-icon">🔊</text><text>老人端</text></view>
+      <view class="quick" data-path="/pages/relations/index" bindtap="navigate"><text class="quick-icon">👥</text><text>家属关联</text></view>
+      <view class="quick" data-path="/pages/more/index" bindtap="navigate"><text class="quick-icon">⚙️</text><text>更多管理</text></view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head"><text class="section-title">长辈健康概览</text><text class="section-link" data-path="/pages/elders/index" bindtap="navigate">管理全部 ›</text></view>
+    <view wx:for="{{elders}}" wx:key="elder_id" class="list-card elder-card" data-id="{{item.elder_id}}" bindtap="openElder">
+      <view class="row gap">
+        <view class="avatar">{{item.gender === 'male' ? '👴' : '👵'}}</view>
+        <view class="flex-1"><text class="list-title">{{item.name}}</text><view class="list-subtitle">{{item.relationship}} · {{item.gender_label}} · {{item.age}}岁</view></view>
+        <text class="tag {{item.permission_level === 'editable' ? 'success' : 'teal'}}">{{item.permission_level_label}}</text>
+      </view>
+      <view class="elder-stats">
+        <view><text class="stat-number">{{item.medication_count}}</text><text class="stat-label">用药</text></view>
+        <view><text class="stat-number warning">{{item.reminder_pending_count}}</text><text class="stat-label">待服</text></view>
+        <view><text class="stat-number danger">{{item.contraindication_count}}</text><text class="stat-label">风险</text></view>
+      </view>
+    </view>
+    <view wx:if="{{!loading && !elders.length}}" class="card empty"><text class="empty-icon">👵</text><text>当前家属暂未关联老人</text></view>
+  </view>
+
+  <view class="section">
+    <view class="section-head"><text class="section-title">最近用药</text><text class="section-link" data-path="/pages/records/index" bindtap="navigate">查看全部 ›</text></view>
+    <view class="card compact-card">
+      <view wx:for="{{records}}" wx:key="record_id" class="record-row">
+        <view class="flex-1"><text class="list-title small">{{item.drug_name}}</text><view class="list-subtitle">{{item.elder_name}} · {{item.dose}} · {{item.frequency}}</view></view>
+        <text class="tag">{{item.drug_category_label}}</text>
+      </view>
+      <view wx:if="{{!records.length}}" class="empty">暂无用药记录</view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading">正在加载…</view>
+</view>
