@@ -1,7 +1,13 @@
 {
-  "description": "药灵通微信小程序（独立离线版）",
+  "description": "药灵通微信小程序（多人分端）",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "folder", "value": "server" },
+      { "type": "folder", "value": "docs" },
+      { "type": "folder", "value": ".github" },
+      { "type": "file", "value": "README.md" },
+      { "type": "file", "value": "CONTRIBUTING.md" }
+    ],
     "include": []
   },
   "setting": {

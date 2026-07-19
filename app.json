@@ -1,5 +1,8 @@
 {
   "pages": [
+    "pages/launch/index",
+    "pages/cloud-home/index",
+    "pages/cloud-elder/index",
     "pages/home/index",
     "pages/elders/index",
     "pages/medication/index",
@@ -13,6 +16,9 @@
     "pages/admin-drugs/index",
     "pages/dictionary/index"
   ],
+  "networkTimeout": {
+    "request": 10000
+  },
   "window": {
     "navigationBarTitleText": "药灵通",
     "navigationBarBackgroundColor": "#e87a5d",

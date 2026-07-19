@@ -97,7 +97,8 @@ button::after { border: 0; }
 .radio-row { display: flex; gap: 12rpx; flex-wrap: wrap; }
 .choice { padding: 14rpx 22rpx; background: var(--soft); border: 2rpx solid transparent; border-radius: 14rpx; font-size: 25rpx; }
 .choice.active { color: var(--primary); border-color: var(--primary); background: var(--primary-soft); }
-.form-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; margin-top: 30rpx; }
+.form-actions { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16rpx; margin-top: 30rpx; }
+.form-actions > .btn { width: 100%; min-width: 0; padding-left: 12rpx; padding-right: 12rpx; }
 
 .empty { padding: 70rpx 30rpx; text-align: center; color: var(--muted); }
 .empty-icon { display: block; font-size: 70rpx; margin-bottom: 10rpx; }

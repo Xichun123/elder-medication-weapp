@@ -1,0 +1,15 @@
+.elder-cloud-page { min-height: 100vh; padding: 44rpx 30rpx calc(50rpx + env(safe-area-inset-bottom)); background: #f1f8f6; color: #173a34; }
+.elder-cloud-main { max-width: 720rpx; margin: 0 auto; }
+.elder-greeting { display: flex; flex-direction: column; align-items: center; padding: 30rpx 0 42rpx; text-align: center; }
+.elder-avatar { font-size: 108rpx; }
+.elder-name { margin-top: 14rpx; font-size: 48rpx; font-weight: 750; }
+.elder-home { margin-top: 8rpx; color: #52766f; font-size: 27rpx; }
+.status-card, .reminder-card { padding: 34rpx; border: 2rpx solid #cde2dd; border-radius: 28rpx; background: #fff; box-shadow: 0 8rpx 24rpx rgba(23,58,52,.06); text-align: center; }
+.status-icon { display: block; font-size: 70rpx; }
+.status-title, .reminder-title { display: block; margin-top: 12rpx; font-size: 38rpx; font-weight: 700; }
+.status-desc, .reminder-desc { display: block; margin-top: 12rpx; color: #52766f; font-size: 29rpx; line-height: 1.7; }
+.reminder-card { margin-top: 24rpx; }
+.elder-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 18rpx; margin-top: 30rpx; }
+.elder-btn { min-height: 92rpx; border-radius: 20rpx; background: #5ba89a; color: #fff; font-size: 30rpx; font-weight: 650; }
+.elder-btn.secondary { background: #dfeeea; color: #315e56; }
+.elder-loading { padding: 180rpx 30rpx; text-align: center; color: #52766f; font-size: 32rpx; }

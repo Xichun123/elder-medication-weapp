@@ -1,0 +1,27 @@
+<view class="elder-cloud-page">
+  <view wx:if="{{elder}}" class="elder-cloud-main">
+    <view class="elder-greeting">
+      <text class="elder-avatar">{{elder.gender === 'male' ? '👴' : '👵'}}</text>
+      <text class="elder-name">您好，{{elder.name}}</text>
+      <text class="elder-home">{{home.name}}正在守护您的用药</text>
+    </view>
+
+    <view class="status-card">
+      <text class="status-icon">☁️</text>
+      <text class="status-title">账号已成功绑定</text>
+      <text class="status-desc">您的身份和家庭档案已在云端同步。</text>
+    </view>
+
+    <view class="reminder-card">
+      <text class="reminder-title">用药提醒即将接入</text>
+      <text class="reminder-desc">下一期将显示今日药物、服用时间，并支持您点击“我已服药”。</text>
+    </view>
+
+    <view class="elder-actions">
+      <button class="elder-btn" bindtap="switchHome">切换家庭</button>
+      <button class="elder-btn secondary" bindtap="logout">退出登录</button>
+    </view>
+  </view>
+  <view wx:elif="{{loading}}" class="elder-loading">正在读取我的档案…</view>
+  <view wx:else class="elder-loading">未找到绑定的长辈档案，请联系家庭创建人</view>
+</view>

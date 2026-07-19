@@ -1,0 +1,15 @@
+.launch-page { padding-top: 70rpx; }
+.brand { text-align: center; margin: 30rpx 0 54rpx; }
+.brand-icon { width: 128rpx; height: 128rpx; display: flex; align-items: center; justify-content: center; margin: 0 auto 18rpx; border-radius: 36rpx; background: linear-gradient(135deg,#f0916f,#e87a5d); box-shadow: 0 16rpx 32rpx rgba(232,122,93,.22); font-size: 68rpx; }
+.brand-title { display: block; font-size: 54rpx; font-weight: 750; }
+.brand-subtitle { display: block; margin-top: 8rpx; color: var(--muted); font-size: 25rpx; }
+.loading-card { display: flex; flex-direction: column; align-items: center; gap: 16rpx; color: var(--muted); }
+.loading-icon { font-size: 54rpx; }
+.retry-btn { margin-top: 28rpx; }
+.welcome-card { margin-bottom: 30rpx; }
+.home-card { margin-bottom: 16rpx; }
+.home-icon { width: 70rpx; height: 70rpx; display: flex; align-items: center; justify-content: center; border-radius: 20rpx; background: var(--primary-soft); font-size: 38rpx; }
+.actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; margin-top: 30rpx; }
+.first-field { margin-top: 24rpx; }
+.form-error { display: block; margin-top: -6rpx; font-size: 24rpx; }
+.invite-input { text-transform: uppercase; letter-spacing: 8rpx; }

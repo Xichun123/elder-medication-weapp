@@ -1,0 +1,77 @@
+<view class="page launch-page">
+  <view class="brand">
+    <view class="brand-icon">💊</view>
+    <text class="brand-title">药灵通</text>
+    <text class="brand-subtitle">家属与长辈，共享一份用药记录</text>
+  </view>
+
+  <view wx:if="{{signedOut}}" class="card signed-out-card">
+    <text class="list-title">已退出登录</text>
+    <text class="list-subtitle">点击下方按钮，使用当前微信身份重新登录。</text>
+    <button class="btn primary block retry-btn" bindtap="loginAgain">微信登录</button>
+  </view>
+
+  <view wx:elif="{{loading}}" class="card loading-card">
+    <text class="loading-icon">⏳</text>
+    <text>正在通过微信安全登录…</text>
+  </view>
+
+  <view wx:elif="{{error && !user}}" class="card">
+    <text class="danger-text">{{error}}</text>
+    <button class="btn primary block retry-btn" bindtap="retry">重新登录</button>
+  </view>
+
+  <block wx:else>
+    <view class="card welcome-card">
+      <text class="list-title">登录成功</text>
+      <text class="list-subtitle">{{user.nickname || '微信用户'}} · 请选择家庭空间</text>
+    </view>
+
+    <view wx:if="{{homes.length}}" class="section">
+      <view class="section-head"><text class="section-title">我的家庭</text></view>
+      <view wx:for="{{homes}}" wx:key="id" class="list-card home-card" data-id="{{item.id}}" bindtap="enterHome">
+        <view class="row between gap">
+          <view class="row gap flex-1">
+            <view class="home-icon">🏠</view>
+            <view class="flex-1">
+              <text class="list-title">{{item.name}}</text>
+              <text class="list-subtitle">{{item.role === 'owner' ? '家庭创建人' : item.role === 'caregiver_edit' ? '可录入家属' : item.role === 'caregiver_view' ? '只读家属' : '老人本人'}}</text>
+            </view>
+          </view>
+          <text>›</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{!mode}}" class="actions-grid">
+      <button class="btn primary block" data-mode="create" bindtap="chooseMode">创建家庭</button>
+      <button class="btn block" data-mode="join" bindtap="chooseMode">用邀请码加入</button>
+    </view>
+
+    <view wx:if="{{mode === 'create'}}" class="card form-card">
+      <text class="list-title">创建家庭</text>
+      <view class="field first-field">
+        <text class="field-label required">家庭名称</text>
+        <input class="input" maxlength="50" value="{{homeName}}" placeholder="如：李家用药照护" bindinput="onHomeName"/>
+      </view>
+      <text wx:if="{{error}}" class="danger-text form-error">{{error}}</text>
+      <view class="form-actions">
+        <button class="btn" bindtap="closeMode">取消</button>
+        <button class="btn primary" loading="{{submitting}}" bindtap="createHome">创建</button>
+      </view>
+    </view>
+
+    <view wx:if="{{mode === 'join'}}" class="card form-card">
+      <text class="list-title">加入家庭</text>
+      <view class="field first-field">
+        <text class="field-label required">8 位邀请码</text>
+        <input class="input invite-input" maxlength="8" value="{{inviteCode}}" placeholder="请输入家属发来的邀请码" bindinput="onInviteCode"/>
+      </view>
+      <text wx:if="{{error}}" class="danger-text form-error">{{error}}</text>
+      <view class="form-actions">
+        <button class="btn" bindtap="closeMode">取消</button>
+        <button class="btn primary" loading="{{submitting}}" bindtap="joinHome">加入</button>
+      </view>
+    </view>
+  </block>
+</view>

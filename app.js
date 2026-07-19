@@ -1,14 +1,22 @@
-const store = require('./utils/store')
-const database = require('./utils/database')
+const config = require('./utils/config')
+const session = require('./utils/session')
 
 App({
   globalData: {
-    currentFamilyId: 'F01',
+    currentUser: null,
+    currentHome: null,
   },
 
   onLaunch() {
-    // 首次启动写入内置种子数据，之后全部 CRUD 均持久化到 wx.storage。
-    database.load()
-    this.globalData.currentFamilyId = store.getFamilyId()
+    this.globalData.currentUser = session.getUser()
+    this.globalData.currentHome = session.getHome()
+
+    // 本地数据库仅保留给显式开启的演示模式，远程模式不再初始化种子数据。
+    if (config.useLocalApi) {
+      const store = require('./utils/store')
+      const database = require('./utils/database')
+      database.load()
+      this.globalData.currentFamilyId = store.getFamilyId()
+    }
   },
 })

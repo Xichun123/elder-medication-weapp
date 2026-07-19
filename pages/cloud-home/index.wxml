@@ -1,0 +1,72 @@
+<view class="page with-safe-bottom">
+  <view wx:if="{{home}}" class="hero">
+    <view class="row between gap">
+      <view class="flex-1">
+        <text class="hero-title">{{home.name}}</text>
+        <text class="hero-subtitle">云端家庭空间 · {{roleLabel}}</text>
+      </view>
+      <text class="cloud-mark">☁️</text>
+    </view>
+    <view class="hero-metrics">
+      <view class="hero-metric"><text class="hero-metric-number">{{elders.length}}</text><text class="hero-metric-label">长辈</text></view>
+      <view class="hero-metric"><text class="hero-metric-number">{{members.length}}</text><text class="hero-metric-label">成员</text></view>
+      <view class="hero-metric"><text class="hero-metric-number">—</text><text class="hero-metric-label">用药</text></view>
+      <view class="hero-metric"><text class="hero-metric-number">—</text><text class="hero-metric-label">待服</text></view>
+    </view>
+  </view>
+
+  <view class="notice cloud-notice">第一期已接通微信登录、家庭、成员邀请和长辈档案；用药与提醒云同步正在下一期接入。</view>
+
+  <view class="section">
+    <view class="section-head">
+      <text class="section-title">长辈档案</text>
+      <button wx:if="{{canEdit && !creating}}" class="btn primary small" bindtap="openCreate">＋ 添加</button>
+    </view>
+
+    <view wx:if="{{creating}}" class="card form-card">
+      <view class="field"><text class="field-label required">姓名</text><input class="input" maxlength="50" value="{{form.name}}" data-field="name" bindinput="onInput"/></view>
+      <view class="field"><text class="field-label required">年龄</text><input class="input" type="number" value="{{form.age}}" data-field="age" bindinput="onInput"/></view>
+      <view class="field"><text class="field-label required">与家属关系</text><input class="input" value="{{form.relationship}}" placeholder="如 母亲 / 父亲" data-field="relationship" bindinput="onInput"/></view>
+      <view class="field"><text class="field-label">性别</text><view class="radio-row"><view class="choice {{form.gender === 'female' ? 'active' : ''}}" data-value="female" bindtap="chooseGender">女</view><view class="choice {{form.gender === 'male' ? 'active' : ''}}" data-value="male" bindtap="chooseGender">男</view></view></view>
+      <view class="form-actions"><button class="btn" bindtap="closeCreate">取消</button><button class="btn primary" loading="{{saving}}" bindtap="createElder">保存</button></view>
+    </view>
+
+    <view wx:for="{{elders}}" wx:key="id" class="list-card">
+      <view class="row gap">
+        <view class="avatar">{{item.gender === 'male' ? '👴' : '👵'}}</view>
+        <view class="flex-1"><text class="list-title">{{item.name}}</text><text class="list-subtitle">{{item.relationship || '长辈'}} · {{item.age}}岁</text><text class="list-meta">{{item.linkedUserId ? '已绑定老人账号' : '尚未绑定老人账号'}}</text></view>
+        <text class="tag {{item.linkedUserId ? 'success' : 'warning'}}">{{item.linkedUserId ? '已绑定' : '待绑定'}}</text>
+      </view>
+      <view wx:if="{{isOwner && !item.linkedUserId}}" class="actions"><button class="btn teal small" data-id="{{item.id}}" bindtap="createElderInvite">生成老人邀请码</button></view>
+    </view>
+    <view wx:if="{{!loading && !elders.length && !creating}}" class="card empty"><text class="empty-icon">👵</text>还没有长辈档案</view>
+  </view>
+
+  <view class="section">
+    <view class="section-head"><text class="section-title">家庭成员</text></view>
+    <view wx:for="{{members}}" wx:key="id" class="member-row">
+      <view class="member-avatar">👤</view>
+      <view class="flex-1"><text class="list-title member-name">{{item.nickname || '微信成员'}}</text><text class="list-subtitle">{{item.role === 'owner' ? '家庭创建人' : item.role === 'caregiver_edit' ? '可录入家属' : item.role === 'caregiver_view' ? '只读家属' : '老人本人'}}</text></view>
+    </view>
+    <view wx:if="{{isOwner}}" class="invite-actions">
+      <button class="btn primary small" data-role="caregiver_edit" bindtap="createFamilyInvite">邀请可录入家属</button>
+      <button class="btn small" data-role="caregiver_view" bindtap="createFamilyInvite">邀请只读家属</button>
+    </view>
+  </view>
+
+  <view class="section account-actions">
+    <button class="btn block" bindtap="switchHome">切换家庭</button>
+    <button class="btn danger block" bindtap="logout">退出登录</button>
+  </view>
+
+  <view wx:if="{{invite}}" class="invite-mask">
+    <view class="invite-card">
+      <text class="page-title">家庭邀请码</text>
+      <text class="page-subtitle">{{invite.role === 'elder' ? '请让对应长辈在自己的手机上输入' : '请发给家庭成员'}}，72 小时内有效</text>
+      <text class="invite-code">{{invite.code}}</text>
+      <view class="form-actions"><button class="btn" bindtap="closeInvite">关闭</button><button class="btn primary" bindtap="copyInvite">复制邀请码</button></view>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading">正在同步云端数据…</view>
+</view>

@@ -3,3 +3,11 @@ project.private.config.json
 
 # macOS
 .DS_Store
+
+# 后端
+server/node_modules/
+server/data/
+server/.env
+
+# 日志与依赖
+npm-debug.log*
