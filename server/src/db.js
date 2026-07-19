@@ -115,6 +115,26 @@ CREATE TABLE IF NOT EXISTS contraindications (
   updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS symptom_logs (
+  id TEXT PRIMARY KEY,
+  home_id TEXT NOT NULL REFERENCES homes(id) ON DELETE CASCADE,
+  elder_profile_id TEXT NOT NULL REFERENCES elder_profiles(id) ON DELETE CASCADE,
+  symptom TEXT NOT NULL,
+  severity TEXT NOT NULL DEFAULT 'normal',
+  source TEXT NOT NULL DEFAULT 'ai_voice',
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS care_alerts (
+  id TEXT PRIMARY KEY,
+  home_id TEXT NOT NULL REFERENCES homes(id) ON DELETE CASCADE,
+  elder_profile_id TEXT NOT NULL REFERENCES elder_profiles(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  content TEXT NOT NULL,
+  read_at TEXT,
+  created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_memberships_user ON memberships(user_id);
 CREATE INDEX IF NOT EXISTS idx_memberships_home ON memberships(home_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_memberships_elder_profile
@@ -123,6 +143,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_memberships_elder_profile
 CREATE INDEX IF NOT EXISTS idx_elders_home ON elder_profiles(home_id);
 CREATE INDEX IF NOT EXISTS idx_records_home_elder ON medication_records(home_id, elder_profile_id);
 CREATE INDEX IF NOT EXISTS idx_reminders_home_elder ON reminder_rules(home_id, elder_profile_id);
+CREATE INDEX IF NOT EXISTS idx_symptoms_home_elder ON symptom_logs(home_id, elder_profile_id);
+CREATE INDEX IF NOT EXISTS idx_alerts_home ON care_alerts(home_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code);
 `
 

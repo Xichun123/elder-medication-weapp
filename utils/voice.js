@@ -19,4 +19,31 @@ function speak(text) {
 
 function stop() {}
 
-module.exports = { speak, stop }
+let audioContext
+
+function getAudioContext() {
+  if (!audioContext) audioContext = wx.createInnerAudioContext({ useWebAudioImplement: true })
+  return audioContext
+}
+
+function playUrl(url) {
+  if (!url) return Promise.reject(new Error('没有可播放的语音'))
+  const context = getAudioContext()
+  context.stop()
+  context.src = url
+  context.play()
+  return Promise.resolve()
+}
+
+function stopRemote() {
+  if (audioContext) audioContext.stop()
+}
+
+function destroy() {
+  if (audioContext) {
+    audioContext.destroy()
+    audioContext = null
+  }
+}
+
+module.exports = { speak, stop, playUrl, stopRemote, destroy }

@@ -59,12 +59,14 @@ function getLoginCode() {
 }
 
 async function login() {
-  // wx.login 的 code 有效期 5 分钟且只能使用一次，应获取后立即换取自定义登录态。
-  const code = await getLoginCode()
+  // 开发者工具连本机服务时不依赖微信 AppID；生产仍用 wx.login 的一次性 code。
+  const data = config.devLogin
+    ? { devOpenid: 'wechat-devtools-user', nickname: '开发调试用户' }
+    : { code: await getLoginCode() }
   const result = await request({
     path: '/auth/wx-login',
     method: 'POST',
-    data: { code },
+    data,
     authenticated: false,
   })
   if (!result || !result.token) throw new Error('服务器未返回登录态')

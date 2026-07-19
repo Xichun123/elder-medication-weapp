@@ -15,7 +15,8 @@
     "pages/more/index",
     "pages/admin-drugs/index",
     "pages/admin-contraindications/index",
-    "pages/dictionary/index"
+    "pages/dictionary/index",
+    "pages/ai-chat/index"
   ],
   "networkTimeout": {
     "request": 10000

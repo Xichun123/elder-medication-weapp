@@ -461,6 +461,13 @@ const api = {
 
   dataDictionary: () => Promise.resolve(dictionaries),
 
+  ai: {
+    async chat(data) {
+      const result = await remote.request({ path: homePath('/ai/chat'), method: 'POST', data })
+      return result
+    },
+  },
+
   local: {
     reset() {
       return Promise.reject(new Error('云端家庭不支持恢复演示数据'))

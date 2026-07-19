@@ -1,0 +1,14 @@
+.ai-page { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 130rpx; }
+.notice { margin: 24rpx 28rpx 12rpx; padding: 16rpx; background: #fff2df; border-radius: 16rpx; color: #85613b; font-size: 23rpx; line-height: 1.5; }
+.elder-picker { display:flex; align-items:center; justify-content:space-between; margin:0 28rpx 16rpx; padding:16rpx 18rpx; border-radius:16rpx; background:#fff; color:#7a6648; font-size:24rpx; box-shadow:0 4rpx 14rpx rgba(92,64,38,.06); }
+.elder-picker-value { color:#a14d39; font-weight:650; }.elder-picker-value text { margin-left:12rpx; color:#b79a84; font-size:22rpx; }
+.phrases { display: flex; gap: 14rpx; padding: 0 28rpx 18rpx; }
+.phrases button { flex: 1; margin: 0; border-radius: 999rpx; font-size: 24rpx; color: #b7533e; background: #fff; border: 1rpx solid #f0c7b8; }
+.chat { flex: 1; box-sizing: border-box; padding: 8rpx 28rpx; }
+.bubble { max-width: 82%; width: fit-content; margin: 16rpx 0; padding: 20rpx 22rpx; border-radius: 20rpx; white-space: pre-wrap; line-height: 1.6; font-size: 28rpx; }
+.bubble.assistant { background: #fff; color: #4d3d30; border-top-left-radius: 4rpx; }
+.bubble.user { margin-left: auto; background: #e87a5d; color: #fff; border-top-right-radius: 4rpx; }
+.play-audio { display:inline-block; margin-top:14rpx; padding:10rpx 16rpx; border-radius:999rpx; background:rgba(112,87,199,.12); color:#7057c7; font-size:24rpx; font-weight:650; }
+.composer { position: fixed; bottom: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16rpx; padding: 18rpx 24rpx calc(18rpx + env(safe-area-inset-bottom)); background: #fff; border-top: 1rpx solid #eadfd6; }
+.composer input { flex: 1; height: 70rpx; padding: 0 20rpx; box-sizing: border-box; background: #f7f3ef; border-radius: 35rpx; font-size: 26rpx; }
+.composer button { margin: 0; background: #e87a5d; color: #fff; border-radius: 35rpx; font-size: 26rpx; }

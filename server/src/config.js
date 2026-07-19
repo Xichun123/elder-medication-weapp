@@ -45,6 +45,11 @@ export const config = {
   wxAppId: process.env.WX_APP_ID || '',
   wxAppSecret: process.env.WX_APP_SECRET || '',
   allowDevLogin: bool(process.env.ALLOW_DEV_LOGIN, false),
+  qwenApiKey: process.env.QWEN_API_KEY || '',
+  qwenApiBaseUrl: process.env.QWEN_API_BASE_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  qwenModel: process.env.QWEN_MODEL || 'qwen-plus',
+  qwenTtsModel: process.env.QWEN_TTS_MODEL || 'qwen3-tts-flash',
+  qwenTtsVoice: process.env.QWEN_TTS_VOICE || 'Cherry',
   databasePath,
 }
 

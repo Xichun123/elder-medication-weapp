@@ -1,0 +1,28 @@
+<view class="page ai-page">
+  <view class="notice">AI 根据家庭用药记录回答，仅供参考；紧急不适请及时就医。</view>
+  <view class="elder-picker" wx:if="{{elders.length}}">
+    <text>当前咨询对象</text>
+    <picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange">
+      <view class="elder-picker-value">👴 {{elders[elderIndex].name}} <text>切换 ›</text></view>
+    </picker>
+  </view>
+  <view class="phrases" wx:if="{{mode === 'elder'}}">
+    <button data-text="我刚吃了药" bindtap="usePhrase">我刚吃了药</button>
+    <button data-text="我头晕" bindtap="usePhrase">我头晕</button>
+  </view>
+  <view class="phrases" wx:else>
+    <button data-text="我妈最近漏服了几次？" bindtap="usePhrase">查漏服次数</button>
+    <button data-text="硝苯地平能和西柚一起吃吗？" bindtap="usePhrase">查询药物禁忌</button>
+  </view>
+  <scroll-view class="chat" scroll-y="true" scroll-into-view="bottom">
+    <view wx:for="{{messages}}" wx:key="index" class="bubble {{item.role === 'user' ? 'user' : 'assistant'}}">
+      <text>{{item.content}}</text>
+      <view wx:if="{{item.audioUrl}}" class="play-audio" data-url="{{item.audioUrl}}" bindtap="playMessage">🔊 播放语音</view>
+    </view>
+    <view id="bottom"></view>
+  </scroll-view>
+  <view class="composer">
+    <input value="{{input}}" placeholder="输入您的问题，也可用键盘语音输入" bindinput="onInput" bindconfirm="send" confirm-type="send" />
+    <button loading="{{sending}}" disabled="{{sending}}" bindtap="send">发送</button>
+  </view>
+</view>

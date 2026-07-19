@@ -134,6 +134,10 @@ Page({
     wx.navigateTo({ url: '/pages/cloud-home/index' })
   },
 
+  openAi() {
+    wx.navigateTo({ url: '/pages/ai-chat/index' })
+  },
+
   navigate(event) {
     const path = event.currentTarget.dataset.path
     const tabPaths = ['/pages/elders/index', '/pages/medication/index', '/pages/reminders/index', '/pages/risks/index']

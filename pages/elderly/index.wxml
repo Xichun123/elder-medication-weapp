@@ -1,6 +1,14 @@
 <view class="elderly-page {{highContrast ? 'high-contrast' : ''}}">
   <view class="elderly-tools"><picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="tool-btn">{{elderIndex >= 0 ? elders[elderIndex].name + ' 长辈' : '选择长辈'}} ▾</view></picker><button class="tool-btn" bindtap="toggleContrast">{{highContrast ? '标准模式' : '高对比'}}</button></view>
   <view wx:if="{{elder}}" class="elderly-main">
+    <view class="ai-entry" bindtap="openAi" hover-class="ai-entry--pressed">
+      <view class="ai-entry-icon">🎙️</view>
+      <view class="ai-entry-main">
+        <text class="ai-entry-title">语音用药助手</text>
+        <text class="ai-entry-desc">说“我刚吃了药”或“我头晕”</text>
+      </view>
+      <view class="ai-entry-arrow">›</view>
+    </view>
     <view class="greeting"><text class="greeting-avatar">{{elder.gender === 'male' ? '👴' : '👵'}}</text><view><text class="elder-title">您好，{{elder.name}}</text><text class="elder-sub">{{greeting}}，今天是 {{today}}</text></view></view>
     <view wx:if="{{currentReminder}}" class="current-card"><text class="current-label">该吃药了</text><text class="current-drug">{{currentReminder.drug_name}}</text><text class="current-voice">🔊 {{currentReminder.voice_text}}</text><button class="play-btn" bindtap="playCurrent">🔊 再播一次</button><text class="current-tip">家属将在手机上确认您已服药</text></view>
     <view wx:else class="current-card resting"><text class="current-drug">今日已无待服提醒</text><text class="current-label">请安心休息</text></view>
