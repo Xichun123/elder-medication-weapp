@@ -91,15 +91,16 @@ function buildDashboard(elderId) {
     }
   })
   const risks = db.collection('contraindications')
-    .filter((item) => drugIds.has(item.drug_a))
+    .filter((item) => drugIds.has(item.drug_a) || (item.drug_b && drugIds.has(item.drug_b)))
     .map((item) => {
       const view = db.contraindicationView(item)
+      const bothTaken = Boolean(item.drug_b) && drugIds.has(item.drug_a) && drugIds.has(item.drug_b)
       return {
         ...view,
         drug_a_id: item.drug_a,
         drug_b_id: item.drug_b || '',
         drug_b_is_food: !item.drug_b,
-        relevance: item.drug_b ? (drugIds.has(item.drug_b) ? '同时服用中' : '注意未同时服用') : '饮食注意事项',
+        relevance: item.drug_b ? (bothTaken ? '同时服用中' : '注意未同时服用') : '饮食注意事项',
       }
     })
     .sort((a, b) => ({ severe: 0, middle: 1, light: 2 }[a.severity] - ({ severe: 0, middle: 1, light: 2 }[b.severity])))
@@ -196,7 +197,18 @@ const api = {
       db.persist()
       return asyncValue({ ...db.recordView(record), auto_created_reminders: autoCreated })
     },
-    update: (id, data) => asyncValue(db.recordView(db.update('records', 'record_id', id, pick(data, ['dose', 'frequency', 'start_date', 'end_date'])))),
+    update: (id, data) => {
+      const previous = db.requireItem('records', 'record_id', id, '用药记录不存在')
+      const previousFrequency = previous.frequency
+      const payload = pick(data, ['dose', 'frequency', 'start_date', 'end_date'])
+      const record = db.update('records', 'record_id', id, payload)
+      if (payload.frequency && payload.frequency !== previousFrequency) {
+        removeWhere(db.collection('reminders'), (item) => item.medication_record === id)
+        db.autoCreateReminders(record)
+        db.persist()
+      }
+      return asyncValue(db.recordView(record))
+    },
     remove: async (id) => {
       db.requireItem('records', 'record_id', id, '用药记录不存在')
       removeWhere(db.collection('reminders'), (item) => item.medication_record === id)

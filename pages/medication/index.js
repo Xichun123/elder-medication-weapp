@@ -9,19 +9,29 @@ Page({
   },
   onLoad(options) { this.initialElderId = options.elder || ''; this.loadElders() },
   onShow() {
+    const familyId = store.getFamilyId()
     const elderId = wx.getStorageSync('elder_medication.medication_elder_id')
-    if (!elderId) return
-    wx.removeStorageSync('elder_medication.medication_elder_id')
-    this.initialElderId = elderId
-    const elderIndex = this.data.elders.findIndex((item) => item.elder_id === elderId)
-    if (elderIndex >= 0) this.setData({ elderIndex })
-    else this.loadElders()
+    if (elderId) {
+      wx.removeStorageSync('elder_medication.medication_elder_id')
+      this.initialElderId = elderId
+      this.lastFamilyId = familyId
+      const elderIndex = this.data.elders.findIndex((item) => item.elder_id === elderId)
+      if (elderIndex >= 0) this.setData({ elderIndex })
+      else this.loadElders()
+      return
+    }
+    if (this.lastFamilyId !== familyId || !this.data.elders.length) {
+      this.lastFamilyId = familyId
+      this.loadElders()
+    }
   },
   onUnload() { if (this.matchTimer) clearTimeout(this.matchTimer) },
 
   async loadElders() {
     try {
-      const overview = await api.families.overview(store.getFamilyId())
+      const familyId = store.getFamilyId()
+      this.lastFamilyId = familyId
+      const overview = await api.families.overview(familyId)
       let elders = overview.elders || []
       if (!elders.length) elders = unwrap(await api.elders.list())
       let elderIndex = elders.findIndex((item) => item.elder_id === this.initialElderId)

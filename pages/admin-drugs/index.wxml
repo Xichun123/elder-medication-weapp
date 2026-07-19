@@ -5,7 +5,7 @@
     <view class="field"><text class="field-label required">通用名</text><input class="input" value="{{form.generic_name}}" data-field="generic_name" bindinput="onInput"/></view>
     <view class="field"><text class="field-label">商品名</text><input class="input" value="{{form.trade_name}}" data-field="trade_name" bindinput="onInput"/></view>
     <view class="field"><text class="field-label">别名</text><input class="input" value="{{form.aliases}}" placeholder="逗号分隔" data-field="aliases" bindinput="onInput"/></view>
-    <view class="field"><text class="field-label required">分类</text><picker range="{{categories}}" range-key="label" value="{{formCategoryIndex}}" bindchange="onFormCategory"><view class="picker">{{categories[formCategoryIndex].label}} ▾</view></picker></view>
+    <view class="field"><text class="field-label required">分类</text><picker range="{{formCategories}}" range-key="label" value="{{formCategoryIndex}}" bindchange="onFormCategory"><view class="picker">{{formCategories[formCategoryIndex].label}} ▾</view></picker></view>
     <view class="field"><text class="field-label">主要成分</text><input class="input" value="{{form.ingredient}}" data-field="ingredient" bindinput="onInput"/></view>
     <view class="field"><text class="field-label">用法用量</text><input class="input" value="{{form.dosage_text}}" data-field="dosage_text" bindinput="onInput"/></view>
     <view class="field"><text class="field-label">禁忌说明</text><textarea class="textarea" value="{{form.contraindication_note}}" data-field="contraindication_note" bindinput="onInput"/></view>
