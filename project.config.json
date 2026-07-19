@@ -1,5 +1,5 @@
 {
-  "description": "长辈用药台账微信小程序（独立离线版）",
+  "description": "药灵通微信小程序（独立离线版）",
   "packOptions": {
     "ignore": [],
     "include": []
@@ -35,7 +35,7 @@
   "compileType": "miniprogram",
   "libVersion": "3.5.7",
   "appid": "wxb9c585f5180b9bb2",
-  "projectname": "elder-medication-weapp",
+  "projectname": "药灵通",
   "miniprogramRoot": "./",
   "condition": {},
   "simulatorPluginLibVersion": {},

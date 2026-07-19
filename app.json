@@ -14,7 +14,7 @@
     "pages/dictionary/index"
   ],
   "window": {
-    "navigationBarTitleText": "长辈用药台账",
+    "navigationBarTitleText": "药灵通",
     "navigationBarBackgroundColor": "#e87a5d",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#faf5ef",

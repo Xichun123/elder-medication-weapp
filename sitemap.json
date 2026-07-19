@@ -1,4 +1,4 @@
 {
-  "desc": "长辈用药台账页面索引",
+  "desc": "药灵通页面索引",
   "rules": [{ "action": "allow", "page": "*" }]
 }
