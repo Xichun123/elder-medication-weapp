@@ -1,4 +1,6 @@
 const api = require('../../utils/api')
+const config = require('../../utils/config')
+const session = require('../../utils/session')
 const store = require('../../utils/store')
 const { unwrap, showError } = require('../../utils/helpers')
 
@@ -6,6 +8,10 @@ Page({
   data: { elders: [], elderIndex: -1, dashboard: null, loading: false, severity: '', type: '', filteredRisks: [], riskSections: [] },
   onLoad(options) { this.initialElderId = options.elder || '' },
   onShow() {
+    if (!config.useLocalApi && !session.getHome()) {
+      wx.reLaunch({ url: '/pages/launch/index' })
+      return
+    }
     const familyId = store.getFamilyId()
     const elderId = wx.getStorageSync('elder_medication.risk_elder_id')
     if (elderId) {

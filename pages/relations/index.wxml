@@ -1,4 +1,87 @@
 <view class="page">
-  <view wx:if="{{!editing}}"><view class="row between gap"><view><text class="page-title">家属-老人关联</text><text class="page-subtitle">维护多对多照护关系与权限级别</text></view><button class="btn primary small" bindtap="openCreate">＋ 新增</button></view><view class="notice relation-notice">一位家属可管理多位老人，一位老人也可由多位家属共同管理。</view><view wx:for="{{list}}" wx:key="relation_id" class="list-card"><view class="relation-line"><view><text class="list-title">{{item.family_name}}</text><text class="list-subtitle">家属 · {{item.family}}</text></view><text class="arrow">↔</text><view class="right"><text class="list-title">{{item.elder_name}}</text><text class="list-subtitle">老人 · {{item.elder}}</text></view></view><view class="row gap relation-tags"><text class="tag primary">{{item.relation_type_label}}</text><text class="tag {{item.permission_level === 'editable' ? 'success' : 'teal'}}">{{item.permission_level_label}}</text></view><view class="actions"><button class="btn small" data-id="{{item.relation_id}}" bindtap="openEdit">编辑</button><button class="btn danger small" data-id="{{item.relation_id}}" bindtap="remove">解除</button></view></view><view wx:if="{{!loading && !list.length}}" class="card empty">暂无关联关系</view><view wx:if="{{loading}}" class="loading">正在加载…</view></view>
-  <view wx:else><text class="page-title">{{isEdit ? '编辑关联关系' : '新增关联关系'}}</text><view class="card form-card"><view class="field"><text class="field-label required">关系ID</text><input class="input" value="{{form.relation_id}}" disabled="{{isEdit}}" data-field="relation_id" bindinput="onInput"/></view><view class="field"><text class="field-label required">家属</text><picker disabled="{{isEdit}}" range="{{families}}" range-key="name" value="{{familyIndex}}" bindchange="onFamilyChange"><view class="picker">{{families[familyIndex].name || '请选择'}} ▾</view></picker></view><view class="field"><text class="field-label required">老人</text><picker disabled="{{isEdit}}" range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="picker">{{elders[elderIndex].name || '请选择'}} ▾</view></picker></view><view class="field"><text class="field-label">关系类型</text><view class="radio-row"><view wx:for="{{roleOptions}}" wx:key="value" class="choice {{form.relation_type === item.value ? 'active' : ''}}" data-field="relation_type" data-value="{{item.value}}" bindtap="choose">{{item.label}}</view></view></view><view class="field"><text class="field-label">权限级别</text><view class="radio-row"><view class="choice {{form.permission_level === 'editable' ? 'active' : ''}}" data-field="permission_level" data-value="editable" bindtap="choose">可录入</view><view class="choice {{form.permission_level === 'readonly' ? 'active' : ''}}" data-field="permission_level" data-value="readonly" bindtap="choose">仅查看</view></view></view><view class="form-actions"><button class="btn" bindtap="cancel">取消</button><button class="btn primary" loading="{{saving}}" bindtap="save">保存</button></view></view></view>
+  <!-- 云端成员管理 -->
+  <block wx:if="{{isRemote}}">
+    <view class="row between gap">
+      <view>
+        <text class="page-title">家庭成员</text>
+        <text class="page-subtitle">云端角色与邀请管理</text>
+      </view>
+      <button wx:if="{{isOwner}}" class="btn primary small" bindtap="openCloudHome">邀请成员</button>
+    </view>
+
+    <view wx:for="{{members}}" wx:key="id" class="list-card">
+      <view class="row gap">
+        <view class="avatar">👤</view>
+        <view class="flex-1">
+          <text class="list-title">{{item.nickname || '微信成员'}}</text>
+          <text class="list-subtitle">{{item.roleLabel}}</text>
+        </view>
+        <text class="tag">{{item.roleLabel}}</text>
+      </view>
+      <view wx:if="{{isOwner && item.role !== 'owner' && item.role !== 'elder'}}" class="actions">
+        <button wx:if="{{item.role !== 'caregiver_edit'}}" class="btn small" data-id="{{item.id}}" data-role="caregiver_edit" bindtap="changeRole">改为可录入</button>
+        <button wx:if="{{item.role !== 'caregiver_view'}}" class="btn small" data-id="{{item.id}}" data-role="caregiver_view" bindtap="changeRole">改为只读</button>
+        <button class="btn danger small" data-id="{{item.id}}" bindtap="removeMember">移除</button>
+      </view>
+    </view>
+
+    <view wx:if="{{isOwner}}" class="section">
+      <view class="section-head"><text class="section-title">有效邀请码</text></view>
+      <view wx:for="{{invites}}" wx:key="id" class="list-card">
+        <view class="row between gap">
+          <view class="flex-1">
+            <text class="list-title">{{item.code}}</text>
+            <text class="list-subtitle">{{item.role === 'elder' ? '老人邀请' : item.role === 'caregiver_view' ? '只读家属' : '可录入家属'}} · 至 {{item.expiresAt}}</text>
+          </view>
+        </view>
+        <view class="actions">
+          <button class="btn small" data-code="{{item.code}}" bindtap="copyInvite">复制</button>
+          <button class="btn danger small" data-id="{{item.id}}" bindtap="revokeInvite">撤销</button>
+        </view>
+      </view>
+      <view wx:if="{{!invites.length}}" class="card empty">暂无有效邀请码</view>
+    </view>
+
+    <view wx:if="{{!loading && !members.length}}" class="card empty">暂无成员</view>
+    <view wx:if="{{loading}}" class="loading">正在加载…</view>
+  </block>
+
+  <!-- 本地关联管理 -->
+  <block wx:else>
+    <view wx:if="{{!editing}}">
+      <view class="row between gap">
+        <view><text class="page-title">家属-老人关联</text><text class="page-subtitle">维护多对多照护关系与权限级别</text></view>
+        <button class="btn primary small" bindtap="openCreate">＋ 新增</button>
+      </view>
+      <view class="notice relation-notice">一位家属可管理多位老人，一位老人也可由多位家属共同管理。</view>
+      <view wx:for="{{list}}" wx:key="relation_id" class="list-card">
+        <view class="relation-line">
+          <view><text class="list-title">{{item.family_name}}</text><text class="list-subtitle">家属 · {{item.family}}</text></view>
+          <text class="arrow">↔</text>
+          <view class="right"><text class="list-title">{{item.elder_name}}</text><text class="list-subtitle">老人 · {{item.elder}}</text></view>
+        </view>
+        <view class="row gap relation-tags">
+          <text class="tag primary">{{item.relation_type_label}}</text>
+          <text class="tag {{item.permission_level === 'editable' ? 'success' : 'teal'}}">{{item.permission_level_label}}</text>
+        </view>
+        <view class="actions">
+          <button class="btn small" data-id="{{item.relation_id}}" bindtap="openEdit">编辑</button>
+          <button class="btn danger small" data-id="{{item.relation_id}}" bindtap="remove">解除</button>
+        </view>
+      </view>
+      <view wx:if="{{!loading && !list.length}}" class="card empty">暂无关联关系</view>
+      <view wx:if="{{loading}}" class="loading">正在加载…</view>
+    </view>
+    <view wx:else>
+      <text class="page-title">{{isEdit ? '编辑关联关系' : '新增关联关系'}}</text>
+      <view class="card form-card">
+        <view class="field"><text class="field-label required">关系ID</text><input class="input" value="{{form.relation_id}}" disabled="{{isEdit}}" data-field="relation_id" bindinput="onInput"/></view>
+        <view class="field"><text class="field-label required">家属</text><picker disabled="{{isEdit}}" range="{{families}}" range-key="name" value="{{familyIndex}}" bindchange="onFamilyChange"><view class="picker">{{families[familyIndex].name || '请选择'}} ▾</view></picker></view>
+        <view class="field"><text class="field-label required">老人</text><picker disabled="{{isEdit}}" range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="picker">{{elders[elderIndex].name || '请选择'}} ▾</view></picker></view>
+        <view class="field"><text class="field-label">关系类型</text><view class="radio-row"><view wx:for="{{roleOptions}}" wx:key="value" class="choice {{form.relation_type === item.value ? 'active' : ''}}" data-field="relation_type" data-value="{{item.value}}" bindtap="choose">{{item.label}}</view></view></view>
+        <view class="field"><text class="field-label">权限级别</text><view class="radio-row"><view class="choice {{form.permission_level === 'editable' ? 'active' : ''}}" data-field="permission_level" data-value="editable" bindtap="choose">可录入</view><view class="choice {{form.permission_level === 'readonly' ? 'active' : ''}}" data-field="permission_level" data-value="readonly" bindtap="choose">仅查看</view></view></view>
+        <view class="form-actions"><button class="btn" bindtap="cancel">取消</button><button class="btn primary" loading="{{saving}}" bindtap="save">保存</button></view>
+      </view>
+    </view>
+  </block>
 </view>

@@ -1,25 +1,34 @@
 <view class="page">
-  <text class="page-title">更多管理</text><text class="page-subtitle">独立离线版 · 数据仅保存在当前设备</text>
+  <text class="page-title">更多管理</text>
+  <text class="page-subtitle">{{isRemote ? (homeName || '云端家庭') + ' · 数据保存在服务器' : '独立离线版 · 数据仅保存在当前设备'}}</text>
   <view class="menu card">
     <view class="menu-item" data-path="/pages/records/index" bindtap="navigate"><text class="menu-icon">📋</text><view class="flex-1"><text class="list-title">用药记录</text><text class="list-subtitle">查看、编辑和删除记录</text></view><text>›</text></view>
-    <view class="menu-item" data-path="/pages/relations/index" bindtap="navigate"><text class="menu-icon">👥</text><view class="flex-1"><text class="list-title">家属关联</text><text class="list-subtitle">维护 N-N 照护关系</text></view><text>›</text></view>
-    <view class="menu-item" data-path="/pages/elderly/index" bindtap="navigate"><text class="menu-icon">🔊</text><view class="flex-1"><text class="list-title">老人提醒端</text><text class="list-subtitle">适老化大字与振动提醒</text></view><text>›</text></view>
+    <view class="menu-item" data-path="/pages/relations/index" bindtap="navigate"><text class="menu-icon">👥</text><view class="flex-1"><text class="list-title">{{isRemote ? '成员管理' : '家属关联'}}</text><text class="list-subtitle">{{isRemote ? '查看家庭成员与角色' : '维护 N-N 照护关系'}}</text></view><text>›</text></view>
+    <view wx:if="{{isRemote}}" class="menu-item" bindtap="openCloudHome"><text class="menu-icon">☁️</text><view class="flex-1"><text class="list-title">邀请与建档</text><text class="list-subtitle">生成邀请码、添加长辈</text></view><text>›</text></view>
+    <view class="menu-item" data-path="/pages/elderly/index" bindtap="navigate"><text class="menu-icon">🔊</text><view class="flex-1"><text class="list-title">老人提醒端预览</text><text class="list-subtitle">适老化大字与振动提醒</text></view><text>›</text></view>
     <view class="menu-item" data-path="/pages/admin-drugs/index" bindtap="navigate"><text class="menu-icon">💊</text><view class="flex-1"><text class="list-title">药物主数据</text><text class="list-subtitle">新增、编辑、删除药物</text></view><text>›</text></view>
+    <view class="menu-item" data-path="/pages/admin-contraindications/index" bindtap="navigate"><text class="menu-icon">⚠️</text><view class="flex-1"><text class="list-title">禁忌管理</text><text class="list-subtitle">维护家庭药物与饮食禁忌</text></view><text>›</text></view>
     <view class="menu-item" data-path="/pages/dictionary/index" bindtap="navigate"><text class="menu-icon">📖</text><view class="flex-1"><text class="list-title">数据字典</text><text class="list-subtitle">查看内置业务字典</text></view><text>›</text></view>
   </view>
 
-  <view class="section"><view class="section-head"><text class="section-title">本地数据</text><text class="tag success">无需网络</text></view>
+  <view class="section">
+    <view class="section-head">
+      <text class="section-title">{{isRemote ? '云端数据' : '本地数据'}}</text>
+      <text class="tag {{isRemote ? 'teal' : 'success'}}">{{isRemote ? '家庭同步' : '无需网络'}}</text>
+    </view>
     <view class="card">
       <view class="data-grid">
         <view><text class="data-number">{{stats.elders}}</text><text class="data-label">老人</text></view>
-        <view><text class="data-number">{{stats.families}}</text><text class="data-label">家属</text></view>
+        <view><text class="data-number">{{stats.families}}</text><text class="data-label">{{isRemote ? '家庭' : '家属'}}</text></view>
         <view><text class="data-number">{{stats.records}}</text><text class="data-label">用药</text></view>
         <view><text class="data-number">{{stats.reminders}}</text><text class="data-label">提醒</text></view>
         <view><text class="data-number">{{stats.drugs}}</text><text class="data-label">药物</text></view>
         <view><text class="data-number">{{stats.contraindications}}</text><text class="data-label">禁忌</text></view>
       </view>
-      <view class="notice local-notice">数据通过 wx.storage 保存在当前微信设备。卸载小程序、清理缓存或恢复初始数据会导致本地修改丢失。</view>
-      <view class="form-actions"><button class="btn" bindtap="exportData">复制 JSON 备份</button><button class="btn danger" loading="{{resetting}}" bindtap="resetData">恢复初始数据</button></view>
+      <view wx:if="{{!isRemote}}" class="notice local-notice">数据通过 wx.storage 保存在当前微信设备。卸载小程序、清理缓存或恢复初始数据会导致本地修改丢失。</view>
+      <view wx:else class="notice local-notice">业务数据保存在家庭云端空间，多名家属与老人账号共享同一真相来源。</view>
+      <view wx:if="{{!isRemote}}" class="form-actions"><button class="btn" bindtap="exportData">复制 JSON 备份</button><button class="btn danger" loading="{{resetting}}" bindtap="resetData">恢复初始数据</button></view>
+      <view wx:else class="form-actions"><button class="btn" bindtap="switchHome">切换家庭</button><button class="btn danger" bindtap="logout">退出登录</button></view>
     </view>
   </view>
   <view class="notice disclaimer">药品与禁忌数据仅供学习参考，不能替代医生诊断。</view>

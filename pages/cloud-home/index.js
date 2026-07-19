@@ -145,6 +145,10 @@ Page({
     this.setData({ invite: null })
   },
 
+  openWorkbench() {
+    wx.switchTab({ url: '/pages/home/index' })
+  },
+
   switchHome() {
     session.setHome(null)
     wx.reLaunch({ url: '/pages/launch/index' })

@@ -1,4 +1,6 @@
 const api = require('../../utils/api')
+const config = require('../../utils/config')
+const session = require('../../utils/session')
 const store = require('../../utils/store')
 const { unwrap, toast, showError, today, makeId } = require('../../utils/helpers')
 
@@ -6,9 +8,15 @@ Page({
   data: {
     elders: [], elderIndex: -1, keyword: '', matchedDrugs: [], selectedDrug: null, matching: false,
     dose: '', frequency: '每日2次', frequencyOptions: ['每日1次', '每日2次', '每日3次'], startDate: today(), endDate: '', saving: false, createdReminders: [], showResult: false,
+    canEdit: true,
   },
   onLoad(options) { this.initialElderId = options.elder || ''; this.loadElders() },
   onShow() {
+    if (!config.useLocalApi && !session.getHome()) {
+      wx.reLaunch({ url: '/pages/launch/index' })
+      return
+    }
+    this.setData({ canEdit: store.canEdit() })
     const familyId = store.getFamilyId()
     const elderId = wx.getStorageSync('elder_medication.medication_elder_id')
     if (elderId) {
@@ -65,16 +73,19 @@ Page({
   onEndDate(event) { this.setData({ endDate: event.detail.value }) },
   clearEndDate() { this.setData({ endDate: '' }) },
   async save() {
+    if (!store.canEdit()) { toast('当前角色仅可查看'); return }
     const elder = this.data.elders[this.data.elderIndex]
     if (!elder) { toast('请选择老人'); return }
     if (!this.data.selectedDrug) { toast('请从匹配结果中选择药物'); return }
     if (!this.data.dose) { toast('请输入剂量'); return }
     this.setData({ saving: true })
     try {
-      const result = await api.records.create({
-        record_id: makeId('R'), elder: elder.elder_id, drug: this.data.selectedDrug.drug_id,
+      const payload = {
+        elder: elder.elder_id, drug: this.data.selectedDrug.drug_id,
         dose: this.data.dose, frequency: this.data.frequency, start_date: this.data.startDate, end_date: this.data.endDate || null,
-      })
+      }
+      if (config.useLocalApi) payload.record_id = makeId('R')
+      const result = await api.records.create(payload)
       this.setData({ createdReminders: result.auto_created_reminders || [], showResult: true })
       this.reset(false)
     } catch (error) { showError(error) }

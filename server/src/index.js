@@ -6,6 +6,7 @@ import { HttpError } from './errors.js'
 import { requireAuth } from './middleware.js'
 import authRoutes from './routes/auth.js'
 import homesRoutes from './routes/homes.js'
+import resourcesRoutes from './routes/resources.js'
 
 const app = new Hono()
 
@@ -38,6 +39,7 @@ app.get('/me', async (c) => {
   })
 })
 app.route('/homes', homesRoutes)
+app.route('/homes', resourcesRoutes)
 
 // 启动前校验生产配置并初始化数据库。
 validateConfig()

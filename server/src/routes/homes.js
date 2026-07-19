@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { mapElder } from '../domain.js'
 import { getDb, nowIso } from '../db.js'
 import { HttpError, assert } from '../errors.js'
 import { newId, newInviteCode } from '../ids.js'
@@ -293,21 +294,5 @@ homes.get('/:homeId/elders', requireHomeMember('caregiver_view'), (c) => {
   }
   return c.json({ elders: rows.map(mapElder) })
 })
-
-function mapElder(row) {
-  return {
-    id: row.id,
-    homeId: row.home_id,
-    name: row.name,
-    gender: row.gender,
-    age: row.age,
-    relationship: row.relationship,
-    allergyNote: row.allergy_note,
-    voiceTone: row.voice_tone,
-    linkedUserId: row.linked_user_id,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }
-}
 
 export default homes

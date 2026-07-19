@@ -14,6 +14,7 @@
     "pages/elderly/index",
     "pages/more/index",
     "pages/admin-drugs/index",
+    "pages/admin-contraindications/index",
     "pages/dictionary/index"
   ],
   "networkTimeout": {

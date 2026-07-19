@@ -13,9 +13,9 @@
     <view class="voice">🔊 {{item.voice_text}}</view>
     <view class="actions">
       <button class="btn small" data-id="{{item.rule_id}}" bindtap="play">播报</button>
-      <button class="btn small" data-id="{{item.rule_id}}" bindtap="regenerate">重生成文本</button>
-      <button wx:if="{{item.status === 'pending'}}" class="btn success small" data-id="{{item.rule_id}}" bindtap="take">✓ 已服</button>
-      <button wx:if="{{item.status === 'pending'}}" class="btn small" data-id="{{item.rule_id}}" bindtap="skip">⊘ 跳过</button>
+      <button wx:if="{{canEdit}}" class="btn small" data-id="{{item.rule_id}}" bindtap="regenerate">重生成文本</button>
+      <button wx:if="{{canTake && item.status === 'pending'}}" class="btn success small" data-id="{{item.rule_id}}" bindtap="take">✓ 已服</button>
+      <button wx:if="{{canTake && item.status === 'pending'}}" class="btn small" data-id="{{item.rule_id}}" bindtap="skip">⊘ 跳过</button>
       <button class="btn teal small" data-elder="{{item.elder}}" bindtap="openElderly">老人端</button>
     </view>
   </view>

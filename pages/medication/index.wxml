@@ -20,7 +20,8 @@
     <view class="field"><text class="field-label required">开始日期</text><picker mode="date" value="{{startDate}}" bindchange="onStartDate"><view class="picker">{{startDate}} ▾</view></picker></view>
     <view class="field"><text class="field-label">结束日期</text><view class="row gap"><picker class="flex-1" mode="date" value="{{endDate || startDate}}" bindchange="onEndDate"><view class="picker">{{endDate || '长期 / 点击选择'}} ▾</view></picker><button wx:if="{{endDate}}" class="btn small" bindtap="clearEndDate">清空</button></view></view>
     <view class="notice">保存后自动生成：每日1次 → 早8:00；每日2次 → 早8:00、晚20:00；每日3次 → 早8:00、午12:00、晚20:00。</view>
-    <view class="form-actions"><button class="btn" bindtap="reset">重置</button><button class="btn primary" loading="{{saving}}" bindtap="save">保存并建提醒</button></view>
+    <view wx:if="{{!canEdit}}" class="notice">当前角色为只读，无法录入用药。</view>
+    <view class="form-actions"><button class="btn" bindtap="reset">重置</button><button wx:if="{{canEdit}}" class="btn primary" loading="{{saving}}" bindtap="save">保存并建提醒</button></view>
   </view>
 
   <view wx:if="{{showResult}}" class="mask">

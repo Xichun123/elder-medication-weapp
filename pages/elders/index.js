@@ -1,4 +1,7 @@
 const api = require('../../utils/api')
+const config = require('../../utils/config')
+const session = require('../../utils/session')
+const store = require('../../utils/store')
 const { unwrap, toast, showError, confirm, makeId } = require('../../utils/helpers')
 
 const emptyForm = () => ({
@@ -6,8 +9,18 @@ const emptyForm = () => ({
 })
 
 Page({
-  data: { list: [], filteredList: [], keyword: '', loading: false, editing: false, isEdit: false, saving: false, form: emptyForm() },
-  onShow() { if (!this.data.editing) this.load() },
+  data: {
+    list: [], filteredList: [], keyword: '', loading: false, editing: false, isEdit: false, saving: false,
+    form: emptyForm(), canEdit: true,
+  },
+  onShow() {
+    if (!config.useLocalApi && !session.getHome()) {
+      wx.reLaunch({ url: '/pages/launch/index' })
+      return
+    }
+    this.setData({ canEdit: store.canEdit() })
+    if (!this.data.editing) this.load()
+  },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()) },
 
   async load() {
@@ -20,8 +33,12 @@ Page({
   },
   onSearchInput(event) { this.setData({ keyword: event.detail.value }) },
   onSearch() { this.load() },
-  openCreate() { this.setData({ editing: true, isEdit: false, form: emptyForm() }) },
+  openCreate() {
+    if (!store.canEdit()) { toast('当前角色仅可查看'); return }
+    this.setData({ editing: true, isEdit: false, form: emptyForm() })
+  },
   openEdit(event) {
+    if (!store.canEdit()) { toast('当前角色仅可查看'); return }
     const row = this.data.list.find((item) => item.elder_id === event.currentTarget.dataset.id)
     if (row) this.setData({ editing: true, isEdit: true, form: { ...row, age: String(row.age) } })
   },
@@ -29,8 +46,9 @@ Page({
   onInput(event) { this.setData({ [`form.${event.currentTarget.dataset.field}`]: event.detail.value }) },
   choose(event) { this.setData({ [`form.${event.currentTarget.dataset.field}`]: event.currentTarget.dataset.value }) },
   async save() {
+    if (!store.canEdit()) { toast('当前角色仅可查看'); return }
     const form = { ...this.data.form, age: Number(this.data.form.age) }
-    if (!form.elder_id || !form.name || !form.relationship || !form.age) { toast('请完整填写必填项'); return }
+    if (!form.name || !form.relationship || !form.age) { toast('请完整填写必填项'); return }
     this.setData({ saving: true })
     try {
       if (this.data.isEdit) await api.elders.update(form.elder_id, form)
@@ -42,6 +60,7 @@ Page({
     finally { this.setData({ saving: false }) }
   },
   async remove(event) {
+    if (!store.canEdit()) { toast('当前角色仅可查看'); return }
     const id = event.currentTarget.dataset.id
     if (!(await confirm('相关用药记录与提醒将一并删除，确定继续？', '删除老人'))) return
     try { await api.elders.remove(id); toast('已删除', 'success'); await this.load() } catch (error) { showError(error) }

@@ -1,0 +1,32 @@
+<view class="page">
+  <view wx:if="{{!editing}}">
+    <view class="row between gap">
+      <view><text class="page-title">禁忌管理</text><text class="page-subtitle">维护药物、饮食及疾病禁忌</text></view>
+      <button wx:if="{{canEdit}}" class="btn primary small" bindtap="openCreate">＋ 新增</button>
+    </view>
+    <view wx:for="{{list}}" wx:key="relation_id" class="list-card">
+      <view class="row between gap">
+        <view class="flex-1"><text class="list-title">{{item.drug_a_name}} × {{item.drug_b_name}}</text><text class="list-subtitle">{{item.contra_type_label}}</text></view>
+        <text class="tag {{item.severity === 'severe' ? 'danger' : item.severity === 'middle' ? 'warning' : ''}}">{{item.severity_label}}</text>
+      </view>
+      <view class="list-meta">{{item.note || '暂无补充说明'}}</view>
+      <view wx:if="{{item.is_system}}" class="notice">系统禁忌，只读</view>
+      <view wx:if="{{canEdit && !item.is_system}}" class="actions"><button class="btn small" data-id="{{item.relation_id}}" bindtap="openEdit">编辑</button><button class="btn danger small" data-id="{{item.relation_id}}" bindtap="remove">删除</button></view>
+    </view>
+    <view wx:if="{{!loading && !list.length}}" class="card empty">暂无禁忌数据</view>
+    <view wx:if="{{loading}}" class="loading">正在加载…</view>
+  </view>
+
+  <view wx:else>
+    <text class="page-title">{{isEdit ? '编辑禁忌' : '新增禁忌'}}</text>
+    <view class="card form-card">
+      <view class="field"><text class="field-label required">药物 A</text><picker range="{{drugs}}" range-key="generic_name" value="{{drugAIndex}}" bindchange="onDrugAChange"><view class="picker">{{drugs[drugAIndex].generic_name || '请选择'}} ▾</view></picker></view>
+      <view class="field"><text class="field-label required">相互作用项</text><picker range="{{drugBOptions}}" range-key="generic_name" value="{{drugBIndex}}" bindchange="onDrugBChange"><view class="picker">{{drugBOptions[drugBIndex].generic_name}} ▾</view></picker></view>
+      <view wx:if="{{!form.drug_b}}" class="field"><text class="field-label required">食物 / 疾病 / 药物文本</text><input class="input" value="{{form.drug_b_text}}" placeholder="如 西柚、酒精、肾功能不全" data-field="drug_b_text" bindinput="onInput"/></view>
+      <view class="field"><text class="field-label required">禁忌类型</text><picker range="{{typeOptions}}" range-key="label" value="{{typeIndex}}" bindchange="onTypeChange"><view class="picker">{{typeOptions[typeIndex].label}} ▾</view></picker></view>
+      <view class="field"><text class="field-label required">严重程度</text><picker range="{{severityOptions}}" range-key="label" value="{{severityIndex}}" bindchange="onSeverityChange"><view class="picker">{{severityOptions[severityIndex].label}} ▾</view></picker></view>
+      <view class="field"><text class="field-label">说明</text><textarea class="textarea" value="{{form.note}}" placeholder="填写风险和注意事项" data-field="note" bindinput="onInput"/></view>
+      <view class="form-actions"><button class="btn" bindtap="cancel">取消</button><button class="btn primary" loading="{{saving}}" bindtap="save">保存</button></view>
+    </view>
+  </view>
+</view>

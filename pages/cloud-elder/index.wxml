@@ -6,15 +6,36 @@
       <text class="elder-home">{{home.name}}正在守护您的用药</text>
     </view>
 
-    <view class="status-card">
-      <text class="status-icon">☁️</text>
-      <text class="status-title">账号已成功绑定</text>
-      <text class="status-desc">您的身份和家庭档案已在云端同步。</text>
+    <view wx:if="{{current}}" class="current-card">
+      <text class="current-label">{{currentDue ? '当前待服药物' : '下一次服药提醒'}}</text>
+      <text class="current-time">{{current.remind_time}}</text>
+      <text class="current-drug">{{current.drug_name}}</text>
+      <text class="current-voice">🔊 {{current.voice_text}}</text>
+      <view class="current-actions">
+        <button class="elder-btn big" bindtap="playCurrent">播报提醒</button>
+        <button class="elder-btn big primary" loading="{{acting}}" bindtap="takeCurrent">我已服药</button>
+      </view>
+    </view>
+    <view wx:else class="status-card">
+      <text class="status-icon">✅</text>
+      <text class="status-title">{{reminders.length ? '暂无待服药物' : '还没有用药提醒'}}</text>
+      <text class="status-desc">{{reminders.length ? '家属端可看到您已确认的服药状态。' : '请让家属为您录入用药后，这里会显示提醒。'}}</text>
     </view>
 
-    <view class="reminder-card">
-      <text class="reminder-title">用药提醒即将接入</text>
-      <text class="reminder-desc">下一期将显示今日药物、服用时间，并支持您点击“我已服药”。</text>
+    <view class="section-block">
+      <text class="section-title">今日提醒</text>
+      <view wx:for="{{reminders}}" wx:key="rule_id" class="reminder-row {{item.status}}">
+        <view class="flex-1">
+          <text class="reminder-time">{{item.remind_time}}</text>
+          <text class="reminder-drug">{{item.drug_name}}</text>
+          <text class="reminder-status">{{item.status_label}}</text>
+        </view>
+        <view class="row-actions">
+          <button class="elder-btn mini" data-id="{{item.rule_id}}" bindtap="playReminder">播报</button>
+          <button wx:if="{{item.status === 'pending'}}" class="elder-btn mini primary" data-id="{{item.rule_id}}" bindtap="takeReminder">已服</button>
+        </view>
+      </view>
+      <view wx:if="{{!reminders.length}}" class="empty-tip">暂无提醒</view>
     </view>
 
     <view class="elder-actions">

@@ -1,4 +1,6 @@
 const api = require('../../utils/api')
+const config = require('../../utils/config')
+const session = require('../../utils/session')
 const store = require('../../utils/store')
 const { unwrap, showError } = require('../../utils/helpers')
 
@@ -15,10 +17,24 @@ Page({
     totalPending: 0,
     totalRisks: 0,
     greeting: '您好',
+    canEdit: true,
+    isRemote: false,
+    roleLabel: '',
   },
 
   onLoad() { this.setGreeting() },
-  onShow() { this.load() },
+  onShow() {
+    const currentHome = session.getHome()
+    if (!config.useLocalApi && !currentHome) {
+      wx.reLaunch({ url: '/pages/launch/index' })
+      return
+    }
+    if (!config.useLocalApi && currentHome.role === 'elder') {
+      wx.reLaunch({ url: '/pages/cloud-elder/index' })
+      return
+    }
+    this.load()
+  },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()) },
 
   setGreeting() {
@@ -35,8 +51,24 @@ Page({
       const familyId = store.getFamilyId()
       let familyIndex = families.findIndex((item) => item.family_id === familyId)
       if (familyIndex < 0) familyIndex = 0
-      const selectedId = families[familyIndex] ? families[familyIndex].family_id : familyId
-      store.setFamilyId(selectedId)
+      const selected = families[familyIndex]
+      const selectedId = selected ? selected.family_id : familyId
+      if (!config.useLocalApi && selected) {
+        const home = session.getHome() || {}
+        session.setHome({
+          ...home,
+          id: selected.family_id,
+          name: selected.name,
+          role: selected.role || home.role,
+          elderProfileId: selected.elderProfileId || null,
+        })
+        if (selected.role === 'elder') {
+          wx.reLaunch({ url: '/pages/cloud-elder/index' })
+          return
+        }
+      } else {
+        store.setFamilyId(selectedId)
+      }
       const [overview, recordsData, remindersData] = await Promise.all([
         api.families.overview(selectedId),
         api.records.list({ family: selectedId }),
@@ -52,11 +84,18 @@ Page({
         elders,
         records,
         reminders: reminders.slice(0, 5),
-        totalMeds: elders.reduce((sum, item) => sum + item.medication_count, 0),
-        totalPending: elders.reduce((sum, item) => sum + item.reminder_pending_count, 0),
-        totalRisks: elders.reduce((sum, item) => sum + item.contraindication_count, 0),
+        totalMeds: elders.reduce((sum, item) => sum + (item.medication_count || 0), 0),
+        totalPending: elders.reduce((sum, item) => sum + (item.reminder_pending_count || 0), 0),
+        totalRisks: elders.reduce((sum, item) => sum + (item.contraindication_count || 0), 0),
+        canEdit: store.canEdit(),
+        isRemote: !config.useLocalApi,
+        roleLabel: overview.family.role_label || '',
       })
     } catch (error) {
+      if (error.statusCode === 401) {
+        wx.reLaunch({ url: '/pages/launch/index' })
+        return
+      }
       showError(error)
     } finally {
       this.setData({ loading: false })
@@ -67,13 +106,32 @@ Page({
     const familyIndex = Number(event.detail.value)
     const family = this.data.families[familyIndex]
     if (!family) return
-    store.setFamilyId(family.family_id)
+    if (!config.useLocalApi) {
+      const home = session.getHome() || {}
+      session.setHome({
+        ...home,
+        id: family.family_id,
+        name: family.name,
+        role: family.role || home.role,
+        elderProfileId: family.elderProfileId || null,
+      })
+      if (family.role === 'elder') {
+        wx.reLaunch({ url: '/pages/cloud-elder/index' })
+        return
+      }
+    } else {
+      store.setFamilyId(family.family_id)
+    }
     this.setData({ familyIndex })
     this.load()
   },
 
   openElder(event) {
     wx.navigateTo({ url: `/pages/elder-detail/index?id=${event.currentTarget.dataset.id}` })
+  },
+
+  openCloudHome() {
+    wx.navigateTo({ url: '/pages/cloud-home/index' })
   },
 
   navigate(event) {

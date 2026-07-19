@@ -15,7 +15,8 @@
     </view>
   </view>
 
-  <view class="notice cloud-notice">第一期已接通微信登录、家庭、成员邀请和长辈档案；用药与提醒云同步正在下一期接入。</view>
+  <view class="notice cloud-notice">用药、提醒与禁忌已接入云端。可在此邀请成员，或进入工作台管理日常用药。</view>
+  <view class="section"><button class="btn primary block" bindtap="openWorkbench">进入家属工作台</button></view>
 
   <view class="section">
     <view class="section-head">

@@ -39,6 +39,12 @@ const dictionaries = {
     { value: 'middle', label: '中' },
     { value: 'severe', label: '严重' },
   ],
+  home_role: [
+    { value: 'owner', label: '家庭创建人' },
+    { value: 'caregiver_edit', label: '可录入家属' },
+    { value: 'caregiver_view', label: '只读家属' },
+    { value: 'elder', label: '老人本人' },
+  ],
 }
 
 function createSeedData() {

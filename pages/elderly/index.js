@@ -1,10 +1,20 @@
 const api = require('../../utils/api')
+const config = require('../../utils/config')
+const session = require('../../utils/session')
 const voice = require('../../utils/voice')
 const { unwrap, showError } = require('../../utils/helpers')
 
 Page({
   data: { elders: [], elderIndex: -1, elder: null, reminders: [], currentReminder: null, nextReminder: null, autoPlay: true, highContrast: false, greeting: '', today: '' },
-  onLoad(options) { this.initialElderId = options.elder || ''; this.setDateText(); this.loadElders() },
+  onLoad(options) {
+    if (!config.useLocalApi && !session.getHome()) {
+      wx.reLaunch({ url: '/pages/launch/index' })
+      return
+    }
+    this.initialElderId = options.elder || ''
+    this.setDateText()
+    this.loadElders()
+  },
   onUnload() { if (this.timer) clearInterval(this.timer); voice.stop() },
   setDateText() { const d = new Date(); const week = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()]; const h = d.getHours(); this.setData({ today: `${d.getMonth()+1}月${d.getDate()}日 ${week}`, greeting: h < 6 ? '凌晨好' : h < 11 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好' }) },
   async loadElders() { try { const elders = unwrap(await api.elders.list()); let elderIndex = elders.findIndex((item) => item.elder_id === this.initialElderId); if (elderIndex < 0 && elders.length) elderIndex = 0; this.setData({ elders, elderIndex }); await this.loadReminders(); this.startTimer() } catch (error) { showError(error) } },

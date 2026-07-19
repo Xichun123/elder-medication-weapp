@@ -86,11 +86,19 @@ Home ── Invite
 | POST | `/homes/join` | `{ code }` 加入 |
 | POST | `/homes/:homeId/invites` | 创建邀请 |
 | GET/POST | `/homes/:homeId/elders` | 长辈档案 |
-| … | elders 更新删除 / records / reminders / drugs / risks | 尚未实现，后续与小程序业务对齐 |
+| PATCH/DELETE | `/homes/:homeId/elders/:elderId` | 更新/删除长辈 |
+| GET | `/homes/:homeId/overview` | 家庭概览（长辈/用药/待服/风险计数） |
+| GET/POST/PATCH/DELETE | `/homes/:homeId/drugs` | 药物（含系统药库只读 + 家庭药库） |
+| GET/POST/PATCH/DELETE | `/homes/:homeId/records` | 用药记录；创建/改频次同步提醒 |
+| GET + take/skip/regenerate-voice | `/homes/:homeId/reminders` | 提醒；老人可确认本人已服 |
+| GET | `/homes/:homeId/elders/:elderId/dashboard` | 长辈禁忌看板 |
+| GET/POST/PATCH/DELETE | `/homes/:homeId/contraindications` | 禁忌 |
+| GET/DELETE | `/homes/:homeId/invites` | 邀请列表/撤销（owner） |
+| PATCH/DELETE | `/homes/:homeId/members/:memberId` | 改角色/移除（owner） |
 
 ## 小程序改造原则
 
-1. `utils/api.js` 逐步改为请求 VPS；可用 `USE_LOCAL_API` 在开发期回退本地 `database.js`。
+1. `utils/api.js` 按 `USE_LOCAL_API` 切换 `api-local.js` / `api-remote.js`；两套 adapter 对页面暴露相同业务接口。
 2. 启动门闸：无 token → 登录页；有 token → 拉家庭列表 → 按角色进首页。
 3. `role=elder`：不展示家属 Tab，直接老人端。
 4. 去掉「无登录切换家属」；改为真实用户 + 当前家庭。
@@ -102,9 +110,9 @@ Home ── Invite
 |----|------|
 | 0 | 架构文档、仓库结构、VPS 目录与域名规划 |
 | 1 | ✅ 已完成：登录、家庭、邀请、角色中间件、小程序门闸与长辈建档 |
-| 2 | 进行中：用药/提醒/禁忌上云，家属多端一致 |
-| 3 | 老人绑定与老人端正式化、老人确认已服 |
-| 4 | 订阅消息、缓存与冲突、成员管理增强 |
+| 2 | ✅ 已完成：用药/提醒/禁忌上云，家属工作台远程适配 |
+| 3 | ✅ 已完成：老人端今日提醒与确认已服 |
+| 4 | 订阅消息、缓存与冲突、体验增强 |
 
 ## 本地数据迁移
 

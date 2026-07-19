@@ -113,7 +113,8 @@ Page({
     if (home.role === 'elder') {
       wx.redirectTo({ url: '/pages/cloud-elder/index' })
     } else {
-      wx.redirectTo({ url: '/pages/cloud-home/index' })
+      // 家属进入带 TabBar 的远程工作台，避免再走仅建档的临时页。
+      wx.switchTab({ url: '/pages/home/index' })
     }
   },
 

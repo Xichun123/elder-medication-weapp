@@ -1,9 +1,18 @@
 const api = require('../../utils/api')
+const config = require('../../utils/config')
+const session = require('../../utils/session')
 const { showError } = require('../../utils/helpers')
 
 Page({
   data: { id: '', elder: null, dashboard: null, loading: false, healthScore: 0, healthLevel: '' },
-  onLoad(options) { this.setData({ id: options.id || '' }); this.load() },
+  onLoad(options) {
+    if (!config.useLocalApi && !session.getHome()) {
+      wx.reLaunch({ url: '/pages/launch/index' })
+      return
+    }
+    this.setData({ id: options.id || '' })
+    this.load()
+  },
   async load() {
     if (!this.data.id) return
     this.setData({ loading: true })

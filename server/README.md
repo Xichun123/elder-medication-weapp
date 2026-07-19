@@ -63,19 +63,20 @@ api.0721online.net {
 }
 ```
 
-## 一期已实现
+## 已实现 API
 
 - `GET /health`
 - `POST /auth/wx-login`（微信 code / 开发 devOpenid）
 - `GET /me`
-- `GET/POST /homes`
-- `POST /homes/join`
-- `GET /homes/:homeId`
-- `GET /homes/:homeId/members`
-- `POST /homes/:homeId/invites`（仅 owner）
-- `GET/POST /homes/:homeId/elders`
+- `GET/POST /homes`、`POST /homes/join`、`GET /homes/:homeId`
+- `GET /homes/:homeId/members`；owner：`PATCH/DELETE .../members/:memberId`
+- `POST /homes/:homeId/invites`；owner：`GET/DELETE .../invites`
+- `GET/POST /homes/:homeId/elders`；`PATCH/DELETE .../elders/:elderId`
+- `GET /homes/:homeId/overview`
+- 药物 / 用药记录 / 提醒 / 禁忌 / 长辈 dashboard（均带 `home_id` 范围与角色校验）
 
-小程序登录门闸、家庭选择、成员邀请和长辈建档已接入远程 API；用药、提醒与禁忌仍为后续迭代。
+权限摘要：`owner` 全量 + 成员管理；`caregiver_edit` 可写业务；`caregiver_view` 只读；`elder` 仅本人档案，可确认已服。
+创建用药记录时自动生成提醒；仅修改频次会重建提醒，只改剂量不重置状态。提醒状态按 `Asia/Shanghai` 自然日计算，跨天自动恢复待服；今日列表只包含处于 `start_date/end_date` 有效期内的用药。
 
 ## 验证
 
