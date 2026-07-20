@@ -4,6 +4,7 @@ const session = require('./session')
 const { dictionaries } = require('./seed')
 
 const label = (name, value) => ((dictionaries[name] || []).find((item) => item.value === value) || {}).label || value || ''
+const apiUrl = (value) => value ? (/^https?:\/\//.test(value) ? value : `${config.apiBaseUrl}${value}`) : ''
 
 function requireHome() {
   const home = session.getHome()
@@ -52,6 +53,8 @@ function mapDrug(item) {
     dosage_text: item.dosageText,
     contraindication_note: item.contraindicationNote,
     interaction_note: item.interactionNote,
+    package_image_url: apiUrl(item.packageImagePath),
+    has_package_image: Boolean(item.packageImagePath),
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   }
@@ -85,7 +88,10 @@ function mapReminder(item) {
     elder: item.elderProfileId,
     elder_name: item.elderName,
     medication_record: item.recordId,
+    drug: item.drugId,
     drug_name: item.drugName,
+    dose: item.dose,
+    package_image_url: apiUrl(item.packageImagePath),
     remind_time: item.remindTime,
     status: item.status,
     status_label: item.statusLabel || label('reminder_status', item.status),
@@ -313,6 +319,22 @@ const api = {
     async match(keyword) {
       const rows = await api.drugs.list({ keyword })
       return rows.slice(0, 10)
+    },
+    async savePackageImage(id, filePath) {
+      const result = await remote.upload({
+        path: homePath(`/drugs/${id}/package-image`),
+        filePath,
+        name: 'image',
+        timeout: config.recognitionTimeout,
+      })
+      return {
+        ...result.packageImage,
+        url: apiUrl(result.packageImage && result.packageImage.urlPath),
+      }
+    },
+    async removePackageImage(id) {
+      await remote.request({ path: homePath(`/drugs/${id}/package-image`), method: 'DELETE' })
+      return null
     },
   },
 

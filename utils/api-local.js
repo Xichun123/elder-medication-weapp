@@ -188,6 +188,8 @@ const api = {
       return null
     },
     match: (keyword) => asyncValue(listDrugs({ keyword }).slice(0, 10)),
+    savePackageImage: () => Promise.reject(new Error('本地演示模式不支持保存药品包装照片')),
+    removePackageImage: () => Promise.reject(new Error('本地演示模式不支持删除药品包装照片')),
   },
   records: {
     list: (params) => asyncValue(listRecords(params)),

@@ -67,7 +67,9 @@ export function normalizeRecognition(value) {
 }
 
 export async function recognizeMedicationImage(image) {
-  if (!config.githubModelsToken) throw new HttpError(503, '拍照识别尚未配置，请先手动录入')
+  if (!config.recognitionApiUrl || !config.recognitionApiKey || !config.recognitionModel) {
+    throw new HttpError(503, '拍照识别尚未配置，请先手动录入')
+  }
   if (!image || typeof image.arrayBuffer !== 'function') throw new HttpError(400, '请选择药盒照片')
   if (!ALLOWED_IMAGE_TYPES.has(image.type)) throw new HttpError(400, '仅支持 JPG、PNG 或 WebP 图片')
   if (!image.size || image.size > MAX_IMAGE_BYTES) throw new HttpError(400, '图片大小不能超过 5MB')
@@ -76,17 +78,15 @@ export async function recognizeMedicationImage(image) {
   const imageUrl = `data:${image.type};base64,${bytes.toString('base64')}`
   let response
   try {
-    response = await fetch(config.githubModelsEndpoint, {
+    response = await fetch(config.recognitionApiUrl, {
       method: 'POST',
       signal: AbortSignal.timeout(config.recognitionTimeoutMs),
       headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${config.githubModelsToken}`,
+        Authorization: `Bearer ${config.recognitionApiKey}`,
         'Content-Type': 'application/json',
-        'X-GitHub-Api-Version': '2022-11-28',
       },
       body: JSON.stringify({
-        model: config.githubModelsModel,
+        model: config.recognitionModel,
         messages: [{
           role: 'user',
           content: [
@@ -102,7 +102,7 @@ export async function recognizeMedicationImage(image) {
   }
 
   if (!response.ok) {
-    if (response.status === 429) throw new HttpError(429, '今日免费识别额度繁忙，请稍后再试')
+    if (response.status === 429) throw new HttpError(429, '识别服务繁忙或额度已用完，请稍后再试')
     if (response.status === 401 || response.status === 403) throw new HttpError(503, '识别服务配置无效')
     throw new HttpError(502, '识别服务返回异常')
   }
@@ -112,5 +112,5 @@ export async function recognizeMedicationImage(image) {
   const result = normalizeRecognition(parseModelContent(content))
   if (!result.isMedicationPackage) throw new HttpError(422, '未识别到药盒或处方，请重新拍摄')
   if (!result.genericName && !result.tradeName) throw new HttpError(422, '药名不清晰，请拍摄药盒正面后重试')
-  return { ...result, model: config.githubModelsModel }
+  return { ...result, model: config.recognitionModel }
 }

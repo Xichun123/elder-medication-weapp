@@ -6,6 +6,7 @@ import { HttpError } from './errors.js'
 import { requireAuth } from './middleware.js'
 import authRoutes from './routes/auth.js'
 import homesRoutes from './routes/homes.js'
+import packageImageRoutes from './routes/package-images.js'
 import resourcesRoutes from './routes/resources.js'
 
 const app = new Hono()
@@ -23,10 +24,11 @@ app.get('/health', (c) => c.json({
   service: 'yao-ling-tong-api',
   time: new Date().toISOString(),
   authConfigured: Boolean(config.wxAppId && config.wxAppSecret),
-  recognitionConfigured: Boolean(config.githubModelsToken),
+  recognitionConfigured: Boolean(config.recognitionApiUrl && config.recognitionApiKey && config.recognitionModel),
 }))
 
 app.route('/auth', authRoutes)
+app.route('/package-images', packageImageRoutes)
 app.use('/me', requireAuth)
 app.get('/me', async (c) => {
   const user = c.get('user')

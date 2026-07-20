@@ -11,7 +11,7 @@
       </view>
     </view>
     <button class="scan-button" loading="{{recognizing}}" disabled="{{recognizing}}" bindtap="chooseMedicationPhoto">{{recognizing ? '正在识别包装…' : '拍照 / 从相册选择'}}</button>
-    <view class="scan-footnote">识别结果仅作录入草稿，保存前请结合药盒与医生处方核对</view>
+    <view class="scan-footnote">照片会上传至第三方 AI 服务处理，可能包含姓名和健康信息；请遮挡无关个人信息。识别结果仅作录入草稿。</view>
   </view>
 
   <view wx:if="{{recognitionImage}}" class="recognition-card">
@@ -22,7 +22,7 @@
           <view class="recognition-kicker">AI 识别草稿</view>
           <view class="recognition-heading">{{recognitionResult ? '请核对后再保存' : '正在读取药盒文字'}}</view>
         </view>
-        <text class="review-badge">待核对</text>
+        <text class="review-badge {{recognitionConfirmed ? 'confirmed' : ''}}">{{recognitionConfirmed ? '已确认' : '待核对'}}</text>
       </view>
       <view wx:if="{{recognizing}}" class="recognition-loading"><view class="recognition-dot"></view>图像分析通常需要几秒钟</view>
       <view wx:if="{{recognitionResult}}">
@@ -65,9 +65,26 @@
     <view class="field"><text class="field-label">频次</text><view class="radio-row"><view wx:for="{{frequencyOptions}}" wx:key="*this" class="choice {{frequency === item ? 'active' : ''}}" data-value="{{item}}" bindtap="chooseFrequency">{{item}}</view></view></view>
     <view class="field"><text class="field-label required">开始日期</text><picker mode="date" value="{{startDate}}" bindchange="onStartDate"><view class="picker">{{startDate}} ▾</view></picker></view>
     <view class="field"><text class="field-label">结束日期</text><view class="row gap"><picker class="flex-1" mode="date" value="{{endDate || startDate}}" bindchange="onEndDate"><view class="picker">{{endDate || '长期 / 点击选择'}} ▾</view></picker><button wx:if="{{endDate}}" class="btn small" bindtap="clearEndDate">清空</button></view></view>
+    <view wx:if="{{recognitionReviewRequired}}" class="review-confirmation {{recognitionConfirmed ? 'confirmed' : ''}}">
+      <view class="review-confirmation-title">AI 信息需要人工确认</view>
+      <checkbox-group bindchange="onRecognitionConfirmChange">
+        <label class="review-confirmation-check">
+          <checkbox value="confirmed" checked="{{recognitionConfirmed}}" color="#3e9183"/>
+          <text>我已对照药盒和医生处方，核对药品、剂量与频次</text>
+        </label>
+      </checkbox-group>
+      <view class="review-confirmation-note">修改药品、剂量或频次后需要重新确认。</view>
+    </view>
+    <view wx:if="{{recognitionImage && recognitionResult && selectedDrug && recognitionConfirmed}}" class="package-image-save">
+      <view class="package-image-save-copy">
+        <view class="package-image-save-title">药品包装照片</view>
+        <view class="package-image-save-note">主动保存后，老人服药提醒会显示这张包装照片。重新保存将替换现有主图。</view>
+      </view>
+      <button class="btn teal small" loading="{{savingPackageImage}}" disabled="{{savingPackageImage || packageImageSaved}}" bindtap="saveRecognitionPackageImage">{{packageImageSaved ? '已保存' : (selectedDrug.has_package_image ? '替换主图' : '保存主图')}}</button>
+    </view>
     <view class="notice">保存后自动生成：每日1次 → 早8:00；每日2次 → 早8:00、晚20:00；每日3次 → 早8:00、午12:00、晚20:00。</view>
     <view wx:if="{{!canEdit}}" class="notice">当前角色为只读，无法录入用药。</view>
-    <view class="form-actions"><button class="btn" bindtap="reset">重置</button><button wx:if="{{canEdit}}" class="btn primary" loading="{{saving}}" bindtap="save">保存并建提醒</button></view>
+    <view class="form-actions"><button class="btn" disabled="{{saving || recognizing || savingPackageImage}}" bindtap="reset">重置</button><button wx:if="{{canEdit}}" class="btn primary" loading="{{saving}}" disabled="{{saving || savingPackageImage || (recognitionReviewRequired && !recognitionConfirmed)}}" bindtap="save">保存并建提醒</button></view>
   </view>
 
   <view wx:if="{{showResult}}" class="mask">

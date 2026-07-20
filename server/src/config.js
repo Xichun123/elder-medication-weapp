@@ -46,9 +46,9 @@ export const config = {
   wxAppSecret: process.env.WX_APP_SECRET || '',
   allowDevLogin: bool(process.env.ALLOW_DEV_LOGIN, false),
   databasePath,
-  githubModelsToken: process.env.GITHUB_MODELS_TOKEN || '',
-  githubModelsModel: process.env.GITHUB_MODELS_MODEL || 'openai/gpt-4.1-mini',
-  githubModelsEndpoint: process.env.GITHUB_MODELS_ENDPOINT || 'https://models.github.ai/inference/chat/completions',
+  recognitionApiUrl: process.env.RECOGNITION_API_URL || '',
+  recognitionApiKey: process.env.RECOGNITION_API_KEY || '',
+  recognitionModel: process.env.RECOGNITION_MODEL || '',
   recognitionTimeoutMs: Number(process.env.RECOGNITION_TIMEOUT_MS || 30_000),
 }
 

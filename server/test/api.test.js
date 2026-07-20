@@ -87,7 +87,9 @@ test.before(async () => {
       DATABASE_PATH: path.join(tempDir, 'test.db'),
       WX_APP_ID: '',
       WX_APP_SECRET: '',
-      GITHUB_MODELS_TOKEN: '',
+      RECOGNITION_API_URL: '',
+      RECOGNITION_API_KEY: '',
+      RECOGNITION_MODEL: '',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   })

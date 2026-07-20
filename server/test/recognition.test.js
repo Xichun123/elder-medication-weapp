@@ -4,11 +4,19 @@ import { config } from '../src/config.js'
 import { normalizeRecognition, parseModelContent, recognizeMedicationImage } from '../src/recognition.js'
 
 const originalFetch = global.fetch
-const originalToken = config.githubModelsToken
+const originalApiUrl = config.recognitionApiUrl
+const originalApiKey = config.recognitionApiKey
+const originalModel = config.recognitionModel
 
-test.beforeEach(() => { config.githubModelsToken = 'test-model-token' })
+test.beforeEach(() => {
+  config.recognitionApiUrl = 'https://example.test/v1/chat/completions'
+  config.recognitionApiKey = 'test-model-token'
+  config.recognitionModel = 'test-vision-model'
+})
 test.afterEach(() => {
-  config.githubModelsToken = originalToken
+  config.recognitionApiUrl = originalApiUrl
+  config.recognitionApiKey = originalApiKey
+  config.recognitionModel = originalModel
   global.fetch = originalFetch
 })
 
@@ -53,8 +61,11 @@ test('模型未返回 JSON 时抛出可控服务错误', () => {
 test('识别请求上传图片并归一化成功结果', async () => {
   let requestBody
   global.fetch = async (url, options) => {
-    assert.equal(url, config.githubModelsEndpoint)
-    assert.equal(options.headers.Authorization, 'Bearer test-model-token')
+    assert.equal(url, config.recognitionApiUrl)
+    assert.deepEqual(options.headers, {
+      Authorization: 'Bearer test-model-token',
+      'Content-Type': 'application/json',
+    })
     requestBody = JSON.parse(options.body)
     return new Response(JSON.stringify({
       choices: [{ message: { content: JSON.stringify({
@@ -73,7 +84,7 @@ test('识别请求上传图片并归一化成功结果', async () => {
   assert.equal(result.genericName, '盐酸托鲁地文拉法辛缓释片')
   assert.equal(result.tradeName, '若欣林')
   assert.equal(result.strength, '80mg')
-  assert.equal(requestBody.model, config.githubModelsModel)
+  assert.equal(requestBody.model, config.recognitionModel)
   assert.match(requestBody.messages[0].content[1].image_url.url, /^data:image\/png;base64,/)
 })
 

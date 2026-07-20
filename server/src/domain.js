@@ -2,6 +2,7 @@ import { getDb, nowIso } from './db.js'
 import { HttpError, assert } from './errors.js'
 import { newId } from './ids.js'
 import { label } from './labels.js'
+import { createPackageImagePath } from './package-images.js'
 
 export const FREQUENCY_TIMES = {
   每日1次: ['早8:00'],
@@ -47,9 +48,11 @@ export function getElderInHome(homeId, elderId) {
 
 export function getDrugVisible(homeId, drugId) {
   const drug = getDb().prepare(`
-    SELECT * FROM drugs
-    WHERE id = ? AND (home_id IS NULL OR home_id = ?)
-  `).get(drugId, homeId)
+    SELECT d.*, pi.id AS package_image_id
+    FROM drugs d
+    LEFT JOIN drug_package_images pi ON pi.home_id = ? AND pi.drug_id = d.id
+    WHERE d.id = ? AND (d.home_id IS NULL OR d.home_id = ?)
+  `).get(homeId, drugId, homeId)
   assert(drug, 404, '药物不存在')
   return drug
 }
@@ -87,6 +90,7 @@ export function mapDrug(row) {
     dosageText: row.dosage_text,
     contraindicationNote: row.contraindication_note,
     interactionNote: row.interaction_note,
+    packageImagePath: createPackageImagePath(row.package_image_id),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -120,7 +124,10 @@ export function mapReminder(row, today = localDate()) {
     elderProfileId: row.elder_profile_id,
     elderName: row.elder_name || '',
     recordId: row.record_id,
+    drugId: row.drug_id || '',
     drugName: row.drug_name || '',
+    dose: row.dose || '',
+    packageImagePath: createPackageImagePath(row.package_image_id),
     remindTime: row.remind_time,
     status,
     statusLabel: label('reminder_status', status),
@@ -163,11 +170,15 @@ const RECORD_SELECT = `
 const REMINDER_SELECT = `
   SELECT rm.*,
     e.name AS elder_name,
-    d.generic_name AS drug_name
+    d.id AS drug_id,
+    d.generic_name AS drug_name,
+    r.dose AS dose,
+    pi.id AS package_image_id
   FROM reminder_rules rm
   JOIN elder_profiles e ON e.id = rm.elder_profile_id
   JOIN medication_records r ON r.id = rm.record_id
   JOIN drugs d ON d.id = r.drug_id
+  LEFT JOIN drug_package_images pi ON pi.home_id = rm.home_id AND pi.drug_id = d.id
 `
 
 const CONTRA_SELECT = `
@@ -231,10 +242,12 @@ export function listReminders(homeId, { elderId, status } = {}) {
 
 export function listDrugs(homeId, { keyword, category } = {}) {
   let rows = getDb().prepare(`
-    SELECT * FROM drugs
-    WHERE home_id IS NULL OR home_id = ?
-    ORDER BY CASE WHEN home_id IS NULL THEN 0 ELSE 1 END, generic_name ASC
-  `).all(homeId)
+    SELECT d.*, pi.id AS package_image_id
+    FROM drugs d
+    LEFT JOIN drug_package_images pi ON pi.home_id = ? AND pi.drug_id = d.id
+    WHERE d.home_id IS NULL OR d.home_id = ?
+    ORDER BY CASE WHEN d.home_id IS NULL THEN 0 ELSE 1 END, d.generic_name ASC
+  `).all(homeId, homeId)
 
   if (keyword) {
     const needle = String(keyword).trim().toLowerCase()
