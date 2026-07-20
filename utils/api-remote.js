@@ -467,8 +467,19 @@ const api = {
 
   ai: {
     async chat(data) {
-      const result = await remote.request({ path: homePath('/ai/chat'), method: 'POST', data, timeout: config.aiRequestTimeout })
-      return result
+      try {
+        return await remote.request({ path: homePath('/ai/chat'), method: 'POST', data, timeout: config.aiRequestTimeout })
+      } catch (error) {
+        // 兼容生产环境旧后端：本地缓存的 elderId 可能已不属于当前家庭，
+        // 旧后端会返回 404。去掉 elderId 后，单老人家庭可由服务端自动选择，
+        // 药品安全等不依赖具体老人的问题也能继续回答。
+        if (error.statusCode === 404 && data && data.elderId) {
+          const fallback = { ...data }
+          delete fallback.elderId
+          return remote.request({ path: homePath('/ai/chat'), method: 'POST', data: fallback, timeout: config.aiRequestTimeout })
+        }
+        throw error
+      }
     },
     async createPendingAction(data) {
       return remote.request({ path: homePath('/ai/pending-actions'), method: 'POST', data })

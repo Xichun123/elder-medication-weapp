@@ -228,13 +228,7 @@ Page({
       this.setData({ messages: this.data.messages.concat(assistant) })
       if (this.data.mode === 'elder') this.speakText(assistant.content, assistant.audioUrl)
     } catch (error) {
-      if (error.statusCode === 404) {
-        wx.showModal({
-          title: 'AI 服务端尚未升级',
-          content: '小程序已经更新，但生产服务器仍是旧版本或缺少 AI 路由，请先部署最新 server 代码。',
-          showCancel: false,
-        })
-      } else showError(error)
+      showError(error)
     } finally {
       this.setData({ sending: false })
     }
