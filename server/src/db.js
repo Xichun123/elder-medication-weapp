@@ -77,6 +77,19 @@ CREATE TABLE IF NOT EXISTS drugs (
   updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS drug_package_images (
+  id TEXT PRIMARY KEY,
+  home_id TEXT NOT NULL REFERENCES homes(id) ON DELETE CASCADE,
+  drug_id TEXT NOT NULL REFERENCES drugs(id) ON DELETE CASCADE,
+  content_type TEXT NOT NULL,
+  byte_size INTEGER NOT NULL,
+  image_data BLOB NOT NULL,
+  created_by TEXT NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE (home_id, drug_id)
+);
+
 CREATE TABLE IF NOT EXISTS medication_records (
   id TEXT PRIMARY KEY,
   home_id TEXT NOT NULL REFERENCES homes(id) ON DELETE CASCADE,
@@ -192,6 +205,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_memberships_elder_profile
 CREATE INDEX IF NOT EXISTS idx_elders_home ON elder_profiles(home_id);
 CREATE INDEX IF NOT EXISTS idx_records_home_elder ON medication_records(home_id, elder_profile_id);
 CREATE INDEX IF NOT EXISTS idx_reminders_home_elder ON reminder_rules(home_id, elder_profile_id);
+CREATE INDEX IF NOT EXISTS idx_package_images_home_drug ON drug_package_images(home_id, drug_id);
 CREATE INDEX IF NOT EXISTS idx_medication_events_home_date ON medication_events(home_id, occurrence_date);
 CREATE INDEX IF NOT EXISTS idx_pending_actions_user_status ON ai_pending_actions(user_id, status, expires_at);
 CREATE INDEX IF NOT EXISTS idx_action_audits_action ON ai_action_audits(action_id, created_at);

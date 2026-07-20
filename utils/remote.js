@@ -45,6 +45,37 @@ function request({ path, method = 'GET', data, authenticated = true, timeout = c
   })
 }
 
+function upload({ path, filePath, name = 'file', formData = {}, authenticated = true, timeout }) {
+  const token = getToken()
+  return new Promise((resolve, reject) => {
+    wx.uploadFile({
+      url: `${config.apiBaseUrl}${path}`,
+      filePath,
+      name,
+      formData,
+      timeout: timeout || config.requestTimeout,
+      header: authenticated && token ? { Authorization: `Bearer ${token}` } : {},
+      success(res) {
+        let data = res.data
+        try { data = JSON.parse(res.data) } catch (error) { /* 保留原始响应，便于展示服务端错误 */ }
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(data)
+          return
+        }
+        if (res.statusCode === 401) setToken('')
+        const message = data && data.error
+        const requestError = new Error(message || `上传失败(${res.statusCode})`)
+        requestError.statusCode = res.statusCode
+        requestError.data = data
+        reject(requestError)
+      },
+      fail(error) {
+        reject(new Error((error && error.errMsg) || '图片上传失败'))
+      },
+    })
+  })
+}
+
 function getLoginCode() {
   return new Promise((resolve, reject) => {
     wx.login({
@@ -85,4 +116,4 @@ async function login() {
   return result
 }
 
-module.exports = { request, login, getToken, setToken }
+module.exports = { request, upload, login, getToken, setToken }

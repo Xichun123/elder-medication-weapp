@@ -9,6 +9,7 @@ const defaults = {
   devOpenid: 'wechat-devtools-user',
   devNickname: '开发调试用户',
   requestTimeout: 10000,
+  recognitionTimeout: 45000,
   aiRequestTimeout: 30000,
   sttRequestTimeout: 20000,
   ttsRequestTimeout: 20000,

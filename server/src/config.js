@@ -55,6 +55,11 @@ export const config = {
   aiRequestTimeoutMs: Number(process.env.AI_REQUEST_TIMEOUT_MS || 25_000),
   aiActionTtlMs: Number(process.env.AI_ACTION_TTL_MS || 5 * 60_000),
 
+  recognitionApiUrl: process.env.RECOGNITION_API_URL || '',
+  recognitionApiKey: process.env.RECOGNITION_API_KEY || '',
+  recognitionModel: process.env.RECOGNITION_MODEL || '',
+  recognitionTimeoutMs: Number(process.env.RECOGNITION_TIMEOUT_MS || 30_000),
+
   sttApiUrl: process.env.STT_API_URL || '',
   sttProvider: process.env.STT_PROVIDER || 'openai_multipart',
   sttApiKey: process.env.STT_API_KEY || process.env.AI_API_KEY || '',
@@ -105,6 +110,7 @@ export function validateConfig() {
   if (config.isProd && (config.sttProvider === 'dashscope_async' || config.ttsApiUrl) && !config.publicBaseUrl) {
     throw new Error('生产环境启用语音能力时必须配置 PUBLIC_BASE_URL')
   }
+  assertInteger('RECOGNITION_TIMEOUT_MS', config.recognitionTimeoutMs, 5_000)
 }
 
 export default config

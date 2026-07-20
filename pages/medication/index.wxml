@@ -1,7 +1,49 @@
 <view class="page with-safe-bottom">
   <text class="page-title">药物录入</text>
   <text class="page-subtitle">药名模糊匹配主数据，保存后自动创建提醒规则</text>
+  <view wx:if="{{canEdit}}" class="scan-card">
+    <view class="scan-top">
+      <view class="scan-icon">AI</view>
+      <view class="scan-copy">
+        <view class="scan-eyebrow">AI 拍药盒识别</view>
+        <view class="scan-title">拍一下，少填好几项</view>
+        <view class="scan-subtitle">自动提取药名、规格与包装文字，再匹配家庭药库</view>
+      </view>
+    </view>
+    <button class="scan-button" loading="{{recognizing}}" disabled="{{recognizing}}" bindtap="chooseMedicationPhoto">{{recognizing ? '正在识别包装…' : '拍照 / 从相册选择'}}</button>
+    <view class="scan-footnote">照片会上传至第三方 AI 服务处理，可能包含姓名和健康信息；请遮挡无关个人信息。识别结果仅作录入草稿。</view>
+  </view>
+
+  <view wx:if="{{recognitionImage}}" class="recognition-card">
+    <image class="recognition-photo" src="{{recognitionImage}}" mode="aspectFill"/>
+    <view class="recognition-content">
+      <view class="row between gap">
+        <view>
+          <view class="recognition-kicker">AI 识别草稿</view>
+          <view class="recognition-heading">{{recognitionResult ? '请核对后再保存' : '正在读取药盒文字'}}</view>
+        </view>
+        <text class="review-badge {{recognitionConfirmed ? 'confirmed' : ''}}">{{recognitionConfirmed ? '已确认' : '待核对'}}</text>
+      </view>
+      <view wx:if="{{recognizing}}" class="recognition-loading"><view class="recognition-dot"></view>图像分析通常需要几秒钟</view>
+      <view wx:if="{{recognitionResult}}">
+        <view class="recognition-grid">
+          <view wx:for="{{recognitionDetails}}" wx:key="label" class="recognition-row">
+            <text class="recognition-label">{{item.label}}</text>
+            <text class="recognition-value">{{item.value}}</text>
+          </view>
+        </view>
+        <view wx:if="{{recognitionVisibleText}}" class="visible-text">包装可见文字：{{recognitionVisibleText}}</view>
+        <view wx:for="{{recognitionResult.warnings}}" wx:key="*this" class="recognition-warning">⚠ {{item}}</view>
+        <view wx:if="{{recognitionUncertainText}}" class="uncertain">需重点核对：{{recognitionUncertainText}}</view>
+        <view class="recognition-actions">
+          <button class="btn small" bindtap="chooseMedicationPhoto">重新拍摄</button>
+          <button class="text-button" bindtap="clearRecognition">收起结果</button>
+        </view>
+      </view>
+    </view>
+  </view>
   <view class="card form-card">
+    <view class="manual-heading"><text>确认用药信息</text><text class="manual-tag">人工核对</text></view>
     <view class="field"><text class="field-label required">选择老人</text><picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="picker">{{elderIndex >= 0 ? elders[elderIndex].name + '（' + elders[elderIndex].relationship + '）' : '请选择长辈'}} ▾</view></picker></view>
     <view class="field"><text class="field-label required">输入药名</text><input class="input" value="{{keyword}}" placeholder="通用名 / 商品名 / 别名" bindinput="onKeywordInput"/></view>
     <view wx:if="{{matching}}" class="loading mini">正在匹配主数据…</view>
@@ -12,6 +54,10 @@
         <view wx:if="{{item.contraindication_note}}" class="contra">⚠️ {{item.contraindication_note}}</view>
       </view>
     </view>
+    <view wx:if="{{recognitionResult && !selectedDrug}}" class="create-drug-hint">
+      <view class="create-drug-copy">没有合适结果？请把上方输入框改成正确的通用名，再建立家庭药品档案。</view>
+      <button class="btn teal small" loading="{{creatingRecognizedDrug}}" disabled="{{creatingRecognizedDrug || !keyword}}" bindtap="createRecognizedDrug">建档并选中</button>
+    </view>
     <view wx:if="{{selectedDrug}}" class="selected">
       <view class="row between"><view><text class="list-title">{{selectedDrug.generic_name}}</text><view class="list-subtitle">{{selectedDrug.drug_id}} · {{selectedDrug.category_label}}</view></view><button class="btn small" bindtap="clearDrug">重选</button></view>
     </view>
@@ -19,9 +65,26 @@
     <view class="field"><text class="field-label">频次</text><view class="radio-row"><view wx:for="{{frequencyOptions}}" wx:key="*this" class="choice {{frequency === item ? 'active' : ''}}" data-value="{{item}}" bindtap="chooseFrequency">{{item}}</view></view></view>
     <view class="field"><text class="field-label required">开始日期</text><picker mode="date" value="{{startDate}}" bindchange="onStartDate"><view class="picker">{{startDate}} ▾</view></picker></view>
     <view class="field"><text class="field-label">结束日期</text><view class="row gap"><picker class="flex-1" mode="date" value="{{endDate || startDate}}" bindchange="onEndDate"><view class="picker">{{endDate || '长期 / 点击选择'}} ▾</view></picker><button wx:if="{{endDate}}" class="btn small" bindtap="clearEndDate">清空</button></view></view>
+    <view wx:if="{{recognitionReviewRequired}}" class="review-confirmation {{recognitionConfirmed ? 'confirmed' : ''}}">
+      <view class="review-confirmation-title">AI 信息需要人工确认</view>
+      <checkbox-group bindchange="onRecognitionConfirmChange">
+        <label class="review-confirmation-check">
+          <checkbox value="confirmed" checked="{{recognitionConfirmed}}" color="#3e9183"/>
+          <text>我已对照药盒和医生处方，核对药品、剂量与频次</text>
+        </label>
+      </checkbox-group>
+      <view class="review-confirmation-note">修改药品、剂量或频次后需要重新确认。</view>
+    </view>
+    <view wx:if="{{recognitionImage && recognitionResult && selectedDrug && recognitionConfirmed}}" class="package-image-save">
+      <view class="package-image-save-copy">
+        <view class="package-image-save-title">药品包装照片</view>
+        <view class="package-image-save-note">主动保存后，老人服药提醒会显示这张包装照片。重新保存将替换现有主图。</view>
+      </view>
+      <button class="btn teal small" loading="{{savingPackageImage}}" disabled="{{savingPackageImage || packageImageSaved}}" bindtap="saveRecognitionPackageImage">{{packageImageSaved ? '已保存' : (selectedDrug.has_package_image ? '替换主图' : '保存主图')}}</button>
+    </view>
     <view class="notice">保存后自动生成：每日1次 → 早8:00；每日2次 → 早8:00、晚20:00；每日3次 → 早8:00、午12:00、晚20:00。</view>
     <view wx:if="{{!canEdit}}" class="notice">当前角色为只读，无法录入用药。</view>
-    <view class="form-actions"><button class="btn" bindtap="reset">重置</button><button wx:if="{{canEdit}}" class="btn primary" loading="{{saving}}" bindtap="save">保存并建提醒</button></view>
+    <view class="form-actions"><button class="btn" disabled="{{saving || recognizing || savingPackageImage}}" bindtap="reset">重置</button><button wx:if="{{canEdit}}" class="btn primary" loading="{{saving}}" disabled="{{saving || savingPackageImage || (recognitionReviewRequired && !recognitionConfirmed)}}" bindtap="save">保存并建提醒</button></view>
   </view>
 
   <view wx:if="{{showResult}}" class="mask">

@@ -3,6 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { spawn } from 'node:child_process'
+import { request as httpRequest } from 'node:http'
 import test from 'node:test'
 
 const serverRoot = path.resolve(import.meta.dirname, '..')
@@ -40,6 +41,26 @@ async function api(pathname, { token, method = 'GET', body } = {}) {
   return { status: response.status, data }
 }
 
+function requestWithDeclaredLength(pathname, { token, length }) {
+  return new Promise((resolve, reject) => {
+    const request = httpRequest(`${baseUrl}${pathname}`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${token}`,
+        'content-type': 'multipart/form-data; boundary=body-limit-test',
+        'content-length': String(length),
+      },
+    }, (response) => {
+      let text = ''
+      response.setEncoding('utf8')
+      response.on('data', (chunk) => { text += chunk })
+      response.on('end', () => resolve({ status: response.statusCode, text }))
+    })
+    request.on('error', reject)
+    request.end()
+  })
+}
+
 async function login(devOpenid, nickname) {
   const result = await api('/auth/wx-login', {
     method: 'POST',
@@ -66,6 +87,9 @@ test.before(async () => {
       DATABASE_PATH: path.join(tempDir, 'test.db'),
       WX_APP_ID: '',
       WX_APP_SECRET: '',
+      RECOGNITION_API_URL: '',
+      RECOGNITION_API_KEY: '',
+      RECOGNITION_MODEL: '',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
@@ -104,6 +128,31 @@ test('owner、家属与老人权限闭环', async () => {
   assert.equal(createdHome.status, 201)
   assert.equal(createdHome.data.home.role, 'owner')
   const homeId = createdHome.data.home.id
+
+  const recognitionForm = new FormData()
+  recognitionForm.append('image', new Blob(['test-image'], { type: 'image/jpeg' }), 'medicine.jpg')
+  const recognitionResponse = await fetch(`${baseUrl}/homes/${homeId}/recognitions/medication`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${owner.token}` },
+    body: recognitionForm,
+  })
+  assert.equal(recognitionResponse.status, 503)
+  assert.equal((await recognitionResponse.json()).error, '拍照识别尚未配置，请先手动录入')
+
+  const retryForm = new FormData()
+  retryForm.append('image', new Blob(['test-image'], { type: 'image/jpeg' }), 'medicine.jpg')
+  const retryResponse = await fetch(`${baseUrl}/homes/${homeId}/recognitions/medication`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${owner.token}` },
+    body: retryForm,
+  })
+  assert.equal(retryResponse.status, 429)
+
+  const oversizedResponse = await requestWithDeclaredLength(`/homes/${homeId}/recognitions/medication`, {
+    token: owner.token,
+    length: 6 * 1024 * 1024 + 1,
+  })
+  assert.equal(oversizedResponse.status, 413)
 
   const createdElder = await api(`/homes/${homeId}/elders`, {
     token: owner.token,

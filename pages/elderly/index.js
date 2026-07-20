@@ -30,5 +30,5 @@ Page({
   },
   playReminder(event) { const row = this.data.reminders.find((item) => item.rule_id === event.currentTarget.dataset.id); if (row) this.playText(row.voice_text) },
   playText(text) { voice.speak(text, { tone: this.data.elder && this.data.elder.voice_tone }).catch(showError) },
-  startTimer() { if (this.timer) clearInterval(this.timer); this.timer = setInterval(async () => { if (!this.data.autoPlay) return; await this.loadReminders(); const current = this.data.currentReminder; if (current && this.lastPlayedId !== current.rule_id) { this.lastPlayedId = current.rule_id; this.playText(current.voice_text) } }, 60000) },
+  startTimer() { if (this.timer) clearInterval(this.timer); this.timer = setInterval(async () => { await this.loadReminders(); if (!this.data.autoPlay) return; const current = this.data.currentReminder; if (current && this.lastPlayedId !== current.rule_id) { this.lastPlayedId = current.rule_id; this.playText(current.voice_text) } }, 60000) },
 })

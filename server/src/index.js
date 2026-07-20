@@ -6,6 +6,7 @@ import { HttpError } from './errors.js'
 import { requireAuth } from './middleware.js'
 import authRoutes from './routes/auth.js'
 import homesRoutes from './routes/homes.js'
+import packageImageRoutes from './routes/package-images.js'
 import resourcesRoutes from './routes/resources.js'
 import aiRoutes from './routes/ai.js'
 import { getAiMedia } from './ai-media.js'
@@ -25,6 +26,7 @@ app.get('/health', (c) => c.json({
   service: 'yao-ling-tong-api',
   time: new Date().toISOString(),
   authConfigured: Boolean(config.wxAppId && config.wxAppSecret),
+  recognitionConfigured: Boolean(config.recognitionApiUrl && config.recognitionApiKey && config.recognitionModel),
 }))
 
 // 短时随机 URL：供百炼异步 ASR 下载录音，也让小程序只从自己的合法域名播放 TTS。
@@ -43,6 +45,7 @@ app.get('/ai-media/:token', async (c) => {
 })
 
 app.route('/auth', authRoutes)
+app.route('/package-images', packageImageRoutes)
 app.use('/me', requireAuth)
 app.get('/me', async (c) => {
   const user = c.get('user')

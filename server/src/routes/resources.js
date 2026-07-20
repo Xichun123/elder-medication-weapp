@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import {
   assertElderScope,
   buildDashboard,
@@ -27,13 +28,35 @@ import { HttpError, assert } from '../errors.js'
 import { newId } from '../ids.js'
 import { requireAuth, requireHomeMember } from '../middleware.js'
 import { confirmMedicationStatus } from '../medication-events.js'
+import { createPackageImagePath, sanitizePackageImage } from '../package-images.js'
 import { createFixedWindowRateLimiter } from '../rate-limit.js'
+import { recognizeMedicationImage } from '../recognition.js'
 
 const resources = new Hono()
 const companionRefreshRateLimiter = createFixedWindowRateLimiter({ windowMs: 60 * 60_000 })
 const COMPANION_REFRESH_LIMIT = 4
 const COMPANION_BATCH_SIZE = 6
 resources.use('*', requireAuth)
+
+const recognitionUsage = new Map()
+const RECOGNITION_WINDOW_MS = 60 * 60 * 1000
+const RECOGNITION_COOLDOWN_MS = 10 * 1000
+const RECOGNITION_MAX_PER_HOUR = 10
+
+async function requireRecognitionQuota(c, next) {
+  const user = c.get('user')
+  const key = `${c.req.param('homeId')}:${user.id}`
+  const now = Date.now()
+  const recent = (recognitionUsage.get(key) || []).filter((timestamp) => now - timestamp < RECOGNITION_WINDOW_MS)
+  if (recent.length && now - recent[recent.length - 1] < RECOGNITION_COOLDOWN_MS) {
+    return c.json({ error: '操作太频繁，请 10 秒后再试' }, 429)
+  }
+  if (recent.length >= RECOGNITION_MAX_PER_HOUR) {
+    return c.json({ error: '本小时识别次数已用完，请稍后再试' }, 429)
+  }
+  recognitionUsage.set(key, [...recent, now])
+  await next()
+}
 
 function enforceCompanionRefreshRateLimit(c) {
   const user = c.get('user')
@@ -249,6 +272,121 @@ resources.delete('/:homeId/drugs/:drugId', requireHomeMember('caregiver_edit'), 
   tx()
   return c.json({ ok: true })
 })
+
+// ── Drug package images ───────────────────────────────────
+resources.get('/:homeId/drugs/:drugId/package-image', requireHomeMember('caregiver_view'), (c) => {
+  const membership = c.get('membership')
+  const drugId = c.req.param('drugId')
+  getDrugVisible(membership.home_id, drugId)
+
+  if (membership.role === 'elder') {
+    const linked = getDb().prepare(`
+      SELECT 1
+      FROM reminder_rules rm
+      JOIN medication_records r ON r.id = rm.record_id
+      WHERE rm.home_id = ? AND rm.elder_profile_id = ? AND r.drug_id = ?
+      LIMIT 1
+    `).get(membership.home_id, membership.elder_profile_id, drugId)
+    assert(linked, 403, '只能查看本人提醒关联的药品照片')
+  }
+
+  const image = getDb().prepare(`
+    SELECT id, content_type, byte_size, updated_at
+    FROM drug_package_images
+    WHERE home_id = ? AND drug_id = ?
+  `).get(membership.home_id, drugId)
+  assert(image, 404, '该药品尚未保存包装照片')
+  return c.json({
+    packageImage: {
+      drugId,
+      contentType: image.content_type,
+      byteSize: image.byte_size,
+      urlPath: createPackageImagePath(image.id),
+      updatedAt: image.updated_at,
+    },
+  })
+})
+
+resources.post(
+  '/:homeId/drugs/:drugId/package-image',
+  requireHomeMember('caregiver_edit'),
+  bodyLimit({
+    maxSize: 6 * 1024 * 1024,
+    onError: (c) => c.json({ error: '图片和表单总大小不能超过 6MB' }, 413),
+  }),
+  async (c) => {
+    const membership = c.get('membership')
+    const user = c.get('user')
+    const drugId = c.req.param('drugId')
+    getDrugVisible(membership.home_id, drugId)
+    const body = await c.req.parseBody().catch(() => ({}))
+    const processed = await sanitizePackageImage(body.image)
+    const imageId = newId('I')
+    const ts = nowIso()
+
+    getDb().prepare(`
+      INSERT INTO drug_package_images (
+        id, home_id, drug_id, content_type, byte_size, image_data,
+        created_by, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(home_id, drug_id) DO UPDATE SET
+        id = excluded.id,
+        content_type = excluded.content_type,
+        byte_size = excluded.byte_size,
+        image_data = excluded.image_data,
+        created_by = excluded.created_by,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+    `).run(
+      imageId,
+      membership.home_id,
+      drugId,
+      processed.contentType,
+      processed.byteSize,
+      processed.data,
+      user.id,
+      ts,
+      ts,
+    )
+    return c.json({
+      packageImage: {
+        drugId,
+        contentType: processed.contentType,
+        byteSize: processed.byteSize,
+        urlPath: createPackageImagePath(imageId),
+        updatedAt: ts,
+      },
+    }, 201)
+  },
+)
+
+resources.delete('/:homeId/drugs/:drugId/package-image', requireHomeMember('caregiver_edit'), (c) => {
+  const membership = c.get('membership')
+  const drugId = c.req.param('drugId')
+  getDrugVisible(membership.home_id, drugId)
+  const result = getDb().prepare(`
+    DELETE FROM drug_package_images
+    WHERE home_id = ? AND drug_id = ?
+  `).run(membership.home_id, drugId)
+  assert(result.changes === 1, 404, '该药品尚未保存包装照片')
+  return c.json({ ok: true })
+})
+
+// ── AI medication package recognition ─────────────────────
+resources.post(
+  '/:homeId/recognitions/medication',
+  requireHomeMember('caregiver_edit'),
+  bodyLimit({
+    maxSize: 6 * 1024 * 1024,
+    onError: (c) => c.json({ error: '图片和表单总大小不能超过 6MB' }, 413),
+  }),
+  requireRecognitionQuota,
+  async (c) => {
+    const body = await c.req.parseBody().catch(() => ({}))
+    const recognition = await recognizeMedicationImage(body.image)
+    return c.json({ recognition })
+  },
+)
 
 // ── Records ───────────────────────────────────────────────
 resources.get('/:homeId/records', requireHomeMember('caregiver_view'), (c) => {
