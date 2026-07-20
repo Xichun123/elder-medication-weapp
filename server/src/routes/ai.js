@@ -293,7 +293,10 @@ ai.post('/:homeId/ai/chat', requireHomeMember('caregiver_view'), async (c) => {
   const mode = body.mode === 'elder' ? 'elder' : 'caregiver'
   const history = dedupeHistory(body.history, question)
   const medications = listMedicationContext(homeId, elder?.id)
-  const system = `你是“药灵通”家庭用药管家。只根据工具返回和提供的数据回答，不编造服药历史。模型不得直接修改服药状态或症状记录；只能调用 propose_* 工具生成待确认候选，最终写库必须由用户点击确认后调用确定性接口。若存在多个待服提醒，不得猜测老人服用了哪一种药。症状候选生成时必须说明尚未通知家属；紧急症状应立即建议就医或拨打 120。医疗信息只作健康教育，不得诊断或擅自调整剂量。回答使用简明中文，结尾附上：${DISCLAIMER}\n\n当前服务模式：${mode}\n当前老人：${elder ? `${elder.name}，${elder.age}岁，过敏史：${elder.allergy_note}` : '未选择'}\n用药档案：${JSON.stringify(medications)}`
+  const elderContext = elder
+    ? `姓名：${elder.name}；性别：${elder.gender === 'male' ? '男' : '女'}；家庭关系：${elder.relationship || '未填写'}；年龄：${elder.age}岁；过敏史：${elder.allergy_note}`
+    : '未选择'
+  const system = `你是“药灵通”家庭用药管家。只根据工具返回和提供的数据回答，不编造服药历史。模型不得直接修改服药状态或症状记录；只能调用 propose_* 工具生成待确认候选，最终写库必须由用户点击确认后调用确定性接口。若存在多个待服提醒，不得猜测老人服用了哪一种药。症状候选生成时必须说明尚未通知家属；紧急症状应立即建议就医或拨打 120。医疗信息只作健康教育，不得诊断或擅自调整剂量。必须严格依据当前老人档案中的性别和家庭关系称呼，不得根据姓名猜测性别；关系不适合作为称谓时使用姓名或“老人”。回答使用简明中文，结尾附上：${DISCLAIMER}\n\n当前服务模式：${mode}\n当前老人：${elderContext}\n用药档案：${JSON.stringify(medications)}`
   const messages = [{ role: 'system', content: system }, ...history, { role: 'user', content: question }]
   const signal = requestSignal(c, config.aiRequestTimeoutMs)
   const drafts = []

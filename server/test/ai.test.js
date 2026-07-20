@@ -516,6 +516,9 @@ test('当前问题不会在 history 和 message 中重复发送', async () => {
   assert.equal(result.status, 200)
   const userMessages = mockRequests[0].body.messages.filter((item) => item.role === 'user' && item.content === question)
   assert.equal(userMessages.length, 1)
+  const systemMessage = mockRequests[0].body.messages.find((item) => item.role === 'system')?.content || ''
+  assert.match(systemMessage, /姓名：周奶奶；性别：女；家庭关系：母亲；年龄：76岁/)
+  assert.match(systemMessage, /不得根据姓名猜测性别/)
 })
 
 test('药物位于禁忌关系任一侧时都能被安全工具查到', async () => {
