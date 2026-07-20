@@ -16,6 +16,7 @@ Page({
     totalMeds: 0,
     totalPending: 0,
     totalRisks: 0,
+    unreadAlertCount: 0,
     greeting: '您好',
     canEdit: true,
     isRemote: false,
@@ -69,10 +70,11 @@ Page({
       } else {
         store.setFamilyId(selectedId)
       }
-      const [overview, recordsData, remindersData] = await Promise.all([
+      const [overview, recordsData, remindersData, alertData] = await Promise.all([
         api.families.overview(selectedId),
         api.records.list({ family: selectedId }),
         api.reminders.list({ family: selectedId, status: 'pending' }),
+        api.alerts.list({ unread: true }),
       ])
       const elders = overview.elders || []
       const records = unwrap(recordsData).slice(0, 5)
@@ -87,10 +89,12 @@ Page({
         totalMeds: elders.reduce((sum, item) => sum + (item.medication_count || 0), 0),
         totalPending: elders.reduce((sum, item) => sum + (item.reminder_pending_count || 0), 0),
         totalRisks: elders.reduce((sum, item) => sum + (item.contraindication_count || 0), 0),
+        unreadAlertCount: Number(alertData.unreadCount || 0),
         canEdit: store.canEdit(),
         isRemote: !config.useLocalApi,
         roleLabel: overview.family.role_label || '',
       })
+      this.syncAlertBadge(Number(alertData.unreadCount || 0))
     } catch (error) {
       if (error.statusCode === 401) {
         wx.reLaunch({ url: '/pages/launch/index' })
@@ -136,6 +140,18 @@ Page({
 
   openAi() {
     wx.navigateTo({ url: '/pages/ai-chat/index' })
+  },
+
+  openAlerts() {
+    wx.navigateTo({ url: '/pages/alerts/index' })
+  },
+
+  syncAlertBadge(count) {
+    if (count > 0 && wx.setTabBarBadge) {
+      wx.setTabBarBadge({ index: 0, text: String(Math.min(count, 99)), fail: () => {} })
+    } else if (wx.removeTabBarBadge) {
+      wx.removeTabBarBadge({ index: 0, fail: () => {} })
+    }
   },
 
   navigate(event) {

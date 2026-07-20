@@ -17,6 +17,15 @@
     </view>
   </view>
 
+  <view class="health-alert-entry {{unreadAlertCount ? 'has-unread' : ''}}" bindtap="openAlerts">
+    <view class="alert-entry-icon">🔔</view>
+    <view class="flex-1">
+      <view class="row gap"><text class="alert-entry-title">家属健康提醒</text><text wx:if="{{unreadAlertCount}}" class="alert-count">{{unreadAlertCount > 99 ? '99+' : unreadAlertCount}}</text></view>
+      <text class="alert-entry-subtitle">{{unreadAlertCount ? '有新的老人症状反馈，请及时查看' : '查看老人症状记录和处理状态'}}</text>
+    </view>
+    <text class="alert-entry-arrow">›</text>
+  </view>
+
   <view class="section">
     <view class="section-head"><text class="section-title">快捷操作</text></view>
     <view class="quick-grid">

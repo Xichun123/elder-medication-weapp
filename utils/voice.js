@@ -1,7 +1,4 @@
-/**
- * 微信小程序没有与浏览器 Web Speech API 对等的离线文字转语音能力。
- * 为保证项目完全离线、零插件、零服务依赖，这里使用振动提示 + 大字播报卡降级。
- */
+// 本地提醒保留大字弹窗降级；AI 回答通过服务端 TTS URL 使用 InnerAudioContext 播放。
 function speak(text) {
   const value = String(text || '').trim()
   if (!value) return Promise.resolve()

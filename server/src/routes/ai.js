@@ -1,10 +1,17 @@
 import { Hono } from 'hono'
 import { config } from '../config.js'
-import { getDb, nowIso } from '../db.js'
+import { getDb } from '../db.js'
 import { HttpError, assert } from '../errors.js'
-import { newId } from '../ids.js'
-import { getElderInHome, localDate } from '../domain.js'
+import { getElderInHome } from '../domain.js'
 import { requireAuth, requireHomeMember } from '../middleware.js'
+import { getMedicationAdherence } from '../medication-events.js'
+import {
+  buildMarkTakenProposal,
+  buildSymptomProposal,
+  confirmPendingAction,
+  createPendingAction,
+  getPendingActionView,
+} from '../ai-actions.js'
 
 const ai = new Hono()
 ai.use('*', requireAuth)
@@ -15,10 +22,15 @@ function cleanText(value, max = 500) {
   return String(value || '').trim().slice(0, max)
 }
 
+function requestSignal(c, timeoutMs) {
+  const signals = [AbortSignal.timeout(timeoutMs)]
+  if (c.req.raw.signal) signals.push(c.req.raw.signal)
+  return AbortSignal.any(signals)
+}
+
 function chooseElder(homeId, membership, elderId) {
   const id = membership.role === 'elder' ? membership.elder_profile_id : elderId
   if (!id) {
-    // 家属未显式选人时，家庭只有一位长辈就自动作为咨询对象。
     const elders = getDb().prepare('SELECT * FROM elder_profiles WHERE home_id = ? ORDER BY created_at LIMIT 2').all(homeId)
     return elders.length === 1 ? elders[0] : null
   }
@@ -26,40 +38,14 @@ function chooseElder(homeId, membership, elderId) {
 }
 
 function listMedicationContext(homeId, elderId) {
-  const db = getDb()
-  const filters = ['r.home_id = ?']
-  const params = [homeId]
-  if (elderId) {
-    filters.push('r.elder_profile_id = ?')
-    params.push(elderId)
-  }
-  return db.prepare(`
-    SELECT r.id, e.name AS elder_name, d.generic_name AS drug_name, r.dose, r.frequency,
-      r.start_date, r.end_date
+  if (!elderId) return []
+  return getDb().prepare(`
+    SELECT r.id, d.generic_name AS drug_name, r.dose, r.frequency, r.start_date, r.end_date
     FROM medication_records r
-    JOIN elder_profiles e ON e.id = r.elder_profile_id
     JOIN drugs d ON d.id = r.drug_id
-    WHERE ${filters.join(' AND ')}
-    ORDER BY e.name, d.generic_name
-  `).all(...params)
-}
-
-function getAdherence(homeId, elderId, days = 30) {
-  const safeDays = Math.max(1, Math.min(Number(days) || 30, 90))
-  const elderFilter = elderId ? 'AND rm.elder_profile_id = ?' : ''
-  const params = [homeId, localDate(new Date(Date.now() - safeDays * 86400000))]
-  if (elderId) params.push(elderId)
-  const rows = getDb().prepare(`
-    SELECT e.name AS elderName,
-      SUM(CASE WHEN rm.status = 'taken' THEN 1 ELSE 0 END) AS taken,
-      SUM(CASE WHEN rm.status = 'skipped' THEN 1 ELSE 0 END) AS skipped,
-      COUNT(*) AS total
-    FROM reminder_rules rm
-    JOIN elder_profiles e ON e.id = rm.elder_profile_id
-    WHERE rm.home_id = ? AND rm.status_date >= ? ${elderFilter}
-    GROUP BY rm.elder_profile_id
-  `).all(...params)
-  return { days: safeDays, rows: rows.map((row) => ({ ...row, missed: Number(row.skipped || 0) })) }
+    WHERE r.home_id = ? AND r.elder_profile_id = ?
+    ORDER BY d.generic_name
+  `).all(homeId, elderId)
 }
 
 function getDrugSafety(homeId, drugName, target) {
@@ -72,11 +58,13 @@ function getDrugSafety(homeId, drugName, target) {
   `).get(homeId, `%${term}%`, `%${term}%`, `%${term}%`)
   if (!item) return { found: false, message: '未在家庭药品库或内置药品库找到该药物。' }
   const interactions = getDb().prepare(`
-    SELECT c.severity, c.contra_type, c.note, COALESCE(db.generic_name, c.drug_b_text) AS withName
+    SELECT c.severity, c.contra_type, c.note, COALESCE(db.generic_name, c.drug_b_text) AS with_name
     FROM contraindications c
     LEFT JOIN drugs db ON db.id = c.drug_b_id
     WHERE c.drug_a_id = ? AND (c.home_id IS NULL OR c.home_id = ?)
-  `).all(item.id, homeId).filter((row) => !target || String(row.withName || '').includes(target) || String(row.note || '').includes(target))
+  `).all(item.id, homeId).filter((row) => !target
+    || String(row.with_name || '').includes(target)
+    || String(row.note || '').includes(target))
   return {
     found: true,
     drug: item.generic_name,
@@ -87,129 +75,280 @@ function getDrugSafety(homeId, drugName, target) {
   }
 }
 
-function markReminderTaken(homeId, elderId, reminderId) {
-  const row = getDb().prepare(`
-    SELECT rm.id, d.generic_name AS drugName, rm.remind_time AS remindTime
-    FROM reminder_rules rm
-    JOIN medication_records r ON r.id = rm.record_id
-    JOIN drugs d ON d.id = r.drug_id
-    WHERE rm.id = ? AND rm.home_id = ? AND rm.elder_profile_id = ?
-  `).get(reminderId, homeId, elderId)
-  if (!row) return { ok: false, message: '未找到可确认的本人提醒。' }
-  getDb().prepare(`UPDATE reminder_rules SET status = 'taken', status_date = ?, updated_at = ? WHERE id = ?`)
-    .run(localDate(), nowIso(), row.id)
-  return { ok: true, message: `已标记 ${row.drugName}（${row.remindTime}）为已服。` }
-}
-
-function recordSymptom(homeId, elderId, symptom, severity = 'normal') {
-  const text = cleanText(symptom, 120)
-  if (!text) return { ok: false, message: '没有识别到具体症状。' }
-  const level = ['normal', 'urgent'].includes(severity) ? severity : 'normal'
-  const db = getDb()
-  const ts = nowIso()
-  db.prepare('INSERT INTO symptom_logs (id, home_id, elder_profile_id, symptom, severity, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(newId('S'), homeId, elderId, text, level, ts)
-  const elder = getElderInHome(homeId, elderId)
-  db.prepare('INSERT INTO care_alerts (id, home_id, elder_profile_id, kind, content, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(newId('A'), homeId, elderId, 'symptom', `${elder.name}反馈：${text}`, ts)
-  return { ok: true, message: `已记录“${text}”，并生成家属端健康提醒。` }
-}
-
 const tools = [
-  { type: 'function', function: { name: 'get_medication_adherence', description: '查询老人近一段时间的已服和漏服统计。', parameters: { type: 'object', properties: { days: { type: 'integer', minimum: 1, maximum: 90 } } } } },
-  { type: 'function', function: { name: 'get_drug_safety', description: '从家庭药品库和禁忌库中检索药物与食物或药物的注意事项。', parameters: { type: 'object', properties: { drugName: { type: 'string' }, target: { type: 'string' } }, required: ['drugName'] } } },
-  { type: 'function', function: { name: 'mark_reminder_taken', description: '当老人明确说已经服药时，确认指定的待服提醒。只能使用上下文中列出的 reminderId。', parameters: { type: 'object', properties: { reminderId: { type: 'string' } }, required: ['reminderId'] } } },
-  { type: 'function', function: { name: 'record_symptom', description: '当老人反馈不舒服时记录症状，并创建供家属查看的提醒。', parameters: { type: 'object', properties: { symptom: { type: 'string' }, severity: { type: 'string', enum: ['normal', 'urgent'] } }, required: ['symptom'] } } },
+  {
+    type: 'function',
+    function: {
+      name: 'get_medication_adherence',
+      description: '从不可变服药事件中查询近一段时间的已服和漏服统计。',
+      parameters: { type: 'object', properties: { days: { type: 'integer', minimum: 1, maximum: 90 } } },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_drug_safety',
+      description: '从家庭药品库和禁忌库中检索药物与食物或其他药物的注意事项。',
+      parameters: {
+        type: 'object',
+        properties: { drugName: { type: 'string' }, target: { type: 'string' } },
+        required: ['drugName'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'propose_mark_taken',
+      description: '仅提出“确认已服”的候选操作，不修改数据库。提醒选择由服务端确定；有多个提醒时必须让用户选择。',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'propose_record_symptom',
+      description: '仅提出记录症状的候选操作，不写数据库、不声称家属已收到通知。',
+      parameters: {
+        type: 'object',
+        properties: {
+          symptom: { type: 'string' },
+          severity: { type: 'string', enum: ['normal', 'urgent'] },
+        },
+        required: ['symptom'],
+      },
+    },
+  },
 ]
 
-async function askQwen(messages) {
-  if (!config.qwenApiKey) throw new HttpError(503, 'AI 尚未配置，请在 server/.env 设置 QWEN_API_KEY。')
-  const endpoint = `${config.qwenApiBaseUrl.replace(/\/$/, '')}/chat/completions`
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${config.qwenApiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: config.qwenModel, messages, tools, tool_choice: 'auto', temperature: 0.2 }),
-  })
+async function callTextModel(messages, signal) {
+  if (!config.aiApiUrl || !config.aiApiKey || !config.aiModel) {
+    throw new HttpError(503, 'AI 服务尚未配置')
+  }
+  let response
+  try {
+    response = await fetch(config.aiApiUrl, {
+      method: 'POST',
+      signal: AbortSignal.any([signal, AbortSignal.timeout(config.aiUpstreamTimeoutMs)]),
+      headers: { Authorization: `Bearer ${config.aiApiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: config.aiModel, messages, tools, tool_choice: 'auto', temperature: 0.2 }),
+    })
+  } catch (error) {
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw new HttpError(504, 'AI 请求超时，请稍后重试')
+    throw new HttpError(502, 'AI 服务暂时不可用')
+  }
   const data = await response.json().catch(() => ({}))
-  if (!response.ok) throw new HttpError(502, data?.error?.message || '千问服务暂时不可用。')
+  if (!response.ok) throw new HttpError(response.status === 429 ? 429 : 502, data?.error?.message || 'AI 服务返回异常')
   const message = data?.choices?.[0]?.message
-  if (!message) throw new HttpError(502, '千问未返回有效回答。')
+  if (!message) throw new HttpError(502, 'AI 服务未返回有效回答')
   return message
 }
 
-async function synthesizeSpeech(text) {
-  const input = cleanText(text, 1800)
-  if (!input || !config.qwenApiKey) return ''
-  const response = await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${config.qwenApiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: config.qwenTtsModel,
-      input: { text: input, voice: config.qwenTtsVoice, language_type: 'Chinese' },
-    }),
-  })
-  const data = await response.json().catch(() => ({}))
-  if (!response.ok || !data?.output?.audio?.url) {
-    throw new Error(data?.message || '语音合成失败')
-  }
-  return data.output.audio.url
+function safeToolArgs(call) {
+  try { return JSON.parse(call.function.arguments || '{}') } catch { return {} }
 }
 
-async function executeTool(homeId, elder, call) {
-  let args = {}
-  try { args = JSON.parse(call.function.arguments || '{}') } catch { return { ok: false, message: '工具参数无法解析。' } }
-  switch (call.function.name) {
-    case 'get_medication_adherence': return getAdherence(homeId, elder?.id, args.days)
-    case 'get_drug_safety': return getDrugSafety(homeId, args.drugName, args.target)
-    case 'mark_reminder_taken':
-      return elder ? markReminderTaken(homeId, elder.id, args.reminderId) : { ok: false, message: '请先选择老人档案。' }
-    case 'record_symptom':
-      return elder ? recordSymptom(homeId, elder.id, args.symptom, args.severity) : { ok: false, message: '请先选择老人档案。' }
-    default: return { ok: false, message: '不支持的工具。' }
+function executeTool({ homeId, membership, elder, call, drafts }) {
+  const args = safeToolArgs(call)
+  try {
+    switch (call.function.name) {
+      case 'get_medication_adherence':
+        return getMedicationAdherence(homeId, elder?.id, args.days)
+      case 'get_drug_safety':
+        return getDrugSafety(homeId, args.drugName, args.target)
+      case 'propose_mark_taken': {
+        if (!elder) return { ok: false, message: '请先选择老人档案。' }
+        const proposal = buildMarkTakenProposal(homeId, membership, elder.id)
+        if (proposal.kind === 'draft') drafts.push(proposal)
+        return proposal
+      }
+      case 'propose_record_symptom': {
+        if (!elder) return { ok: false, message: '请先选择老人档案。' }
+        const proposal = buildSymptomProposal(membership, elder.id, args.symptom, args.severity)
+        drafts.push(proposal)
+        return {
+          ...proposal,
+          payload: undefined,
+          message: proposal.payload.severity === 'urgent'
+            ? '已生成待确认症状操作，尚未通知家属。紧急不适请立即就医或拨打 120。'
+            : '已生成待确认症状操作，尚未通知家属；确认后只会生成应用内提醒。',
+        }
+      }
+      default:
+        return { ok: false, message: '不支持的工具。' }
+    }
+  } catch (error) {
+    if (error instanceof HttpError) return { ok: false, status: error.status, message: error.message }
+    throw error
   }
+}
+
+function dedupeHistory(history, question) {
+  const rows = Array.isArray(history) ? history.slice(-8).map((item) => ({
+    role: item?.role === 'assistant' ? 'assistant' : 'user',
+    content: cleanText(item?.content, 800),
+  })).filter((item) => item.content) : []
+  if (rows.length && rows[rows.length - 1].role === 'user' && rows[rows.length - 1].content === question) rows.pop()
+  return rows
+}
+
+function persistDraft({ homeId, user, membership, draft }) {
+  return createPendingAction({
+    homeId,
+    user,
+    membership,
+    actionType: draft.actionType,
+    elderId: draft.elderId,
+    reminderId: draft.reminderId,
+    payload: draft.payload,
+  })
 }
 
 ai.post('/:homeId/ai/chat', requireHomeMember('caregiver_view'), async (c) => {
   const membership = c.get('membership')
+  const user = c.get('user')
   const homeId = membership.home_id
   const body = await c.req.json().catch(() => ({}))
   const question = cleanText(body.message)
-  assert(question, 400, '请输入要咨询的内容。')
+  assert(question, 400, '请输入要咨询的内容')
   const elder = chooseElder(homeId, membership, cleanText(body.elderId, 80))
-  const medications = listMedicationContext(homeId, elder?.id)
-  const pending = elder ? getDb().prepare(`
-    SELECT rm.id AS reminderId, d.generic_name AS drugName, rm.remind_time AS remindTime
-    FROM reminder_rules rm JOIN medication_records r ON r.id = rm.record_id JOIN drugs d ON d.id = r.drug_id
-    WHERE rm.home_id = ? AND rm.elder_profile_id = ? AND (rm.status_date IS NULL OR rm.status_date <> ? OR rm.status = 'pending')
-    ORDER BY rm.remind_time
-  `).all(homeId, elder.id, localDate()) : []
   const mode = body.mode === 'elder' ? 'elder' : 'caregiver'
-  const history = Array.isArray(body.history) ? body.history.slice(-8).map((item) => ({
-    role: item?.role === 'assistant' ? 'assistant' : 'user', content: cleanText(item?.content, 800),
-  })).filter((item) => item.content) : []
-  const system = `你是“药灵通”家庭用药管家。以工具查询结果和以下家庭数据为准，不编造用药或服药数据。${mode === 'elder' ? '正在服务老人：若对方明确说已服药，调用 mark_reminder_taken；若说头晕、疼痛、不舒服等，调用 record_symptom。' : '正在服务家属：关于漏服、药物禁忌、用药情况，先调用相应工具。'} 医疗信息只能作健康教育，不得诊断或擅自调整剂量。回答使用简明中文，结尾附上：${DISCLAIMER}\n\n当前选中老人：${elder ? `${elder.name}，${elder.age}岁，过敏史：${elder.allergy_note}` : '未选择'}\n用药档案：${JSON.stringify(medications)}\n当前待服提醒：${JSON.stringify(pending)}`
+  const history = dedupeHistory(body.history, question)
+  const medications = listMedicationContext(homeId, elder?.id)
+  const system = `你是“药灵通”家庭用药管家。只根据工具返回和提供的数据回答，不编造服药历史。模型不得直接修改服药状态或症状记录；只能调用 propose_* 工具生成待确认候选，最终写库必须由用户点击确认后调用确定性接口。若存在多个待服提醒，不得猜测老人服用了哪一种药。症状候选生成时必须说明尚未通知家属；紧急症状应立即建议就医或拨打 120。医疗信息只作健康教育，不得诊断或擅自调整剂量。回答使用简明中文，结尾附上：${DISCLAIMER}\n\n当前服务模式：${mode}\n当前老人：${elder ? `${elder.name}，${elder.age}岁，过敏史：${elder.allergy_note}` : '未选择'}\n用药档案：${JSON.stringify(medications)}`
   const messages = [{ role: 'system', content: system }, ...history, { role: 'user', content: question }]
-  const actions = []
-  for (let round = 0; round < 3; round += 1) {
-    const message = await askQwen(messages)
+  const signal = requestSignal(c, config.aiRequestTimeoutMs)
+  const drafts = []
+  const toolResults = []
+
+  for (let round = 0; round < 2; round += 1) {
+    const message = await callTextModel(messages, signal)
     messages.push(message)
     if (!Array.isArray(message.tool_calls) || !message.tool_calls.length) {
-      const answer = cleanText(message.content, 2000) || `我暂时无法生成回答。${DISCLAIMER}`
-      const actionText = actions.map((item) => item.message).filter(Boolean).join('。')
-      let audioUrl = ''
-      try { audioUrl = await synthesizeSpeech(`${answer}${actionText ? `。${actionText}` : ''}`) } catch (error) { console.warn('AI 语音合成失败', error.message) }
-      return c.json({ answer, actions, audioUrl })
+      if (signal.aborted) throw new HttpError(504, 'AI 请求超时，请稍后重试')
+      let pendingAction = null
+      if (drafts.length) pendingAction = persistDraft({ homeId, user, membership, draft: drafts[0] })
+      const ambiguous = toolResults.find((item) => item.result?.kind === 'ambiguous')
+      const draft = drafts[0]
+      let answer = cleanText(message.content, 2000) || '我暂时无法生成回答。'
+      if (ambiguous) answer = '我找到多个待服提醒，不能替您猜测是哪一种药。请根据药品包装、药名、剂量和提醒时间选择。'
+      else if (draft?.actionType === 'mark_taken') answer = '我找到了一个待服提醒，但还没有修改服药状态。请先核对确认卡中的药品包装、药名、剂量和提醒时间。'
+      else if (draft?.actionType === 'record_symptom') {
+        answer = draft.payload.severity === 'urgent'
+          ? '我已整理出待确认的紧急症状记录，目前尚未通知家属。请立即就医或拨打 120，不要等待家属查看提醒。'
+          : '我已整理出待确认的症状记录，目前尚未通知家属。确认后会生成应用内家属提醒，但不代表消息已经送达或读取。'
+      }
+      if (!answer.includes(DISCLAIMER)) answer = `${answer}\n\n${DISCLAIMER}`
+      return c.json({
+        answer,
+        toolResults,
+        pendingAction,
+        candidates: ambiguous?.result?.candidates || [],
+      })
     }
     for (const call of message.tool_calls) {
-      const result = await executeTool(homeId, elder, call)
-      actions.push({ name: call.function.name, ...result })
+      const result = executeTool({ homeId, membership, elder, call, drafts })
+      toolResults.push({ name: call.function.name, result })
       messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result) })
     }
   }
-  const answer = `我已完成相关查询。${DISCLAIMER}`
-  let audioUrl = ''
-  try { audioUrl = await synthesizeSpeech(answer) } catch (error) { console.warn('AI 语音合成失败', error.message) }
-  return c.json({ answer, actions, audioUrl })
+
+  // 工具后的模型请求未成功收束，不持久化草稿，避免客户端失败后遗留操作或产生副作用。
+  throw new HttpError(502, 'AI 未能完成本次请求，请重试')
+})
+
+ai.post('/:homeId/ai/pending-actions', requireHomeMember('caregiver_view'), async (c) => {
+  const membership = c.get('membership')
+  const user = c.get('user')
+  const body = await c.req.json().catch(() => ({}))
+  const elder = chooseElder(membership.home_id, membership, cleanText(body.elderId, 80))
+  assert(elder, 400, '请先选择老人档案')
+  const action = createPendingAction({
+    homeId: membership.home_id,
+    user,
+    membership,
+    actionType: body.actionType,
+    elderId: elder.id,
+    reminderId: cleanText(body.reminderId, 80),
+    payload: body.payload || {},
+  })
+  return c.json({ pendingAction: action }, 201)
+})
+
+ai.get('/:homeId/ai/pending-actions/:actionId', requireHomeMember('caregiver_view'), (c) => {
+  const membership = c.get('membership')
+  const user = c.get('user')
+  return c.json({ pendingAction: getPendingActionView(membership.home_id, user.id, c.req.param('actionId')) })
+})
+
+ai.post('/:homeId/ai/pending-actions/:actionId/confirm', requireHomeMember('caregiver_view'), (c) => {
+  const membership = c.get('membership')
+  const user = c.get('user')
+  return c.json(confirmPendingAction({
+    homeId: membership.home_id,
+    user,
+    membership,
+    actionId: c.req.param('actionId'),
+  }))
+})
+
+ai.post('/:homeId/ai/transcribe', requireHomeMember('caregiver_view'), async (c) => {
+  if (!config.sttApiUrl || !config.sttApiKey || !config.sttModel) throw new HttpError(503, '语音识别服务尚未配置')
+  const body = await c.req.json().catch(() => ({}))
+  const audioBase64 = String(body.audioBase64 || '')
+  const format = ['mp3', 'aac', 'wav', 'm4a'].includes(body.format) ? body.format : 'mp3'
+  assert(audioBase64, 400, '录音内容不能为空')
+  let audio
+  try { audio = Buffer.from(audioBase64, 'base64') } catch { throw new HttpError(400, '录音数据无效') }
+  assert(audio.length > 0 && audio.length <= 3 * 1024 * 1024, 400, '录音大小必须在 3MB 以内')
+
+  const contentTypes = { mp3: 'audio/mpeg', aac: 'audio/aac', wav: 'audio/wav', m4a: 'audio/mp4' }
+  const form = new FormData()
+  form.append('model', config.sttModel)
+  form.append('file', new Blob([audio], { type: contentTypes[format] }), `elder-voice.${format}`)
+  let response
+  try {
+    response = await fetch(config.sttApiUrl, {
+      method: 'POST',
+      signal: requestSignal(c, config.sttUpstreamTimeoutMs),
+      headers: { Authorization: `Bearer ${config.sttApiKey}` },
+      body: form,
+    })
+  } catch (error) {
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw new HttpError(504, '语音识别超时')
+    throw new HttpError(502, '语音识别服务暂时不可用')
+  }
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new HttpError(response.status === 429 ? 429 : 502, data?.error?.message || data?.message || '语音识别失败')
+  const text = cleanText(data.text || data.transcript || data?.output?.text, 500)
+  assert(text, 502, '语音识别未返回文字')
+  return c.json({ text })
+})
+
+ai.post('/:homeId/ai/speech', requireHomeMember('caregiver_view'), async (c) => {
+  if (!config.ttsApiUrl || !config.ttsApiKey || !config.ttsModel) throw new HttpError(503, '语音合成服务尚未配置')
+  const body = await c.req.json().catch(() => ({}))
+  const text = cleanText(body.text, 1800)
+  assert(text, 400, '播报文字不能为空')
+  let response
+  try {
+    response = await fetch(config.ttsApiUrl, {
+      method: 'POST',
+      signal: requestSignal(c, config.ttsUpstreamTimeoutMs),
+      headers: { Authorization: `Bearer ${config.ttsApiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: config.ttsModel,
+        input: { text, voice: config.ttsVoice, language_type: 'Chinese' },
+      }),
+    })
+  } catch (error) {
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw new HttpError(504, '语音合成超时')
+    throw new HttpError(502, '语音合成服务暂时不可用')
+  }
+  const data = await response.json().catch(() => ({}))
+  const audioUrl = data.audioUrl || data.url || data?.output?.audio?.url || ''
+  if (!response.ok || !audioUrl) throw new HttpError(502, data?.message || '语音合成失败')
+  return c.json({ audioUrl })
 })
 
 export default ai

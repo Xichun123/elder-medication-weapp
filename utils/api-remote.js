@@ -1,4 +1,5 @@
 const remote = require('./remote')
+const config = require('./config')
 const session = require('./session')
 const { dictionaries } = require('./seed')
 
@@ -51,6 +52,7 @@ function mapDrug(item) {
     dosage_text: item.dosageText,
     contraindication_note: item.contraindicationNote,
     interaction_note: item.interactionNote,
+    primary_package_image_url: item.primaryPackageImageUrl || '',
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   }
@@ -272,6 +274,7 @@ const api = {
           dosageText: data.dosage_text,
           contraindicationNote: data.contraindication_note,
           interactionNote: data.interaction_note,
+          primaryPackageImageUrl: data.primary_package_image_url,
         },
       })
       return mapDrug(result.drug)
@@ -289,6 +292,7 @@ const api = {
           dosageText: data.dosage_text,
           contraindicationNote: data.contraindication_note,
           interactionNote: data.interaction_note,
+          primaryPackageImageUrl: data.primary_package_image_url,
         },
       })
       return mapDrug(result.drug)
@@ -463,8 +467,31 @@ const api = {
 
   ai: {
     async chat(data) {
-      const result = await remote.request({ path: homePath('/ai/chat'), method: 'POST', data })
+      const result = await remote.request({ path: homePath('/ai/chat'), method: 'POST', data, timeout: config.aiRequestTimeout })
       return result
+    },
+    async createPendingAction(data) {
+      return remote.request({ path: homePath('/ai/pending-actions'), method: 'POST', data })
+    },
+    async confirmPendingAction(actionId) {
+      return remote.request({ path: homePath(`/ai/pending-actions/${actionId}/confirm`), method: 'POST' })
+    },
+    async transcribe(data) {
+      return remote.request({ path: homePath('/ai/transcribe'), method: 'POST', data, timeout: config.sttRequestTimeout })
+    },
+    async speech(text) {
+      return remote.request({ path: homePath('/ai/speech'), method: 'POST', data: { text }, timeout: config.ttsRequestTimeout })
+    },
+  },
+
+  alerts: {
+    async list({ unread = false } = {}) {
+      const result = await remote.request({ path: homePath(`/alerts${unread ? '?unread=1' : ''}`) })
+      return result
+    },
+    async markRead(alertId) {
+      const result = await remote.request({ path: homePath(`/alerts/${alertId}/read`), method: 'PATCH' })
+      return result.alert
     },
   },
 

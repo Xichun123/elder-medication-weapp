@@ -1,11 +1,13 @@
-<view class="page ai-page">
-  <view class="notice">AI 根据家庭用药记录回答，仅供参考；紧急不适请及时就医。</view>
+<view class="page ai-page" wx:if="{{privacyReady}}">
+  <view class="notice">相关用药、过敏史、症状、对话和主动录制的语音会发送给第三方 AI/语音服务处理。AI 仅供参考，紧急不适请立即就医。</view>
+
   <view class="elder-picker" wx:if="{{elders.length}}">
     <text>当前咨询对象</text>
     <picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange">
       <view class="elder-picker-value">👴 {{elders[elderIndex].name}} <text>切换 ›</text></view>
     </picker>
   </view>
+
   <view class="phrases" wx:if="{{mode === 'elder'}}">
     <button data-text="我刚吃了药" bindtap="usePhrase">我刚吃了药</button>
     <button data-text="我头晕" bindtap="usePhrase">我头晕</button>
@@ -14,15 +16,54 @@
     <button data-text="我妈最近漏服了几次？" bindtap="usePhrase">查漏服次数</button>
     <button data-text="硝苯地平能和西柚一起吃吗？" bindtap="usePhrase">查询药物禁忌</button>
   </view>
+
   <scroll-view class="chat" scroll-y="true" scroll-into-view="bottom">
-    <view wx:for="{{messages}}" wx:key="index" class="bubble {{item.role === 'user' ? 'user' : 'assistant'}}">
-      <text>{{item.content}}</text>
-      <view wx:if="{{item.audioUrl}}" class="play-audio" data-url="{{item.audioUrl}}" bindtap="playMessage">🔊 播放语音</view>
+    <view wx:for="{{messages}}" wx:key="index" class="bubble-wrap {{item.role}}">
+      <view class="bubble {{item.role}}">
+        <text>{{item.content}}</text>
+        <view wx:if="{{item.role === 'assistant' && item.content}}" class="play-audio" data-text="{{item.content}}" bindtap="playMessage">🔊 播放语音</view>
+
+        <view wx:if="{{item.pendingAction}}" class="confirm-card">
+          <block wx:if="{{item.pendingAction.type === 'mark_taken'}}">
+            <image wx:if="{{item.pendingAction.reminder.packageImageUrl}}" class="package-image" mode="aspectFit" src="{{item.pendingAction.reminder.packageImageUrl}}" />
+            <view wx:else class="package-placeholder">暂无药品包装照片</view>
+            <text class="confirm-title">{{item.pendingAction.reminder.drugName}}</text>
+            <text class="confirm-meta">剂量：{{item.pendingAction.reminder.dose}}</text>
+            <text class="confirm-meta">提醒时间：{{item.pendingAction.reminder.remindTime}}</text>
+          </block>
+          <block wx:else>
+            <text class="confirm-title">记录症状：{{item.pendingAction.symptom}}</text>
+            <text class="confirm-meta">级别：{{item.pendingAction.severity === 'urgent' ? '紧急' : '一般'}}</text>
+          </block>
+          <text class="safety-warning">{{item.pendingAction.safetyWarning}}</text>
+          <button wx:if="{{item.pendingAction.status === 'pending'}}" class="confirm-btn" data-id="{{item.pendingAction.id}}" bindtap="confirmAction">
+            {{item.pendingAction.type === 'mark_taken' ? '核对无误，确认已服' : '确认记录并生成站内提醒'}}
+          </button>
+          <view wx:else class="confirmed-label">✓ 已确认</view>
+        </view>
+
+        <view wx:if="{{item.candidates.length}}" class="candidate-list">
+          <text class="candidate-heading">找到多个待服提醒，请选择刚刚服用的药：</text>
+          <view wx:for="{{item.candidates}}" wx:for-item="candidate" wx:key="reminderId" class="candidate-card">
+            <image wx:if="{{candidate.packageImageUrl}}" class="candidate-image" mode="aspectFit" src="{{candidate.packageImageUrl}}" />
+            <view wx:else class="candidate-placeholder">药盒图</view>
+            <view class="candidate-info">
+              <text class="candidate-name">{{candidate.drugName}}</text>
+              <text>{{candidate.dose}} · {{candidate.remindTime}}</text>
+            </view>
+            <button class="candidate-btn" data-id="{{candidate.reminderId}}" bindtap="chooseCandidate">选择</button>
+          </view>
+          <text class="safety-warning">不要仅凭散装药片外观判断药品。</text>
+        </view>
+      </view>
     </view>
     <view id="bottom"></view>
   </scroll-view>
+
   <view class="composer">
-    <input value="{{input}}" placeholder="输入您的问题，也可用键盘语音输入" bindinput="onInput" bindconfirm="send" confirm-type="send" />
+    <button wx:if="{{mode === 'elder'}}" class="voice-input {{recording ? 'recording' : ''}}" disabled="{{sending || transcribing}}" bindtap="toggleRecording">{{recording ? '■' : '🎤'}}</button>
+    <input value="{{input}}" placeholder="输入问题" bindinput="onInput" bindconfirm="send" confirm-type="send" />
     <button loading="{{sending}}" disabled="{{sending}}" bindtap="send">发送</button>
   </view>
+  <view wx:if="{{mode === 'elder' && (recording || transcribing)}}" class="voice-status">{{recording ? '正在录音，再点一次结束' : '正在识别，请稍候…'}}</view>
 </view>

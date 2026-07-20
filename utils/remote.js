@@ -11,14 +11,14 @@ function setToken(token) {
   else wx.removeStorageSync(TOKEN_KEY)
 }
 
-function request({ path, method = 'GET', data, authenticated = true }) {
+function request({ path, method = 'GET', data, authenticated = true, timeout = config.requestTimeout }) {
   const token = getToken()
   return new Promise((resolve, reject) => {
     wx.request({
       url: `${config.apiBaseUrl}${path}`,
       method,
       data,
-      timeout: config.requestTimeout,
+      timeout,
       header: {
         'content-type': 'application/json',
         ...(authenticated && token ? { Authorization: `Bearer ${token}` } : {}),
@@ -59,14 +59,12 @@ function getLoginCode() {
 }
 
 async function login() {
-  // 开发者工具连本机服务时不依赖微信 AppID；生产仍用 wx.login 的一次性 code。
-  const data = config.devLogin
-    ? { devOpenid: 'wechat-devtools-user', nickname: '开发调试用户' }
-    : { code: await getLoginCode() }
+  // wx.login 的 code 有效期短且只能使用一次，获取后立即换取服务端登录态。
+  const code = await getLoginCode()
   const result = await request({
     path: '/auth/wx-login',
     method: 'POST',
-    data,
+    data: { code },
     authenticated: false,
   })
   if (!result || !result.token) throw new Error('服务器未返回登录态')
