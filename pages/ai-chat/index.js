@@ -64,8 +64,8 @@ Page({
       wx.showModal({
         title: 'AI 隐私说明',
         content: '为回答问题，相关用药记录、过敏史、症状、对话内容和主动录制的语音会发送给已配置的第三方 AI/语音服务处理。请确认知情后继续。',
-        confirmText: '同意并继续',
-        cancelText: '暂不使用',
+        confirmText: '同意',
+        cancelText: '取消',
         success: (res) => {
           if (!res.confirm) { resolve(false); return }
           wx.setStorageSync(PRIVACY_KEY, true)

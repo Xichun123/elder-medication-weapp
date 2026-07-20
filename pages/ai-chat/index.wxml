@@ -61,9 +61,12 @@
   </scroll-view>
 
   <view class="composer">
-    <button class="voice-input {{recording ? 'recording' : ''}}" disabled="{{sending || transcribing}}" bindtap="toggleRecording">{{recording ? '■' : '🎤'}}</button>
+    <button class="voice-input {{recording ? 'recording' : ''}}" disabled="{{sending || transcribing}}" bindtap="toggleRecording">
+      <text class="voice-input-icon">{{recording ? '■' : '🎤'}}</text>
+    </button>
     <input value="{{input}}" placeholder="输入问题" bindinput="onInput" bindconfirm="send" confirm-type="send" />
     <button loading="{{sending}}" disabled="{{sending}}" bindtap="send">发送</button>
   </view>
+  <view wx:if="{{mode === 'elder' && !recording && !transcribing}}" class="voice-hint">点击左下角麦克风，直接说出您的问题</view>
   <view wx:if="{{mode === 'elder' && (recording || transcribing)}}" class="voice-status">{{recording ? '正在录音，再点一次结束' : '正在识别，请稍候…'}}</view>
 </view>
