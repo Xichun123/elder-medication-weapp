@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import sharp from 'sharp'
 import { config } from '../src/config.js'
 import { normalizeRecognition, parseModelContent, recognizeMedicationImage } from '../src/recognition.js'
 
@@ -20,12 +21,15 @@ test.afterEach(() => {
   global.fetch = originalFetch
 })
 
-function testImage(overrides = {}) {
-  const bytes = Uint8Array.from([137, 80, 78, 71])
+const validPngBytes = await sharp({
+  create: { width: 2, height: 2, channels: 3, background: '#ffffff' },
+}).png().toBuffer()
+
+function testImage({ bytes = validPngBytes, ...overrides } = {}) {
   return {
     type: 'image/png',
     size: bytes.byteLength,
-    arrayBuffer: async () => bytes.buffer,
+    arrayBuffer: async () => Uint8Array.from(bytes).buffer,
     ...overrides,
   }
 }
@@ -60,6 +64,10 @@ test('模型未返回 JSON 时抛出可控服务错误', () => {
 
 test('识别请求上传图片并归一化成功结果', async () => {
   let requestBody
+  const imageWithMetadata = await sharp({
+    create: { width: 3, height: 2, channels: 3, background: '#f2f2f2' },
+  }).withMetadata({ orientation: 6 }).jpeg().toBuffer()
+  assert.ok((await sharp(imageWithMetadata).metadata()).exif)
   global.fetch = async (url, options) => {
     assert.equal(url, config.recognitionApiUrl)
     assert.deepEqual(options.headers, {
@@ -80,12 +88,17 @@ test('识别请求上传图片并归一化成功结果', async () => {
     }), { status: 200, headers: { 'content-type': 'application/json' } })
   }
 
-  const result = await recognizeMedicationImage(testImage())
+  const result = await recognizeMedicationImage(testImage({ bytes: imageWithMetadata, type: 'image/jpeg' }))
   assert.equal(result.genericName, '盐酸托鲁地文拉法辛缓释片')
   assert.equal(result.tradeName, '若欣林')
   assert.equal(result.strength, '80mg')
   assert.equal(requestBody.model, config.recognitionModel)
-  assert.match(requestBody.messages[0].content[1].image_url.url, /^data:image\/png;base64,/)
+  const forwardedUrl = requestBody.messages[0].content[1].image_url.url
+  assert.match(forwardedUrl, /^data:image\/jpeg;base64,/)
+  const forwardedBytes = Buffer.from(forwardedUrl.split(',')[1], 'base64')
+  const forwardedMetadata = await sharp(forwardedBytes).metadata()
+  assert.equal(forwardedMetadata.format, 'jpeg')
+  assert.equal(forwardedMetadata.exif, undefined)
 })
 
 test('识别前拒绝非法格式与超过 5MB 的图片', async () => {
@@ -97,6 +110,21 @@ test('识别前拒绝非法格式与超过 5MB 的图片', async () => {
     recognizeMedicationImage(testImage({ size: 5 * 1024 * 1024 + 1 })),
     (error) => error.status === 400 && error.message.includes('5MB'),
   )
+})
+
+test('伪造图片 MIME 的非图片不会调用识别上游', async () => {
+  let upstreamCalled = false
+  global.fetch = async () => {
+    upstreamCalled = true
+    throw new Error('不应调用上游')
+  }
+
+  const bytes = Buffer.from('not an image')
+  await assert.rejects(
+    recognizeMedicationImage(testImage({ bytes, type: 'image/jpeg' })),
+    (error) => error.status === 400 && error.message.includes('无法解析'),
+  )
+  assert.equal(upstreamCalled, false)
 })
 
 test('映射上游限流与超时错误', async () => {

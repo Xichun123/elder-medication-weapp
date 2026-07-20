@@ -21,7 +21,7 @@
 
 1. 打开微信开发者工具，导入本仓库根目录。
 2. `project.config.json` 使用项目 AppID；协作成员需开发者或体验成员权限。
-3. 微信后台将 `https://api.0721online.net` 配为 request 与 uploadFile 合法域名。
+3. 微信后台将 `https://api.0721online.net` 同时配置为 request、uploadFile 与 downloadFile 合法域名。
 4. 编译运行后自动执行微信登录，可创建家庭或用邀请码加入。
 
 当前远程模式入口：
@@ -43,7 +43,7 @@ npm install
 npm run dev            # 默认 http://127.0.0.1:8787
 ```
 
-生产 API 已部署到 `https://api.0721online.net`。微信后台仍需将该 HTTPS 地址加入 request 合法域名，并满足 ICP 备案要求；细节见 `server/README.md`。
+生产 API 已部署到 `https://api.0721online.net`。微信后台需将该 HTTPS 地址同时加入 request、uploadFile 与 downloadFile 合法域名，并满足 ICP 备案要求；开发阶段即使临时关闭域名校验，上线前也必须恢复校验并用真机确认上传和包装图下载均正常，细节见 `server/README.md`。
 
 ## 协作开发
 

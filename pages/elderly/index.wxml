@@ -8,15 +8,4 @@
     <view class="auto-card"><view class="row between gap"><view><text class="auto-title">自动提醒播报</text><text class="auto-desc">每分钟检查并振动提示待服提醒</text></view><switch checked="{{autoPlay}}" color="#e87a5d" bindchange="onAutoChange"/></view><view wx:if="{{autoPlay}}" class="auto-tip">✅ 已开启，下一提醒：{{nextReminder ? nextReminder.remind_time + ' ' + nextReminder.drug_name : '无'}}</view></view>
   </view>
   <view wx:else class="loading elderly-loading">请稍候…</view>
-  <view wx:if="{{showMedicationPrompt && promptReminder}}" class="medication-prompt-mask" bindtap="closeMedicationPrompt">
-    <view class="medication-prompt" catchtap="noop">
-      <text class="prompt-label">服药提醒 · {{promptReminder.remind_time}}</text>
-      <image wx:if="{{promptReminder.package_image_url}}" class="prompt-package-image" src="{{promptReminder.package_image_url}}" mode="aspectFit"/>
-      <view wx:else class="prompt-package-placeholder"><view>暂无药品包装照片</view><view>请以药名和处方为准</view></view>
-      <text class="prompt-drug">{{promptReminder.drug_name}}</text>
-      <text wx:if="{{promptReminder.dose}}" class="prompt-dose">本次剂量：{{promptReminder.dose}}</text>
-      <view class="prompt-actions"><button class="play-btn prompt-play" bindtap="playPrompt">🔊 播报药名</button><button class="prompt-close" bindtap="closeMedicationPrompt">我知道了</button></view>
-      <text class="prompt-warning">请核对药品包装和医生处方，不要仅凭散装药片外观判断</text>
-    </view>
-  </view>
 </view>

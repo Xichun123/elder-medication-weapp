@@ -13,6 +13,9 @@ Page({
     pending: [],
     current: null,
     currentDue: false,
+    promptReminder: null,
+    showMedicationPrompt: false,
+    autoPlay: true,
     acting: false,
   },
 
@@ -26,7 +29,18 @@ Page({
   },
 
   onShow() {
+    this.startTimer()
     if (this.data.home) this.loadReminders()
+  },
+
+  onHide() {
+    this.stopTimer()
+    voice.stop()
+  },
+
+  onUnload() {
+    this.stopTimer()
+    voice.stop()
   },
 
   onPullDownRefresh() {
@@ -39,8 +53,8 @@ Page({
     this.setData({ loading: true })
     try {
       const [homeResult, eldersResult] = await Promise.all([
-        remote.request({ path: `/homes/${selected.id}` }),
-        remote.request({ path: `/homes/${selected.id}/elders` }),
+        remote.request({ path: '/homes/' + selected.id }),
+        remote.request({ path: '/homes/' + selected.id + '/elders' }),
       ])
       const home = {
         ...selected,
@@ -74,15 +88,44 @@ Page({
   async loadReminders() {
     try {
       const reminders = await api.reminders.list()
-      const pending = reminders.filter((item) => item.status === 'pending')
-      const now = new Date()
+      const pending = reminders
+        .filter((item) => item.status === 'pending')
+        .sort((left, right) => this.reminderMinutes(left.remind_time) - this.reminderMinutes(right.remind_time))
+      const now = this.getNow()
       const nowMinutes = now.getHours() * 60 + now.getMinutes()
       const due = pending.filter((item) => this.reminderMinutes(item.remind_time) <= nowMinutes)
-      const current = due[due.length - 1] || pending[0] || null
-      this.setData({ reminders, pending, current, currentDue: due.length > 0 })
+      const latestDue = due[due.length - 1] || null
+      const current = latestDue || pending[0] || null
+      const nextData = {
+        reminders,
+        pending,
+        current,
+        currentDue: Boolean(latestDue),
+      }
+      let shouldPlay = false
+
+      if (!latestDue) {
+        nextData.promptReminder = null
+        nextData.showMedicationPrompt = false
+      } else {
+        const promptKey = this.reminderPromptKey(latestDue, now)
+        if (promptKey !== this.lastPromptedKey) {
+          this.lastPromptedKey = promptKey
+          nextData.promptReminder = latestDue
+          nextData.showMedicationPrompt = true
+          shouldPlay = this.data.autoPlay
+        }
+      }
+
+      this.setData(nextData)
+      if (shouldPlay) this.playText(latestDue.voice_text)
     } catch (error) {
       showError(error)
     }
+  },
+
+  getNow() {
+    return new Date()
   },
 
   reminderMinutes(value) {
@@ -90,16 +133,56 @@ Page({
     return match ? Number(match[1]) * 60 + Number(match[2]) : Number.MAX_SAFE_INTEGER
   },
 
+  reminderPromptKey(reminder, now) {
+    const date = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0'),
+    ].join('-')
+    return [date, reminder.rule_id, reminder.remind_time].join(':')
+  },
+
+  startTimer() {
+    this.stopTimer()
+    this.timer = setInterval(() => this.loadReminders(), 60000)
+  },
+
+  stopTimer() {
+    if (this.timer) clearInterval(this.timer)
+    this.timer = null
+  },
+
+  onAutoChange(event) {
+    this.setData({ autoPlay: event.detail.value })
+  },
+
+  playText(text) {
+    voice.speak(text, { tone: this.data.elder && this.data.elder.voice_tone }).catch(showError)
+  },
+
   playCurrent() {
-    const current = this.data.current
-    if (!current) return
-    voice.speak(current.voice_text, { tone: this.data.elder && this.data.elder.voice_tone }).catch(showError)
+    if (this.data.current) this.playText(this.data.current.voice_text)
   },
 
   playReminder(event) {
     const row = this.data.reminders.find((item) => item.rule_id === event.currentTarget.dataset.id)
-    if (row) voice.speak(row.voice_text, { tone: this.data.elder && this.data.elder.voice_tone }).catch(showError)
+    if (row) this.playText(row.voice_text)
   },
+
+  closeMedicationPrompt() {
+    this.setData({ showMedicationPrompt: false })
+  },
+
+  playPrompt() {
+    if (this.data.promptReminder) this.playText(this.data.promptReminder.voice_text)
+  },
+
+  async takePrompt() {
+    const reminder = this.data.promptReminder
+    if (reminder && await this.takeById(reminder.rule_id)) this.closeMedicationPrompt()
+  },
+
+  noop() {},
 
   async takeCurrent() {
     if (!this.data.current || this.data.acting) return
@@ -111,14 +194,16 @@ Page({
   },
 
   async takeById(id) {
-    if (this.data.acting) return
+    if (this.data.acting) return false
     this.setData({ acting: true })
     try {
       await api.reminders.take(id)
       toast('已确认服药', 'success')
       await this.loadReminders()
+      return true
     } catch (error) {
       showError(error)
+      return false
     } finally {
       this.setData({ acting: false })
     }

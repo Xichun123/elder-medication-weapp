@@ -1,5 +1,6 @@
 import { config } from './config.js'
 import { HttpError } from './errors.js'
+import { sanitizePackageImage } from './package-images.js'
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
@@ -74,8 +75,8 @@ export async function recognizeMedicationImage(image) {
   if (!ALLOWED_IMAGE_TYPES.has(image.type)) throw new HttpError(400, '仅支持 JPG、PNG 或 WebP 图片')
   if (!image.size || image.size > MAX_IMAGE_BYTES) throw new HttpError(400, '图片大小不能超过 5MB')
 
-  const bytes = Buffer.from(await image.arrayBuffer())
-  const imageUrl = `data:${image.type};base64,${bytes.toString('base64')}`
+  const processed = await sanitizePackageImage(image)
+  const imageUrl = 'data:' + processed.contentType + ';base64,' + processed.data.toString('base64')
   let response
   try {
     response = await fetch(config.recognitionApiUrl, {

@@ -34,7 +34,7 @@ curl -s http://127.0.0.1:8787/auth/wx-login \
 3. 保留服务器上的 `.env` 与 `data/`；升级时只替换 `src/`、`package*.json` 等程序文件，禁止直接删除整个部署目录。
 4. `npm ci --omit=dev && systemctl restart yao-ling-tong-api`。
 5. Caddy 反代到 `127.0.0.1:8787`，开启 HTTPS。
-6. 微信公众平台将 `https://api.0721online.net` 配为 request 与 uploadFile 合法域名（不要显式写 `:443`）；域名需按官方要求完成 ICP 备案。
+6. 微信公众平台将 `https://api.0721online.net` 分别配置为 request、uploadFile 与 downloadFile 合法域名（不要显式写 `:443`）；包装图签名地址由 `<image>` 下载，遗漏 downloadFile 会导致正式版无法显示。域名需按官方要求完成 ICP 备案。
 
 ### systemd 示例
 
@@ -104,7 +104,7 @@ api.0721online.net {
 
 识别接口按“用户 + 家庭”限制为 10 秒一次、每小时 10 次；该限流保存在进程内，正式多实例部署应迁移到 Redis。
 
-小程序上线前的隐私声明、用户告知和真机检查见 [`../docs/privacy-release.md`](../docs/privacy-release.md)。
+小程序上线前的隐私声明、用户告知和真机检查见 [`../docs/privacy-release.md`](../docs/privacy-release.md)。开发工具中可临时关闭域名校验用于联调，但发布前必须恢复校验，并在真机分别验证识别图片上传和签名包装图下载。
 
 ## 验证
 

@@ -9,17 +9,29 @@
     <view wx:if="{{current}}" class="current-card">
       <text class="current-label">{{currentDue ? '当前待服药物' : '下一次服药提醒'}}</text>
       <text class="current-time">{{current.remind_time}}</text>
+      <image wx:if="{{current.package_image_url}}" class="current-package-image" src="{{current.package_image_url}}" mode="aspectFit"/>
+      <view wx:else class="current-package-placeholder">暂无药品包装照片</view>
       <text class="current-drug">{{current.drug_name}}</text>
+      <text wx:if="{{current.dose}}" class="current-dose">剂量：{{current.dose}}</text>
       <text class="current-voice">🔊 {{current.voice_text}}</text>
       <view class="current-actions">
         <button class="elder-btn big" bindtap="playCurrent">播报提醒</button>
         <button class="elder-btn big primary" loading="{{acting}}" bindtap="takeCurrent">我已服药</button>
       </view>
+      <text class="safety-tip">请对照包装、药名和医生处方，不要仅凭散装药片外观判断</text>
     </view>
     <view wx:else class="status-card">
       <text class="status-icon">✅</text>
       <text class="status-title">{{reminders.length ? '暂无待服药物' : '还没有用药提醒'}}</text>
       <text class="status-desc">{{reminders.length ? '家属端可看到您已确认的服药状态。' : '请让家属为您录入用药后，这里会显示提醒。'}}</text>
+    </view>
+
+    <view class="auto-card">
+      <view class="auto-copy">
+        <text class="auto-title">自动语音播报</text>
+        <text class="auto-desc">关闭语音后，到点弹窗和包装图仍会正常显示</text>
+      </view>
+      <switch checked="{{autoPlay}}" color="#5ba89a" bindchange="onAutoChange"/>
     </view>
 
     <view class="section-block">
@@ -45,4 +57,23 @@
   </view>
   <view wx:elif="{{loading}}" class="elder-loading">正在读取我的档案…</view>
   <view wx:else class="elder-loading">未找到绑定的长辈档案，请联系家庭创建人</view>
+
+  <view wx:if="{{showMedicationPrompt && promptReminder}}" class="medication-prompt-mask" bindtap="closeMedicationPrompt">
+    <view class="medication-prompt" catchtap="noop">
+      <text class="prompt-label">服药提醒 · {{promptReminder.remind_time}}</text>
+      <image wx:if="{{promptReminder.package_image_url}}" class="prompt-package-image" src="{{promptReminder.package_image_url}}" mode="aspectFit"/>
+      <view wx:else class="prompt-package-placeholder">
+        <text>暂无药品包装照片</text>
+        <text>请以药名和医生处方为准</text>
+      </view>
+      <text class="prompt-drug">{{promptReminder.drug_name}}</text>
+      <text wx:if="{{promptReminder.dose}}" class="prompt-dose">本次剂量：{{promptReminder.dose}}</text>
+      <view class="prompt-actions">
+        <button class="elder-btn prompt-play" bindtap="playPrompt">播报药名</button>
+        <button class="elder-btn primary" loading="{{acting}}" bindtap="takePrompt">我已服药</button>
+      </view>
+      <button class="prompt-close" bindtap="closeMedicationPrompt">稍后处理</button>
+      <text class="prompt-warning">请核对药品包装和医生处方，不要仅凭散装药片外观判断</text>
+    </view>
+  </view>
 </view>
