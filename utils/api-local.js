@@ -140,6 +140,9 @@ function familyOverview(familyId) {
 }
 
 const api = {
+  recognition: {
+    recognize: () => Promise.reject(new Error('本地演示模式不支持 AI 拍照识别，请手动录入药名')),
+  },
   elders: {
     list: (params) => asyncValue(listElders(params)),
     get: (id) => asyncValue(db.elderView(db.requireItem('elders', 'elder_id', id, '老人不存在'))),

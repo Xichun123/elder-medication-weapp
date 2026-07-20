@@ -8,6 +8,7 @@ Page({
   data: {
     elders: [], elderIndex: -1, keyword: '', matchedDrugs: [], selectedDrug: null, matching: false,
     dose: '', frequency: '每日2次', frequencyOptions: ['每日1次', '每日2次', '每日3次'], startDate: today(), endDate: '', saving: false, createdReminders: [], showResult: false,
+    recognizing: false, creatingRecognizedDrug: false, recognitionImage: '', recognitionResult: null, recognitionDetails: [], recognitionVisibleText: '', recognitionUncertainText: '',
     canEdit: true,
   },
   onLoad(options) { this.initialElderId = options.elder || ''; this.loadElders() },
@@ -48,6 +49,103 @@ Page({
     } catch (error) { showError(error) }
   },
   onElderChange(event) { this.setData({ elderIndex: Number(event.detail.value) }) },
+  chooseMedicationPhoto() {
+    if (!store.canEdit()) { toast('当前角色仅可查看'); return }
+    if (config.useLocalApi) { toast('本地演示模式请手动录入药名'); return }
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['camera', 'album'],
+      camera: 'back',
+      success: (res) => {
+        const file = res.tempFiles && res.tempFiles[0]
+        if (!file || !file.tempFilePath) return
+        if (file.size > 5 * 1024 * 1024) { toast('图片不能超过 5MB'); return }
+        this.recognizeMedicationPhoto(file.tempFilePath)
+      },
+    })
+  },
+  async recognizeMedicationPhoto(filePath) {
+    this.setData({
+      recognizing: true,
+      recognitionImage: filePath,
+      recognitionResult: null,
+      recognitionDetails: [],
+    })
+    try {
+      const result = await api.recognition.recognize(filePath)
+      const keyword = result.genericName || result.tradeName
+      const details = [
+        { label: '通用名', value: result.genericName },
+        { label: '商品名', value: result.tradeName },
+        { label: '包装规格', value: result.strength },
+        { label: '剂型', value: result.dosageForm },
+        { label: '生产企业', value: result.manufacturer },
+      ].filter((item) => item.value)
+      const nextData = {
+        recognitionResult: result,
+        recognitionDetails: details,
+        recognitionVisibleText: (result.visibleText || []).join(' · '),
+        recognitionUncertainText: (result.uncertainFields || []).join('、'),
+        keyword,
+        selectedDrug: null,
+        matchedDrugs: [],
+      }
+      if (result.dosageText) nextData.dose = result.dosageText
+      if (this.data.frequencyOptions.includes(result.frequency)) nextData.frequency = result.frequency
+      this.setData(nextData)
+
+      const matches = await api.drugs.match(keyword)
+      const names = [result.genericName, result.tradeName].filter(Boolean).map((item) => item.trim().toLowerCase())
+      const exact = matches.find((drug) => names.includes(String(drug.generic_name || '').trim().toLowerCase())
+        || names.includes(String(drug.trade_name || '').trim().toLowerCase()))
+      if (exact) {
+        this.setData({
+          selectedDrug: exact,
+          keyword: exact.generic_name,
+          matchedDrugs: [],
+          dose: result.dosageText || this.data.dose || exact.dosage_text || '',
+        })
+      } else {
+        this.setData({ matchedDrugs: matches })
+      }
+    } catch (error) {
+      this.setData({
+        recognitionImage: '', recognitionResult: null, recognitionDetails: [],
+        recognitionVisibleText: '', recognitionUncertainText: '',
+      })
+      showError(error)
+    } finally {
+      this.setData({ recognizing: false })
+    }
+  },
+  clearRecognition() {
+    this.setData({ recognitionImage: '', recognitionResult: null, recognitionDetails: [], recognitionVisibleText: '', recognitionUncertainText: '' })
+  },
+  async createRecognizedDrug() {
+    const result = this.data.recognitionResult
+    const genericName = String(this.data.keyword || '').trim()
+    if (!result || !genericName) { toast('请先核对并补充通用名'); return }
+    this.setData({ creatingRecognizedDrug: true })
+    try {
+      const drug = await api.drugs.create({
+        generic_name: genericName,
+        trade_name: result.tradeName || '',
+        aliases: '',
+        category: 'other',
+        ingredient: '',
+        dosage_text: result.dosageText || '',
+        contraindication_note: '',
+        interaction_note: '',
+      })
+      this.setData({ selectedDrug: drug, keyword: drug.generic_name, matchedDrugs: [] })
+      toast('药品档案已建立，请继续核对剂量')
+    } catch (error) {
+      showError(error)
+    } finally {
+      this.setData({ creatingRecognizedDrug: false })
+    }
+  },
   onKeywordInput(event) {
     const keyword = event.detail.value
     this.setData({ keyword, selectedDrug: null })
@@ -92,7 +190,11 @@ Page({
     finally { this.setData({ saving: false }) }
   },
   reset(closeResult = true) {
-    this.setData({ keyword: '', selectedDrug: null, matchedDrugs: [], dose: '', frequency: '每日2次', startDate: today(), endDate: '', ...(closeResult ? { showResult: false } : {}) })
+    this.setData({
+      keyword: '', selectedDrug: null, matchedDrugs: [], dose: '', frequency: '每日2次', startDate: today(), endDate: '',
+      recognitionImage: '', recognitionResult: null, recognitionDetails: [], recognitionVisibleText: '', recognitionUncertainText: '',
+      ...(closeResult ? { showResult: false } : {}),
+    })
   },
   closeResult() { this.setData({ showResult: false }) },
   goReminders() { this.setData({ showResult: false }); wx.switchTab({ url: '/pages/reminders/index' }) },

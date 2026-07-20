@@ -1,7 +1,49 @@
 <view class="page with-safe-bottom">
   <text class="page-title">药物录入</text>
   <text class="page-subtitle">药名模糊匹配主数据，保存后自动创建提醒规则</text>
+  <view wx:if="{{canEdit}}" class="scan-card">
+    <view class="scan-top">
+      <view class="scan-icon">AI</view>
+      <view class="scan-copy">
+        <view class="scan-eyebrow">AI 拍药盒识别</view>
+        <view class="scan-title">拍一下，少填好几项</view>
+        <view class="scan-subtitle">自动提取药名、规格与包装文字，再匹配家庭药库</view>
+      </view>
+    </view>
+    <button class="scan-button" loading="{{recognizing}}" disabled="{{recognizing}}" bindtap="chooseMedicationPhoto">{{recognizing ? '正在识别包装…' : '拍照 / 从相册选择'}}</button>
+    <view class="scan-footnote">识别结果仅作录入草稿，保存前请结合药盒与医生处方核对</view>
+  </view>
+
+  <view wx:if="{{recognitionImage}}" class="recognition-card">
+    <image class="recognition-photo" src="{{recognitionImage}}" mode="aspectFill"/>
+    <view class="recognition-content">
+      <view class="row between gap">
+        <view>
+          <view class="recognition-kicker">AI 识别草稿</view>
+          <view class="recognition-heading">{{recognitionResult ? '请核对后再保存' : '正在读取药盒文字'}}</view>
+        </view>
+        <text class="review-badge">待核对</text>
+      </view>
+      <view wx:if="{{recognizing}}" class="recognition-loading"><view class="recognition-dot"></view>图像分析通常需要几秒钟</view>
+      <view wx:if="{{recognitionResult}}">
+        <view class="recognition-grid">
+          <view wx:for="{{recognitionDetails}}" wx:key="label" class="recognition-row">
+            <text class="recognition-label">{{item.label}}</text>
+            <text class="recognition-value">{{item.value}}</text>
+          </view>
+        </view>
+        <view wx:if="{{recognitionVisibleText}}" class="visible-text">包装可见文字：{{recognitionVisibleText}}</view>
+        <view wx:for="{{recognitionResult.warnings}}" wx:key="*this" class="recognition-warning">⚠ {{item}}</view>
+        <view wx:if="{{recognitionUncertainText}}" class="uncertain">需重点核对：{{recognitionUncertainText}}</view>
+        <view class="recognition-actions">
+          <button class="btn small" bindtap="chooseMedicationPhoto">重新拍摄</button>
+          <button class="text-button" bindtap="clearRecognition">收起结果</button>
+        </view>
+      </view>
+    </view>
+  </view>
   <view class="card form-card">
+    <view class="manual-heading"><text>确认用药信息</text><text class="manual-tag">人工核对</text></view>
     <view class="field"><text class="field-label required">选择老人</text><picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="picker">{{elderIndex >= 0 ? elders[elderIndex].name + '（' + elders[elderIndex].relationship + '）' : '请选择长辈'}} ▾</view></picker></view>
     <view class="field"><text class="field-label required">输入药名</text><input class="input" value="{{keyword}}" placeholder="通用名 / 商品名 / 别名" bindinput="onKeywordInput"/></view>
     <view wx:if="{{matching}}" class="loading mini">正在匹配主数据…</view>
@@ -11,6 +53,10 @@
         <view class="list-subtitle">商品名：{{item.trade_name || '—'}} · 别名：{{item.aliases || '—'}}</view>
         <view wx:if="{{item.contraindication_note}}" class="contra">⚠️ {{item.contraindication_note}}</view>
       </view>
+    </view>
+    <view wx:if="{{recognitionResult && !selectedDrug}}" class="create-drug-hint">
+      <view class="create-drug-copy">没有合适结果？请把上方输入框改成正确的通用名，再建立家庭药品档案。</view>
+      <button class="btn teal small" loading="{{creatingRecognizedDrug}}" disabled="{{creatingRecognizedDrug || !keyword}}" bindtap="createRecognizedDrug">建档并选中</button>
     </view>
     <view wx:if="{{selectedDrug}}" class="selected">
       <view class="row between"><view><text class="list-title">{{selectedDrug.generic_name}}</text><view class="list-subtitle">{{selectedDrug.drug_id}} · {{selectedDrug.category_label}}</view></view><button class="btn small" bindtap="clearDrug">重选</button></view>

@@ -10,6 +10,7 @@ const config = {
   /** 生产 API（HTTPS，已部署 dm VPS） */
   apiBaseUrl: 'https://api.0721online.net',
   requestTimeout: 10000,
+  recognitionTimeout: 45000,
 }
 
 module.exports = config

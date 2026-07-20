@@ -23,6 +23,7 @@ app.get('/health', (c) => c.json({
   service: 'yao-ling-tong-api',
   time: new Date().toISOString(),
   authConfigured: Boolean(config.wxAppId && config.wxAppSecret),
+  recognitionConfigured: Boolean(config.githubModelsToken),
 }))
 
 app.route('/auth', authRoutes)

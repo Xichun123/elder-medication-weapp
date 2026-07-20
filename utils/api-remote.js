@@ -1,4 +1,5 @@
 const remote = require('./remote')
+const config = require('./config')
 const session = require('./session')
 const { dictionaries } = require('./seed')
 
@@ -133,6 +134,18 @@ function mapFamily(home) {
 }
 
 const api = {
+  recognition: {
+    async recognize(filePath) {
+      const result = await remote.upload({
+        path: homePath('/recognitions/medication'),
+        filePath,
+        name: 'image',
+        timeout: config.recognitionTimeout,
+      })
+      return result.recognition
+    },
+  },
+
   elders: {
     async list(params = {}) {
       // overview 自带 medication/reminder/risk 计数，避免列表页再拼请求。

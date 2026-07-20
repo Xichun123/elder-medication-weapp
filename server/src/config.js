@@ -46,6 +46,10 @@ export const config = {
   wxAppSecret: process.env.WX_APP_SECRET || '',
   allowDevLogin: bool(process.env.ALLOW_DEV_LOGIN, false),
   databasePath,
+  githubModelsToken: process.env.GITHUB_MODELS_TOKEN || '',
+  githubModelsModel: process.env.GITHUB_MODELS_MODEL || 'openai/gpt-4.1-mini',
+  githubModelsEndpoint: process.env.GITHUB_MODELS_ENDPOINT || 'https://models.github.ai/inference/chat/completions',
+  recognitionTimeoutMs: Number(process.env.RECOGNITION_TIMEOUT_MS || 30_000),
 }
 
 export function validateConfig() {
@@ -60,6 +64,9 @@ export function validateConfig() {
   }
   if (config.isProd && config.allowDevLogin) {
     throw new Error('生产环境禁止开启 ALLOW_DEV_LOGIN')
+  }
+  if (!Number.isInteger(config.recognitionTimeoutMs) || config.recognitionTimeoutMs < 5_000) {
+    throw new Error('RECOGNITION_TIMEOUT_MS 必须是不小于 5000 的整数')
   }
 }
 

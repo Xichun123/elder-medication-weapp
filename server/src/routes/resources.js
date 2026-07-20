@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import {
   assertElderScope,
   buildDashboard,
@@ -25,9 +26,30 @@ import { getDb, nowIso } from '../db.js'
 import { HttpError, assert } from '../errors.js'
 import { newId } from '../ids.js'
 import { requireAuth, requireHomeMember } from '../middleware.js'
+import { recognizeMedicationImage } from '../recognition.js'
 
 const resources = new Hono()
 resources.use('*', requireAuth)
+
+const recognitionUsage = new Map()
+const RECOGNITION_WINDOW_MS = 60 * 60 * 1000
+const RECOGNITION_COOLDOWN_MS = 10 * 1000
+const RECOGNITION_MAX_PER_HOUR = 10
+
+async function requireRecognitionQuota(c, next) {
+  const user = c.get('user')
+  const key = `${c.req.param('homeId')}:${user.id}`
+  const now = Date.now()
+  const recent = (recognitionUsage.get(key) || []).filter((timestamp) => now - timestamp < RECOGNITION_WINDOW_MS)
+  if (recent.length && now - recent[recent.length - 1] < RECOGNITION_COOLDOWN_MS) {
+    return c.json({ error: '操作太频繁，请 10 秒后再试' }, 429)
+  }
+  if (recent.length >= RECOGNITION_MAX_PER_HOUR) {
+    return c.json({ error: '本小时识别次数已用完，请稍后再试' }, 429)
+  }
+  recognitionUsage.set(key, [...recent, now])
+  await next()
+}
 
 function parseOptionalDate(value, fieldName) {
   if (value === undefined || value === null || value === '') return null
@@ -213,6 +235,22 @@ resources.delete('/:homeId/drugs/:drugId', requireHomeMember('caregiver_edit'), 
   tx()
   return c.json({ ok: true })
 })
+
+// ── AI medication package recognition ─────────────────────
+resources.post(
+  '/:homeId/recognitions/medication',
+  requireHomeMember('caregiver_edit'),
+  bodyLimit({
+    maxSize: 6 * 1024 * 1024,
+    onError: (c) => c.json({ error: '图片和表单总大小不能超过 6MB' }, 413),
+  }),
+  requireRecognitionQuota,
+  async (c) => {
+    const body = await c.req.parseBody().catch(() => ({}))
+    const recognition = await recognizeMedicationImage(body.image)
+    return c.json({ recognition })
+  },
+)
 
 // ── Records ───────────────────────────────────────────────
 resources.get('/:homeId/records', requireHomeMember('caregiver_view'), (c) => {
