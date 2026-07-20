@@ -6,6 +6,10 @@ const { showError } = require('../../utils/helpers')
 
 const PRIVACY_KEY = 'yao_ling_tong.ai_privacy_consent_v1'
 
+function makeMessage(role, content, extra = {}) {
+  return { role, content: String(content || ''), pendingAction: null, candidates: [], ...extra }
+}
+
 Page({
   data: {
     mode: 'caregiver', elderId: '', elders: [], elderIndex: -1,
@@ -66,7 +70,7 @@ Page({
     const content = this.data.mode === 'elder'
       ? '您好，我是用药小助手。您可以告诉我“我刚吃了药”或“我头晕”。涉及记录修改时，我会先请您核对并确认。'
       : '您好，我可以查询服药历史和药品注意事项。涉及服药状态或症状记录时，需要您在确认卡上再次确认。'
-    this.setData({ privacyReady: true, messages: [{ role: 'assistant', content }] })
+    this.setData({ privacyReady: true, messages: [makeMessage('assistant', content)] })
     this.loadElders()
   },
 
@@ -169,7 +173,7 @@ Page({
       .filter((item) => item.content)
       .slice(-8)
       .map((item) => ({ role: item.role, content: item.content }))
-    const nextMessages = this.data.messages.concat({ role: 'user', content: text })
+    const nextMessages = this.data.messages.concat(makeMessage('user', text))
     this.setData({ messages: nextMessages, input: '', sending: true })
     try {
       const result = await api.ai.chat({
@@ -178,12 +182,10 @@ Page({
         elderId: this.data.elderId,
         history,
       })
-      const assistant = {
-        role: 'assistant',
-        content: result.answer || '',
+      const assistant = makeMessage('assistant', result.answer || '', {
         pendingAction: result.pendingAction || null,
         candidates: result.candidates || [],
-      }
+      })
       this.setData({ messages: this.data.messages.concat(assistant) })
       if (this.data.mode === 'elder') this.speakText(assistant.content)
     } catch (error) {
@@ -202,11 +204,13 @@ Page({
         elderId: this.data.elderId,
         reminderId,
       })
-      this.setData({ messages: this.data.messages.concat({
-        role: 'assistant',
-        content: '请核对以下药品信息，确认无误后再提交。',
+      this.setData({ messages: this.data.messages.concat(makeMessage(
+        'assistant',
+        '请核对以下药品信息，确认无误后再提交。',
+        {
         pendingAction: result.pendingAction,
-      }) })
+        },
+      )) })
     } catch (error) { showError(error) }
   },
 
@@ -219,7 +223,7 @@ Page({
       const messages = this.data.messages.map((item) => item.pendingAction?.id === actionId
         ? { ...item, pendingAction: { ...item.pendingAction, status: 'confirmed' } }
         : item)
-      const reply = { role: 'assistant', content: result.message || '操作已确认。' }
+      const reply = makeMessage('assistant', result.message || '操作已确认。')
       this.setData({ messages: messages.concat(reply) })
       if (this.data.mode === 'elder') this.speakText(reply.content)
     } catch (error) { showError(error) } finally { wx.hideLoading() }

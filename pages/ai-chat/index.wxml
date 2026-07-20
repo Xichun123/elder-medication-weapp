@@ -42,7 +42,7 @@
           <view wx:else class="confirmed-label">✓ 已确认</view>
         </view>
 
-        <view wx:if="{{item.candidates.length}}" class="candidate-list">
+        <view wx:if="{{item.candidates && item.candidates.length}}" class="candidate-list">
           <text class="candidate-heading">找到多个待服提醒，请选择刚刚服用的药：</text>
           <view wx:for="{{item.candidates}}" wx:for-item="candidate" wx:key="reminderId" class="candidate-card">
             <image wx:if="{{candidate.packageImageUrl}}" class="candidate-image" mode="aspectFit" src="{{candidate.packageImageUrl}}" />
@@ -67,3 +67,4 @@
   </view>
   <view wx:if="{{mode === 'elder' && (recording || transcribing)}}" class="voice-status">{{recording ? '正在录音，再点一次结束' : '正在识别，请稍候…'}}</view>
 </view>
+<view wx:else class="privacy-loading">正在打开 AI 用药管家…</view>
