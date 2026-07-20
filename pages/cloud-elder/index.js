@@ -124,6 +124,11 @@ Page({
     }
   },
 
+  openAi() {
+    if (!this.data.elder) return
+    wx.navigateTo({ url: `/pages/ai-chat/index?mode=elder&elder=${this.data.elder.id}` })
+  },
+
   switchHome() {
     session.setHome(null)
     wx.reLaunch({ url: '/pages/launch/index' })

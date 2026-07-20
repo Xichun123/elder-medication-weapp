@@ -4,6 +4,12 @@
 .elder-avatar { font-size: 108rpx; }
 .elder-name { margin-top: 14rpx; font-size: 48rpx; font-weight: 750; }
 .elder-home { margin-top: 8rpx; color: #52766f; font-size: 27rpx; }
+.ai-assistant-entry { display: flex; align-items: center; gap: 18rpx; margin-bottom: 24rpx; padding: 26rpx; border-radius: 26rpx; color: #fff; background: linear-gradient(135deg,#6f5bd3,#7057c7); box-shadow: 0 12rpx 28rpx rgba(112,87,199,.24); }
+.ai-assistant-entry-pressed { opacity: .82; transform: scale(.99); }
+.ai-assistant-icon { width: 82rpx; height: 82rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 24rpx; background: rgba(255,255,255,.18); font-size: 43rpx; }
+.ai-assistant-title { display: block; font-size: 36rpx; font-weight: 750; }
+.ai-assistant-desc { display: block; margin-top: 5rpx; font-size: 25rpx; opacity: .9; }
+.ai-assistant-arrow { font-size: 52rpx; opacity: .82; }
 .status-card, .current-card { padding: 34rpx; border: 2rpx solid #cde2dd; border-radius: 28rpx; background: #fff; box-shadow: 0 8rpx 24rpx rgba(23,58,52,.06); text-align: center; }
 .status-icon { display: block; font-size: 70rpx; }
 .status-title { display: block; margin-top: 12rpx; font-size: 38rpx; font-weight: 700; }

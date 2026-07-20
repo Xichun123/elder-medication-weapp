@@ -240,6 +240,10 @@ const api = {
   },
   dashboard: (elderId) => asyncValue(buildDashboard(elderId)),
   dataDictionary: () => asyncValue(db.dictionaries),
+  alerts: {
+    list: () => asyncValue({ alerts: [], unreadCount: 0 }),
+    markRead: () => asyncValue(null),
+  },
   local: {
     reset: () => asyncValue(db.reset()),
     export: () => asyncValue(db.exportData()),

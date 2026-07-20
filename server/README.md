@@ -35,6 +35,17 @@ curl -s http://127.0.0.1:8787/auth/wx-login \
 5. Caddy 反代到 `127.0.0.1:8787`，开启 HTTPS。
 6. 微信公众平台将 `https://api.0721online.net` 配为 request 合法域名（不要显式写 `:443`）；域名需按官方要求完成 ICP 备案。
 
+## AI、语音与隐私配置
+
+- 文本模型使用 OpenAI Chat Completions 兼容配置：`AI_API_URL`、`AI_API_KEY`、`AI_MODEL`。
+- 语音识别使用独立的 OpenAI Audio Transcriptions 兼容配置：`STT_API_URL`、`STT_API_KEY`、`STT_MODEL`；`STT_API_KEY` 留空时复用 `AI_API_KEY`。
+- 语音合成使用独立的 `TTS_API_URL`、`TTS_API_KEY`、`TTS_MODEL`、`TTS_VOICE`。
+- 各上游均有独立超时配置；不要在代码中硬编码供应商 URL 或密钥。
+
+AI 问答和语音能力会把与当前问题相关的用药记录、过敏史、症状、对话内容及用户主动录制的语音发送给所配置的第三方服务。上线前必须在小程序隐私保护指引中披露处理目的、数据范围、第三方供应商和保存策略，并取得用户知情同意。
+
+模型无权直接写入服药状态或症状记录。写操作先生成短时有效且归属于当前用户的 `pendingAction`，用户核对药品包装照片、药名、剂量和提醒时间后，再调用确定性确认接口；服务端会重新校验角色、老人范围、提醒状态、用药有效期、幂等性并记录审计。
+
 ### systemd 示例
 
 ```ini
@@ -74,9 +85,11 @@ api.0721online.net {
 - `GET/POST /homes/:homeId/elders`；`PATCH/DELETE .../elders/:elderId`
 - `GET /homes/:homeId/overview`
 - 药物 / 用药记录 / 提醒 / 禁忌 / 长辈 dashboard（均带 `home_id` 范围与角色校验）
+- AI 对话、待确认操作、语音识别、语音合成
+- 家属健康提醒列表与标记已读
 
 权限摘要：`owner` 全量 + 成员管理；`caregiver_edit` 可写业务；`caregiver_view` 只读；`elder` 仅本人档案，可确认已服。
-创建用药记录时自动生成提醒；仅修改频次会重建提醒，只改剂量不重置状态。提醒状态按 `Asia/Shanghai` 自然日计算，跨天自动恢复待服；今日列表只包含处于 `start_date/end_date` 有效期内的用药。
+创建用药记录时自动生成提醒；仅修改频次会重建提醒，只改剂量不重置状态。提醒状态按 `Asia/Shanghai` 自然日计算，跨天自动恢复待服；今日列表只包含处于 `start_date/end_date` 有效期内的用药。已服/漏服统计来自保留药名、剂量和提醒时间快照的不可变服药事件，不依赖提醒规则的最新状态。
 
 ## 验证
 

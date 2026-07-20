@@ -7,6 +7,8 @@ import { requireAuth } from './middleware.js'
 import authRoutes from './routes/auth.js'
 import homesRoutes from './routes/homes.js'
 import resourcesRoutes from './routes/resources.js'
+import aiRoutes from './routes/ai.js'
+import { getAiMedia } from './ai-media.js'
 
 const app = new Hono()
 
@@ -25,6 +27,21 @@ app.get('/health', (c) => c.json({
   authConfigured: Boolean(config.wxAppId && config.wxAppSecret),
 }))
 
+// 短时随机 URL：供百炼异步 ASR 下载录音，也让小程序只从自己的合法域名播放 TTS。
+app.get('/ai-media/:token', async (c) => {
+  const item = getAiMedia(c.req.param('token'))
+  if (!item) return c.json({ error: '音频已过期或不存在' }, 404)
+  if (item.buffer) return new Response(item.buffer, { headers: { 'content-type': item.contentType, 'cache-control': 'private, max-age=60' } })
+  const upstream = await fetch(item.remoteUrl, { signal: AbortSignal.timeout(10_000) }).catch(() => null)
+  if (!upstream?.ok) return c.json({ error: '音频暂不可用' }, 502)
+  return new Response(upstream.body, {
+    headers: {
+      'content-type': upstream.headers.get('content-type') || item.contentType,
+      'cache-control': 'private, max-age=60',
+    },
+  })
+})
+
 app.route('/auth', authRoutes)
 app.use('/me', requireAuth)
 app.get('/me', async (c) => {
@@ -40,6 +57,7 @@ app.get('/me', async (c) => {
 })
 app.route('/homes', homesRoutes)
 app.route('/homes', resourcesRoutes)
+app.route('/homes', aiRoutes)
 
 // 启动前校验生产配置并初始化数据库。
 validateConfig()

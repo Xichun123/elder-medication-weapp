@@ -11,14 +11,14 @@ function setToken(token) {
   else wx.removeStorageSync(TOKEN_KEY)
 }
 
-function request({ path, method = 'GET', data, authenticated = true }) {
+function request({ path, method = 'GET', data, authenticated = true, timeout = config.requestTimeout }) {
   const token = getToken()
   return new Promise((resolve, reject) => {
     wx.request({
       url: `${config.apiBaseUrl}${path}`,
       method,
       data,
-      timeout: config.requestTimeout,
+      timeout,
       header: {
         'content-type': 'application/json',
         ...(authenticated && token ? { Authorization: `Bearer ${token}` } : {}),
@@ -37,7 +37,9 @@ function request({ path, method = 'GET', data, authenticated = true }) {
         reject(error)
       },
       fail(error) {
-        reject(new Error((error && error.errMsg) || '网络请求失败'))
+        const requestError = new Error((error && error.errMsg) || '网络请求失败')
+        requestError.isNetworkError = true
+        reject(requestError)
       },
     })
   })
@@ -59,7 +61,18 @@ function getLoginCode() {
 }
 
 async function login() {
-  // wx.login 的 code 有效期 5 分钟且只能使用一次，应获取后立即换取自定义登录态。
+  if (config.devLogin) {
+    const result = await request({
+      path: '/auth/wx-login',
+      method: 'POST',
+      data: { devOpenid: config.devOpenid, nickname: config.devNickname },
+      authenticated: false,
+    })
+    if (!result || !result.token) throw new Error('本地服务器未返回登录态')
+    setToken(result.token)
+    return result
+  }
+  // wx.login 的 code 有效期短且只能使用一次，获取后立即换取服务端登录态。
   const code = await getLoginCode()
   const result = await request({
     path: '/auth/wx-login',

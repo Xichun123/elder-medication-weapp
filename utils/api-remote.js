@@ -1,4 +1,5 @@
 const remote = require('./remote')
+const config = require('./config')
 const session = require('./session')
 const { dictionaries } = require('./seed')
 
@@ -51,6 +52,7 @@ function mapDrug(item) {
     dosage_text: item.dosageText,
     contraindication_note: item.contraindicationNote,
     interaction_note: item.interactionNote,
+    primary_package_image_url: item.primaryPackageImageUrl || '',
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   }
@@ -272,6 +274,7 @@ const api = {
           dosageText: data.dosage_text,
           contraindicationNote: data.contraindication_note,
           interactionNote: data.interaction_note,
+          primaryPackageImageUrl: data.primary_package_image_url,
         },
       })
       return mapDrug(result.drug)
@@ -289,6 +292,7 @@ const api = {
           dosageText: data.dosage_text,
           contraindicationNote: data.contraindication_note,
           interactionNote: data.interaction_note,
+          primaryPackageImageUrl: data.primary_package_image_url,
         },
       })
       return mapDrug(result.drug)
@@ -460,6 +464,47 @@ const api = {
   },
 
   dataDictionary: () => Promise.resolve(dictionaries),
+
+  ai: {
+    async chat(data) {
+      try {
+        return await remote.request({ path: homePath('/ai/chat'), method: 'POST', data, timeout: config.aiRequestTimeout })
+      } catch (error) {
+        // 兼容生产环境旧后端：本地缓存的 elderId 可能已不属于当前家庭，
+        // 旧后端会返回 404。去掉 elderId 后，单老人家庭可由服务端自动选择，
+        // 药品安全等不依赖具体老人的问题也能继续回答。
+        if (error.statusCode === 404 && data && data.elderId) {
+          const fallback = { ...data }
+          delete fallback.elderId
+          return remote.request({ path: homePath('/ai/chat'), method: 'POST', data: fallback, timeout: config.aiRequestTimeout })
+        }
+        throw error
+      }
+    },
+    async createPendingAction(data) {
+      return remote.request({ path: homePath('/ai/pending-actions'), method: 'POST', data })
+    },
+    async confirmPendingAction(actionId) {
+      return remote.request({ path: homePath(`/ai/pending-actions/${actionId}/confirm`), method: 'POST' })
+    },
+    async transcribe(data) {
+      return remote.request({ path: homePath('/ai/transcribe'), method: 'POST', data, timeout: config.sttRequestTimeout })
+    },
+    async speech(text) {
+      return remote.request({ path: homePath('/ai/speech'), method: 'POST', data: { text }, timeout: config.ttsRequestTimeout })
+    },
+  },
+
+  alerts: {
+    async list({ unread = false } = {}) {
+      const result = await remote.request({ path: homePath(`/alerts${unread ? '?unread=1' : ''}`) })
+      return result
+    },
+    async markRead(alertId) {
+      const result = await remote.request({ path: homePath(`/alerts/${alertId}/read`), method: 'PATCH' })
+      return result.alert
+    },
+  },
 
   local: {
     reset() {

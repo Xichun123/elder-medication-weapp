@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS drugs (
   dosage_text TEXT NOT NULL DEFAULT '',
   contraindication_note TEXT NOT NULL DEFAULT '',
   interaction_note TEXT NOT NULL DEFAULT '',
+  primary_package_image_url TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -115,6 +116,72 @@ CREATE TABLE IF NOT EXISTS contraindications (
   updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS ai_pending_actions (
+  id TEXT PRIMARY KEY,
+  home_id TEXT NOT NULL REFERENCES homes(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  elder_profile_id TEXT NOT NULL REFERENCES elder_profiles(id) ON DELETE CASCADE,
+  action_type TEXT NOT NULL CHECK (action_type IN ('mark_taken', 'record_symptom')),
+  reminder_id TEXT REFERENCES reminder_rules(id) ON DELETE CASCADE,
+  payload_json TEXT NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'expired', 'cancelled')),
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS medication_events (
+  id TEXT PRIMARY KEY,
+  home_id TEXT NOT NULL REFERENCES homes(id) ON DELETE CASCADE,
+  elder_profile_id TEXT NOT NULL REFERENCES elder_profiles(id) ON DELETE CASCADE,
+  reminder_id TEXT NOT NULL,
+  record_id TEXT NOT NULL,
+  drug_id TEXT,
+  drug_name_snapshot TEXT NOT NULL DEFAULT '',
+  dose_snapshot TEXT NOT NULL DEFAULT '',
+  remind_time_snapshot TEXT NOT NULL DEFAULT '',
+  actor_user_id TEXT REFERENCES users(id),
+  event_type TEXT NOT NULL CHECK (event_type IN ('taken', 'skipped')),
+  occurrence_date TEXT NOT NULL,
+  occurred_at TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'manual',
+  pending_action_id TEXT,
+  created_at TEXT NOT NULL,
+  UNIQUE (reminder_id, occurrence_date)
+);
+
+CREATE TABLE IF NOT EXISTS ai_action_audits (
+  id TEXT PRIMARY KEY,
+  action_id TEXT NOT NULL REFERENCES ai_pending_actions(id) ON DELETE CASCADE,
+  home_id TEXT NOT NULL REFERENCES homes(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  event_type TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS symptom_logs (
+  id TEXT PRIMARY KEY,
+  home_id TEXT NOT NULL REFERENCES homes(id) ON DELETE CASCADE,
+  elder_profile_id TEXT NOT NULL REFERENCES elder_profiles(id) ON DELETE CASCADE,
+  symptom TEXT NOT NULL,
+  severity TEXT NOT NULL DEFAULT 'normal',
+  source TEXT NOT NULL DEFAULT 'ai_voice',
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS care_alerts (
+  id TEXT PRIMARY KEY,
+  home_id TEXT NOT NULL REFERENCES homes(id) ON DELETE CASCADE,
+  elder_profile_id TEXT NOT NULL REFERENCES elder_profiles(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  severity TEXT NOT NULL DEFAULT 'normal',
+  content TEXT NOT NULL,
+  read_at TEXT,
+  read_by TEXT REFERENCES users(id),
+  created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_memberships_user ON memberships(user_id);
 CREATE INDEX IF NOT EXISTS idx_memberships_home ON memberships(home_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_memberships_elder_profile
@@ -123,6 +190,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_memberships_elder_profile
 CREATE INDEX IF NOT EXISTS idx_elders_home ON elder_profiles(home_id);
 CREATE INDEX IF NOT EXISTS idx_records_home_elder ON medication_records(home_id, elder_profile_id);
 CREATE INDEX IF NOT EXISTS idx_reminders_home_elder ON reminder_rules(home_id, elder_profile_id);
+CREATE INDEX IF NOT EXISTS idx_medication_events_home_date ON medication_events(home_id, occurrence_date);
+CREATE INDEX IF NOT EXISTS idx_pending_actions_user_status ON ai_pending_actions(user_id, status, expires_at);
+CREATE INDEX IF NOT EXISTS idx_action_audits_action ON ai_action_audits(action_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_symptoms_home_elder ON symptom_logs(home_id, elder_profile_id);
+CREATE INDEX IF NOT EXISTS idx_alerts_home ON care_alerts(home_id, read_at, created_at);
 CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code);
 `
 
@@ -192,6 +264,92 @@ function migrateSchema(database) {
   if (!reminderColumns.some((column) => column.name === 'status_date')) {
     database.exec('ALTER TABLE reminder_rules ADD COLUMN status_date TEXT')
   }
+
+  const drugColumns = database.prepare('PRAGMA table_info(drugs)').all()
+  if (!drugColumns.some((column) => column.name === 'primary_package_image_url')) {
+    database.exec("ALTER TABLE drugs ADD COLUMN primary_package_image_url TEXT NOT NULL DEFAULT ''")
+  }
+
+  const alertColumns = database.prepare('PRAGMA table_info(care_alerts)').all()
+  if (!alertColumns.some((column) => column.name === 'severity')) {
+    database.exec("ALTER TABLE care_alerts ADD COLUMN severity TEXT NOT NULL DEFAULT 'normal'")
+  }
+  if (!alertColumns.some((column) => column.name === 'read_by')) {
+    database.exec('ALTER TABLE care_alerts ADD COLUMN read_by TEXT REFERENCES users(id)')
+  }
+
+  migrateMedicationEvents(database)
+
+  // 旧版本仅保存规则的最后一次状态；迁移为一条明确标记为 legacy_snapshot 的历史事件。
+  database.exec(`
+    INSERT OR IGNORE INTO medication_events (
+      id, home_id, elder_profile_id, reminder_id, record_id, drug_id,
+      drug_name_snapshot, dose_snapshot, remind_time_snapshot, actor_user_id,
+      event_type, occurrence_date, occurred_at, source, pending_action_id, created_at
+    )
+    SELECT
+      'EVLEGACY_' || rm.id || '_' || REPLACE(rm.status_date, '-', ''),
+      rm.home_id, rm.elder_profile_id, rm.id, rm.record_id, r.drug_id,
+      d.generic_name, r.dose, rm.remind_time, NULL,
+      rm.status, rm.status_date, rm.updated_at, 'legacy_snapshot', NULL, rm.updated_at
+    FROM reminder_rules rm
+    JOIN medication_records r ON r.id = rm.record_id
+    JOIN drugs d ON d.id = r.drug_id
+    WHERE rm.status_date IS NOT NULL AND rm.status IN ('taken', 'skipped')
+  `)
+}
+
+function migrateMedicationEvents(database) {
+  const columns = database.prepare('PRAGMA table_info(medication_events)').all()
+  const foreignKeys = database.prepare('PRAGMA foreign_key_list(medication_events)').all()
+  const hasSnapshots = ['drug_id', 'drug_name_snapshot', 'dose_snapshot', 'remind_time_snapshot']
+    .every((name) => columns.some((column) => column.name === name))
+  const hasMutableParentCascade = foreignKeys.some((key) => ['reminder_id', 'record_id', 'pending_action_id'].includes(key.from))
+  if (hasSnapshots && !hasMutableParentCascade) return
+
+  const hasColumn = (name) => columns.some((column) => column.name === name)
+  const drugId = hasColumn('drug_id') ? 'me.drug_id' : 'r.drug_id'
+  const drugName = hasColumn('drug_name_snapshot') ? 'me.drug_name_snapshot' : "COALESCE(d.generic_name, '')"
+  const dose = hasColumn('dose_snapshot') ? 'me.dose_snapshot' : "COALESCE(r.dose, '')"
+  const remindTime = hasColumn('remind_time_snapshot') ? 'me.remind_time_snapshot' : "COALESCE(rm.remind_time, '')"
+
+  database.exec(`
+    ALTER TABLE medication_events RENAME TO medication_events_legacy;
+    CREATE TABLE medication_events (
+      id TEXT PRIMARY KEY,
+      home_id TEXT NOT NULL REFERENCES homes(id) ON DELETE CASCADE,
+      elder_profile_id TEXT NOT NULL REFERENCES elder_profiles(id) ON DELETE CASCADE,
+      reminder_id TEXT NOT NULL,
+      record_id TEXT NOT NULL,
+      drug_id TEXT,
+      drug_name_snapshot TEXT NOT NULL DEFAULT '',
+      dose_snapshot TEXT NOT NULL DEFAULT '',
+      remind_time_snapshot TEXT NOT NULL DEFAULT '',
+      actor_user_id TEXT REFERENCES users(id),
+      event_type TEXT NOT NULL CHECK (event_type IN ('taken', 'skipped')),
+      occurrence_date TEXT NOT NULL,
+      occurred_at TEXT NOT NULL,
+      source TEXT NOT NULL DEFAULT 'manual',
+      pending_action_id TEXT,
+      created_at TEXT NOT NULL,
+      UNIQUE (reminder_id, occurrence_date)
+    );
+    INSERT INTO medication_events (
+      id, home_id, elder_profile_id, reminder_id, record_id, drug_id,
+      drug_name_snapshot, dose_snapshot, remind_time_snapshot, actor_user_id,
+      event_type, occurrence_date, occurred_at, source, pending_action_id, created_at
+    )
+    SELECT
+      me.id, me.home_id, me.elder_profile_id, me.reminder_id, me.record_id, ${drugId},
+      ${drugName}, ${dose}, ${remindTime}, me.actor_user_id,
+      me.event_type, me.occurrence_date, me.occurred_at, me.source, me.pending_action_id, me.created_at
+    FROM medication_events_legacy me
+    LEFT JOIN reminder_rules rm ON rm.id = me.reminder_id
+    LEFT JOIN medication_records r ON r.id = me.record_id
+    LEFT JOIN drugs d ON d.id = r.drug_id;
+    DROP TABLE medication_events_legacy;
+    CREATE INDEX IF NOT EXISTS idx_medication_events_home_date ON medication_events(home_id, occurrence_date);
+  `)
 }
 
 /** 系统药库与常见禁忌，仅在空库时写入一次。 */

@@ -1,15 +1,22 @@
 /**
- * 运行时配置。
- * USE_LOCAL_API=true 时走本地 database.js（演示）；false 时请求 VPS。
- * 远程模式需在微信公众平台配置 request 合法域名：api.0721online.net
+ * 提交仓库的默认值必须始终指向生产 HTTPS 服务。
+ * 本地联调请使用开发者工具的本地覆盖能力或临时未跟踪配置，不要提交 localhost。
  */
-const USE_LOCAL_API = false
-
-const config = {
-  useLocalApi: USE_LOCAL_API,
-  /** 生产 API（HTTPS，已部署 dm VPS） */
+const defaults = {
+  useLocalApi: false,
   apiBaseUrl: 'https://api.0721online.net',
+  devLogin: false,
+  devOpenid: 'wechat-devtools-user',
+  devNickname: '开发调试用户',
   requestTimeout: 10000,
+  aiRequestTimeout: 30000,
+  sttRequestTimeout: 20000,
+  ttsRequestTimeout: 20000,
 }
 
-module.exports = config
+let local = {}
+try { local = require('./config.local') } catch (error) {
+  if (!error || error.code !== 'MODULE_NOT_FOUND') console.warn('读取本地配置失败', error)
+}
+
+module.exports = { ...defaults, ...local }

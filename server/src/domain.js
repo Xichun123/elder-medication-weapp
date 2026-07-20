@@ -87,6 +87,7 @@ export function mapDrug(row) {
     dosageText: row.dosage_text,
     contraindicationNote: row.contraindication_note,
     interactionNote: row.interaction_note,
+    primaryPackageImageUrl: row.primary_package_image_url || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
