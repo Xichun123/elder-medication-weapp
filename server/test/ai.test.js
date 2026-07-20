@@ -67,7 +67,7 @@ async function readJson(request) {
 function createUpstreamServer() {
   return http.createServer(async (request, response) => {
     const body = await readJson(request).catch(() => ({}))
-    mockRequests.push({ url: request.url, body })
+    mockRequests.push({ url: request.url, method: request.method, body })
     mockCallCount += 1
 
     if (request.url === '/v1/audio/speech') {
@@ -115,6 +115,8 @@ function createUpstreamServer() {
       message = toolMessage('propose_record_symptom', { symptom: '头晕', severity: 'normal' })
     } else if (!hasToolResult && mockMode === 'tool_adherence') {
       message = toolMessage('get_medication_adherence', { days: 30 })
+    } else if (!hasToolResult && mockMode === 'tool_safety') {
+      message = toolMessage('get_drug_safety', { drugName: '测试降压药' })
     } else {
       message = { role: 'assistant', content: '这是模拟 AI 回答。' }
     }
@@ -516,6 +518,38 @@ test('当前问题不会在 history 和 message 中重复发送', async () => {
   assert.equal(userMessages.length, 1)
 })
 
+test('药物位于禁忌关系任一侧时都能被安全工具查到', async () => {
+  const otherDrug = await api(`/homes/${context.homeId}/drugs`, {
+    token: context.owner.token,
+    method: 'POST',
+    body: { genericName: '相互作用药', category: 'other' },
+  })
+  assert.equal(otherDrug.status, 201)
+  const contraindication = await api(`/homes/${context.homeId}/contraindications`, {
+    token: context.owner.token,
+    method: 'POST',
+    body: {
+      drugAId: otherDrug.data.drug.id,
+      drugBId: context.drugId,
+      contraType: 'co_administration',
+      severity: 'severe',
+      note: '禁止同时服用',
+    },
+  })
+  assert.equal(contraindication.status, 201)
+
+  resetMock('tool_safety')
+  const result = await api(`/homes/${context.homeId}/ai/chat`, {
+    token: context.owner.token,
+    method: 'POST',
+    body: { message: '测试降压药有什么相互作用？', elderId: context.elderId },
+  })
+  assert.equal(result.status, 200)
+  const followup = mockRequests.find((item) => item.body.messages?.some((message) => message.role === 'tool'))
+  const toolResult = JSON.parse(followup.body.messages.find((message) => message.role === 'tool').content)
+  assert.ok(toolResult.interactions.some((item) => item.with_name === '相互作用药' && item.severity === 'severe'))
+})
+
 test('紧急症状确认后形成家属可见、可标记已读的闭环', async () => {
   const proposed = await api(`/homes/${context.homeId}/ai/pending-actions`, {
     token: context.elder.token,
@@ -583,5 +617,6 @@ test('老人录音通过独立 STT 配置识别为文字', async () => {
   })
   assert.equal(result.status, 200)
   assert.equal(result.data.text, '我刚吃了药')
-  assert.ok(mockRequests.some((item) => item.url === '/v1/audio/transcriptions'))
+  assert.ok(mockRequests.some((item) => item.url === '/v1/audio/transcriptions' && item.method === 'POST'))
+  assert.ok(mockRequests.some((item) => item.url === '/api/v1/tasks/mock-asr-task' && item.method === 'GET'))
 })

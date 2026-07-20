@@ -4,8 +4,9 @@ import { getDb } from '../db.js'
 import { HttpError, assert } from '../errors.js'
 import { getElderInHome } from '../domain.js'
 import { requireAuth, requireHomeMember } from '../middleware.js'
-import { storeAiMedia } from '../ai-media.js'
+import { deleteAiMedia, storeAiMedia } from '../ai-media.js'
 import { getMedicationAdherence } from '../medication-events.js'
+import { createFixedWindowRateLimiter } from '../rate-limit.js'
 import {
   buildMarkTakenProposal,
   buildSymptomProposal,
@@ -17,7 +18,17 @@ import {
 const ai = new Hono()
 ai.use('*', requireAuth)
 
+const aiRateLimiter = createFixedWindowRateLimiter()
 const DISCLAIMER = '用药建议仅供参考，不能替代医生或药师意见；出现胸痛、呼吸困难、昏厥等紧急症状，请立即就医或拨打 120。'
+
+function enforceAiRateLimit(c, scope, limit) {
+  const user = c.get('user')
+  const result = aiRateLimiter.consume(`${scope}:${user.id}`, limit)
+  if (!result.allowed) {
+    const seconds = Math.max(1, Math.ceil(result.retryAfterMs / 1000))
+    throw new HttpError(429, `请求过于频繁，请 ${seconds} 秒后重试`)
+  }
+}
 
 function cleanText(value, max = 500) {
   return String(value || '').trim().slice(0, max)
@@ -47,36 +58,40 @@ function sleep(ms, signal) {
 async function transcribeDashScope({ audio, format, signal }) {
   const contentTypes = { mp3: 'audio/mpeg', aac: 'audio/aac', wav: 'audio/wav', m4a: 'audio/mp4' }
   const token = storeAiMedia({ buffer: audio, contentType: contentTypes[format] })
-  const headers = {
-    Authorization: `Bearer ${config.sttApiKey}`,
-    'Content-Type': 'application/json',
-    'X-DashScope-Async': 'enable',
+  try {
+    const headers = {
+      Authorization: `Bearer ${config.sttApiKey}`,
+      'Content-Type': 'application/json',
+      'X-DashScope-Async': 'enable',
+    }
+    const submit = await fetch(config.sttApiUrl, {
+      method: 'POST', signal, headers,
+      body: JSON.stringify({ model: config.sttModel, input: { file_urls: [publicMediaUrl(token)] } }),
+    })
+    const submitted = await submit.json().catch(() => ({}))
+    if (!submit.ok) throw new HttpError(submit.status === 429 ? 429 : 502, submitted?.message || submitted?.code || '语音识别任务提交失败')
+    const taskId = submitted?.output?.task_id
+    assert(taskId, 502, '语音识别服务未返回任务编号')
+    const taskUrl = new URL(`/api/v1/tasks/${taskId}`, config.sttApiUrl).toString()
+    for (let index = 0; index < 40; index += 1) {
+      await sleep(250, signal)
+      const response = await fetch(taskUrl, { method: 'GET', signal, headers: { Authorization: `Bearer ${config.sttApiKey}` } })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new HttpError(response.status === 429 ? 429 : 502, data?.message || '查询语音识别任务失败')
+      const status = data?.output?.task_status
+      if (status === 'FAILED' || status === 'CANCELED') throw new HttpError(502, data?.output?.message || '语音识别失败')
+      if (status !== 'SUCCEEDED') continue
+      const result = data?.output?.results?.[0]
+      assert(result?.subtask_status !== 'FAILED' && result?.transcription_url, 502, result?.message || '语音识别没有返回结果')
+      const transcriptResponse = await fetch(result.transcription_url, { signal })
+      const transcript = await transcriptResponse.json().catch(() => ({}))
+      if (!transcriptResponse.ok) throw new HttpError(502, '读取语音识别结果失败')
+      return cleanText((transcript.transcripts || []).map((item) => item.text || '').join(''), 500)
+    }
+    throw new HttpError(504, '语音识别超时')
+  } finally {
+    deleteAiMedia(token)
   }
-  const submit = await fetch(config.sttApiUrl, {
-    method: 'POST', signal, headers,
-    body: JSON.stringify({ model: config.sttModel, input: { file_urls: [publicMediaUrl(token)] } }),
-  })
-  const submitted = await submit.json().catch(() => ({}))
-  if (!submit.ok) throw new HttpError(submit.status === 429 ? 429 : 502, submitted?.message || submitted?.code || '语音识别任务提交失败')
-  const taskId = submitted?.output?.task_id
-  assert(taskId, 502, '语音识别服务未返回任务编号')
-  const taskUrl = new URL(`/api/v1/tasks/${taskId}`, config.sttApiUrl).toString()
-  for (let index = 0; index < 40; index += 1) {
-    await sleep(250, signal)
-    const response = await fetch(taskUrl, { method: 'POST', signal, headers: { Authorization: `Bearer ${config.sttApiKey}` } })
-    const data = await response.json().catch(() => ({}))
-    if (!response.ok) throw new HttpError(response.status === 429 ? 429 : 502, data?.message || '查询语音识别任务失败')
-    const status = data?.output?.task_status
-    if (status === 'FAILED' || status === 'CANCELED') throw new HttpError(502, data?.output?.message || '语音识别失败')
-    if (status !== 'SUCCEEDED') continue
-    const result = data?.output?.results?.[0]
-    assert(result?.subtask_status !== 'FAILED' && result?.transcription_url, 502, result?.message || '语音识别没有返回结果')
-    const transcriptResponse = await fetch(result.transcription_url, { signal })
-    const transcript = await transcriptResponse.json().catch(() => ({}))
-    if (!transcriptResponse.ok) throw new HttpError(502, '读取语音识别结果失败')
-    return cleanText((transcript.transcripts || []).map((item) => item.text || '').join(''), 500)
-  }
-  throw new HttpError(504, '语音识别超时')
 }
 
 function chooseElder(homeId, membership, elderId) {
@@ -101,19 +116,30 @@ function listMedicationContext(homeId, elderId) {
 
 function getDrugSafety(homeId, drugName, target) {
   const term = cleanText(drugName, 80)
+  if (!term) return { found: false, message: '请提供要查询的药物名称。' }
+  const escapedTerm = term.replace(/[\\%_]/g, '\\$&')
+  const pattern = `%${escapedTerm}%`
   const item = getDb().prepare(`
     SELECT * FROM drugs
     WHERE (home_id IS NULL OR home_id = ?)
-      AND (generic_name LIKE ? OR trade_name LIKE ? OR aliases LIKE ?)
+      AND (generic_name LIKE ? ESCAPE '\\' OR trade_name LIKE ? ESCAPE '\\' OR aliases LIKE ? ESCAPE '\\')
+    ORDER BY CASE WHEN generic_name = ? THEN 0 WHEN trade_name = ? THEN 1 ELSE 2 END,
+      CASE WHEN home_id = ? THEN 0 ELSE 1 END, generic_name
     LIMIT 1
-  `).get(homeId, `%${term}%`, `%${term}%`, `%${term}%`)
+  `).get(homeId, pattern, pattern, pattern, term, term, homeId)
   if (!item) return { found: false, message: '未在家庭药品库或内置药品库找到该药物。' }
   const interactions = getDb().prepare(`
-    SELECT c.severity, c.contra_type, c.note, COALESCE(db.generic_name, c.drug_b_text) AS with_name
+    SELECT c.severity, c.contra_type, c.note,
+      CASE WHEN c.drug_a_id = ?
+        THEN COALESCE(db.generic_name, c.drug_b_text)
+        ELSE da.generic_name
+      END AS with_name
     FROM contraindications c
+    JOIN drugs da ON da.id = c.drug_a_id
     LEFT JOIN drugs db ON db.id = c.drug_b_id
-    WHERE c.drug_a_id = ? AND (c.home_id IS NULL OR c.home_id = ?)
-  `).all(item.id, homeId).filter((row) => !target
+    WHERE (c.drug_a_id = ? OR c.drug_b_id = ?)
+      AND (c.home_id IS NULL OR c.home_id = ?)
+  `).all(item.id, item.id, item.id, homeId).filter((row) => !target
     || String(row.with_name || '').includes(target)
     || String(row.note || '').includes(target))
   return {
@@ -256,6 +282,7 @@ function persistDraft({ homeId, user, membership, draft }) {
 }
 
 ai.post('/:homeId/ai/chat', requireHomeMember('caregiver_view'), async (c) => {
+  enforceAiRateLimit(c, 'chat', 20)
   const membership = c.get('membership')
   const user = c.get('user')
   const homeId = membership.home_id
@@ -344,6 +371,7 @@ ai.post('/:homeId/ai/pending-actions/:actionId/confirm', requireHomeMember('care
 })
 
 ai.post('/:homeId/ai/transcribe', requireHomeMember('caregiver_view'), async (c) => {
+  enforceAiRateLimit(c, 'transcribe', 10)
   if (!config.sttApiUrl || !config.sttApiKey || !config.sttModel) throw new HttpError(503, '语音识别服务尚未配置')
   const body = await c.req.json().catch(() => ({}))
   const audioBase64 = String(body.audioBase64 || '')
@@ -389,6 +417,7 @@ ai.post('/:homeId/ai/transcribe', requireHomeMember('caregiver_view'), async (c)
 })
 
 ai.post('/:homeId/ai/speech', requireHomeMember('caregiver_view'), async (c) => {
+  enforceAiRateLimit(c, 'speech', 30)
   if (!config.ttsApiUrl || !config.ttsApiKey || !config.ttsModel) throw new HttpError(503, '语音合成服务尚未配置')
   const body = await c.req.json().catch(() => ({}))
   const text = cleanText(body.text, 1800)
