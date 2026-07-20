@@ -37,7 +37,9 @@ function request({ path, method = 'GET', data, authenticated = true, timeout = c
         reject(error)
       },
       fail(error) {
-        reject(new Error((error && error.errMsg) || '网络请求失败'))
+        const requestError = new Error((error && error.errMsg) || '网络请求失败')
+        requestError.isNetworkError = true
+        reject(requestError)
       },
     })
   })

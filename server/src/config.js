@@ -46,6 +46,7 @@ export const config = {
   wxAppSecret: process.env.WX_APP_SECRET || '',
   allowDevLogin: bool(process.env.ALLOW_DEV_LOGIN, false),
   databasePath,
+  publicBaseUrl: String(process.env.PUBLIC_BASE_URL || '').replace(/\/$/, ''),
 
   aiApiUrl: process.env.AI_API_URL || '',
   aiApiKey: process.env.AI_API_KEY || '',
@@ -55,6 +56,7 @@ export const config = {
   aiActionTtlMs: Number(process.env.AI_ACTION_TTL_MS || 5 * 60_000),
 
   sttApiUrl: process.env.STT_API_URL || '',
+  sttProvider: process.env.STT_PROVIDER || 'openai_multipart',
   sttApiKey: process.env.STT_API_KEY || process.env.AI_API_KEY || '',
   sttModel: process.env.STT_MODEL || '',
   sttUpstreamTimeoutMs: Number(process.env.STT_UPSTREAM_TIMEOUT_MS || 15_000),
@@ -82,6 +84,9 @@ export function validateConfig() {
   assertInteger('TTS_UPSTREAM_TIMEOUT_MS', config.ttsUpstreamTimeoutMs, 500)
   if (config.isProd && config.jwtSecret.length < 32) throw new Error('生产环境 JWT_SECRET 至少需要 32 个字符')
   if (config.isProd && config.allowDevLogin) throw new Error('生产环境禁止开启 ALLOW_DEV_LOGIN')
+  if (config.isProd && (config.sttProvider === 'dashscope_async' || config.ttsApiUrl) && !config.publicBaseUrl) {
+    throw new Error('生产环境启用语音能力时必须配置 PUBLIC_BASE_URL')
+  }
 }
 
 export default config

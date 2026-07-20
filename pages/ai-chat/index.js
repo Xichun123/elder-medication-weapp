@@ -7,7 +7,7 @@ const { showError } = require('../../utils/helpers')
 const PRIVACY_KEY = 'yao_ling_tong.ai_privacy_consent_v1'
 
 function makeMessage(role, content, extra = {}) {
-  return { role, content: String(content || ''), pendingAction: null, candidates: [], ...extra }
+  return { role, content: String(content || ''), audioUrl: '', pendingAction: null, candidates: [], ...extra }
 }
 
 Page({
@@ -58,19 +58,25 @@ Page({
   ensurePrivacyConsent() {
     if (wx.getStorageSync(PRIVACY_KEY)) {
       this.setData({ privacyConsented: true })
-      return
+      return Promise.resolve(true)
     }
-    wx.showModal({
-      title: 'AI 隐私说明',
-      content: '为回答问题，相关用药记录、过敏史、症状、对话内容和主动录制的语音会发送给已配置的第三方 AI/语音服务处理。请确认知情后继续。',
-      confirmText: '同意并继续',
-      cancelText: '暂不使用',
-      success: (res) => {
-        if (!res.confirm) { wx.navigateBack(); return }
-        wx.setStorageSync(PRIVACY_KEY, true)
-        this.setData({ privacyConsented: true })
-      },
-      fail: () => wx.showToast({ title: '无法打开隐私确认，请返回重试', icon: 'none' }),
+    return new Promise((resolve) => {
+      wx.showModal({
+        title: 'AI 隐私说明',
+        content: '为回答问题，相关用药记录、过敏史、症状、对话内容和主动录制的语音会发送给已配置的第三方 AI/语音服务处理。请确认知情后继续。',
+        confirmText: '同意并继续',
+        cancelText: '暂不使用',
+        success: (res) => {
+          if (!res.confirm) { resolve(false); return }
+          wx.setStorageSync(PRIVACY_KEY, true)
+          this.setData({ privacyConsented: true })
+          resolve(true)
+        },
+        fail: () => {
+          wx.showToast({ title: '无法打开隐私确认，请重试', icon: 'none' })
+          resolve(false)
+        },
+      })
     })
   },
 
@@ -100,8 +106,9 @@ Page({
   onInput(event) { this.setData({ input: event.detail.value }) },
   usePhrase(event) { this.setData({ input: event.currentTarget.dataset.text }, () => this.send()) },
 
-  toggleRecording() {
-    if (this.data.sending || this.data.transcribing || !this.data.privacyConsented) return
+  async toggleRecording() {
+    if (this.data.sending || this.data.transcribing) return
+    if (!this.data.privacyConsented && !(await this.ensurePrivacyConsent())) return
     if (!this.recorder) {
       try { this.initializeRecorder() } catch (error) { console.warn('当前环境无法初始化录音', error) }
     }
@@ -160,26 +167,36 @@ Page({
     }
   },
 
-  async speakText(text) {
+  async speakText(text, existingAudioUrl = '') {
     const value = String(text || '').trim()
     if (!value || this.data.speaking) return
     this.setData({ speaking: true })
     try {
-      const result = await api.ai.speech(value)
-      await voice.playUrl(result.audioUrl)
+      let audioUrl = existingAudioUrl
+      if (!audioUrl) {
+        const result = await api.ai.speech(value)
+        audioUrl = result.audioUrl
+      }
+      await voice.playUrl(audioUrl)
     } catch (error) {
       console.warn('语音播报失败', error)
-      wx.showToast({ title: '语音播报暂不可用', icon: 'none' })
+      wx.showToast({
+        title: error.statusCode === 404 ? '服务器语音接口尚未部署' : '语音播报暂不可用',
+        icon: 'none',
+      })
     } finally {
       this.setData({ speaking: false })
     }
   },
 
-  playMessage(event) { this.speakText(event.currentTarget.dataset.text) },
+  playMessage(event) {
+    this.speakText(event.currentTarget.dataset.text, event.currentTarget.dataset.audio)
+  },
 
   async send() {
     const text = String(this.data.input || '').trim()
-    if (!text || this.data.sending || !this.data.privacyConsented) return
+    if (!text || this.data.sending) return
+    if (!this.data.privacyConsented && !(await this.ensurePrivacyConsent())) return
     if (!api.ai || !api.ai.chat) { wx.showToast({ title: 'AI 对话需要云端模式', icon: 'none' }); return }
 
     // history 只包含请求前已经存在的消息；当前问题由 message 字段单独发送。
@@ -197,13 +214,20 @@ Page({
         history,
       })
       const assistant = makeMessage('assistant', result.answer || '', {
+        audioUrl: result.audioUrl || '',
         pendingAction: result.pendingAction || null,
         candidates: result.candidates || [],
       })
       this.setData({ messages: this.data.messages.concat(assistant) })
-      if (this.data.mode === 'elder') this.speakText(assistant.content)
+      if (this.data.mode === 'elder') this.speakText(assistant.content, assistant.audioUrl)
     } catch (error) {
-      showError(error)
+      if (error.statusCode === 404) {
+        wx.showModal({
+          title: 'AI 服务端尚未升级',
+          content: '小程序已经更新，但生产服务器仍是旧版本或缺少 AI 路由，请先部署最新 server 代码。',
+          showCancel: false,
+        })
+      } else showError(error)
     } finally {
       this.setData({ sending: false })
     }

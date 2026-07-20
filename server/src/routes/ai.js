@@ -4,6 +4,7 @@ import { getDb } from '../db.js'
 import { HttpError, assert } from '../errors.js'
 import { getElderInHome } from '../domain.js'
 import { requireAuth, requireHomeMember } from '../middleware.js'
+import { storeAiMedia } from '../ai-media.js'
 import { getMedicationAdherence } from '../medication-events.js'
 import {
   buildMarkTakenProposal,
@@ -26,6 +27,56 @@ function requestSignal(c, timeoutMs) {
   const signals = [AbortSignal.timeout(timeoutMs)]
   if (c.req.raw.signal) signals.push(c.req.raw.signal)
   return AbortSignal.any(signals)
+}
+
+function publicMediaUrl(token) {
+  assert(config.publicBaseUrl, 503, '语音服务缺少 PUBLIC_BASE_URL 配置')
+  return `${config.publicBaseUrl}/ai-media/${token}`
+}
+
+function sleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms)
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timer)
+      reject(signal.reason || new DOMException('Aborted', 'AbortError'))
+    }, { once: true })
+  })
+}
+
+async function transcribeDashScope({ audio, format, signal }) {
+  const contentTypes = { mp3: 'audio/mpeg', aac: 'audio/aac', wav: 'audio/wav', m4a: 'audio/mp4' }
+  const token = storeAiMedia({ buffer: audio, contentType: contentTypes[format] })
+  const headers = {
+    Authorization: `Bearer ${config.sttApiKey}`,
+    'Content-Type': 'application/json',
+    'X-DashScope-Async': 'enable',
+  }
+  const submit = await fetch(config.sttApiUrl, {
+    method: 'POST', signal, headers,
+    body: JSON.stringify({ model: config.sttModel, input: { file_urls: [publicMediaUrl(token)] } }),
+  })
+  const submitted = await submit.json().catch(() => ({}))
+  if (!submit.ok) throw new HttpError(submit.status === 429 ? 429 : 502, submitted?.message || submitted?.code || '语音识别任务提交失败')
+  const taskId = submitted?.output?.task_id
+  assert(taskId, 502, '语音识别服务未返回任务编号')
+  const taskUrl = new URL(`/api/v1/tasks/${taskId}`, config.sttApiUrl).toString()
+  for (let index = 0; index < 40; index += 1) {
+    await sleep(250, signal)
+    const response = await fetch(taskUrl, { method: 'POST', signal, headers: { Authorization: `Bearer ${config.sttApiKey}` } })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) throw new HttpError(response.status === 429 ? 429 : 502, data?.message || '查询语音识别任务失败')
+    const status = data?.output?.task_status
+    if (status === 'FAILED' || status === 'CANCELED') throw new HttpError(502, data?.output?.message || '语音识别失败')
+    if (status !== 'SUCCEEDED') continue
+    const result = data?.output?.results?.[0]
+    assert(result?.subtask_status !== 'FAILED' && result?.transcription_url, 502, result?.message || '语音识别没有返回结果')
+    const transcriptResponse = await fetch(result.transcription_url, { signal })
+    const transcript = await transcriptResponse.json().catch(() => ({}))
+    if (!transcriptResponse.ok) throw new HttpError(502, '读取语音识别结果失败')
+    return cleanText((transcript.transcripts || []).map((item) => item.text || '').join(''), 500)
+  }
+  throw new HttpError(504, '语音识别超时')
 }
 
 function chooseElder(homeId, membership, elderId) {
@@ -302,6 +353,18 @@ ai.post('/:homeId/ai/transcribe', requireHomeMember('caregiver_view'), async (c)
   try { audio = Buffer.from(audioBase64, 'base64') } catch { throw new HttpError(400, '录音数据无效') }
   assert(audio.length > 0 && audio.length <= 3 * 1024 * 1024, 400, '录音大小必须在 3MB 以内')
 
+  const signal = requestSignal(c, config.sttUpstreamTimeoutMs)
+  if (config.sttProvider === 'dashscope_async') {
+    let text
+    try { text = await transcribeDashScope({ audio, format, signal }) } catch (error) {
+      if (error instanceof HttpError) throw error
+      if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw new HttpError(504, '语音识别超时')
+      throw new HttpError(502, '语音识别服务暂时不可用')
+    }
+    assert(text, 502, '语音识别未返回文字')
+    return c.json({ text })
+  }
+
   const contentTypes = { mp3: 'audio/mpeg', aac: 'audio/aac', wav: 'audio/wav', m4a: 'audio/mp4' }
   const form = new FormData()
   form.append('model', config.sttModel)
@@ -310,7 +373,7 @@ ai.post('/:homeId/ai/transcribe', requireHomeMember('caregiver_view'), async (c)
   try {
     response = await fetch(config.sttApiUrl, {
       method: 'POST',
-      signal: requestSignal(c, config.sttUpstreamTimeoutMs),
+      signal,
       headers: { Authorization: `Bearer ${config.sttApiKey}` },
       body: form,
     })
@@ -348,7 +411,8 @@ ai.post('/:homeId/ai/speech', requireHomeMember('caregiver_view'), async (c) => 
   const data = await response.json().catch(() => ({}))
   const audioUrl = data.audioUrl || data.url || data?.output?.audio?.url || ''
   if (!response.ok || !audioUrl) throw new HttpError(502, data?.message || '语音合成失败')
-  return c.json({ audioUrl })
+  const token = storeAiMedia({ remoteUrl: audioUrl, contentType: 'audio/mpeg' })
+  return c.json({ audioUrl: publicMediaUrl(token) })
 })
 
 export default ai

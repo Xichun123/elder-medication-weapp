@@ -21,7 +21,7 @@
     <view wx:for="{{messages}}" wx:key="index" class="bubble-wrap {{item.role}}">
       <view class="bubble {{item.role}}">
         <text>{{item.content}}</text>
-        <view wx:if="{{item.role === 'assistant' && item.content}}" class="play-audio" data-text="{{item.content}}" bindtap="playMessage">🔊 播放语音</view>
+        <view wx:if="{{item.role === 'assistant' && item.content}}" class="play-audio" data-text="{{item.content}}" data-audio="{{item.audioUrl}}" bindtap="playMessage">🔊 播放语音</view>
 
         <view wx:if="{{item.pendingAction}}" class="confirm-card">
           <block wx:if="{{item.pendingAction.type === 'mark_taken'}}">
@@ -61,9 +61,9 @@
   </scroll-view>
 
   <view class="composer">
-    <button wx:if="{{mode === 'elder'}}" class="voice-input {{recording ? 'recording' : ''}}" disabled="{{sending || transcribing || !privacyConsented}}" bindtap="toggleRecording">{{recording ? '■' : '🎤'}}</button>
+    <button class="voice-input {{recording ? 'recording' : ''}}" disabled="{{sending || transcribing}}" bindtap="toggleRecording">{{recording ? '■' : '🎤'}}</button>
     <input value="{{input}}" placeholder="输入问题" bindinput="onInput" bindconfirm="send" confirm-type="send" />
-    <button loading="{{sending}}" disabled="{{sending || !privacyConsented}}" bindtap="send">发送</button>
+    <button loading="{{sending}}" disabled="{{sending}}" bindtap="send">发送</button>
   </view>
   <view wx:if="{{mode === 'elder' && (recording || transcribing)}}" class="voice-status">{{recording ? '正在录音，再点一次结束' : '正在识别，请稍候…'}}</view>
 </view>

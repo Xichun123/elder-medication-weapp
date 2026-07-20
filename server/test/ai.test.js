@@ -71,11 +71,29 @@ function createUpstreamServer() {
     mockCallCount += 1
 
     if (request.url === '/v1/audio/speech') {
-      json(response, 200, { output: { audio: { url: 'https://audio.example.test/answer.mp3' } } })
+      json(response, 200, { output: { audio: { url: `${upstreamUrl}/mock-audio.mp3` } } })
+      return
+    }
+    if (request.url === '/mock-audio.mp3') {
+      response.writeHead(200, { 'content-type': 'audio/mpeg' })
+      response.end(Buffer.from('mock-audio'))
       return
     }
     if (request.url === '/v1/audio/transcriptions') {
-      json(response, 200, { text: '我刚吃了药' })
+      json(response, 200, { output: { task_id: 'mock-asr-task', task_status: 'PENDING' } })
+      return
+    }
+    if (request.url === '/api/v1/tasks/mock-asr-task') {
+      json(response, 200, {
+        output: {
+          task_status: 'SUCCEEDED',
+          results: [{ subtask_status: 'SUCCEEDED', transcription_url: `${upstreamUrl}/mock-transcript.json` }],
+        },
+      })
+      return
+    }
+    if (request.url === '/mock-transcript.json') {
+      json(response, 200, { transcripts: [{ text: '我刚吃了药' }] })
       return
     }
 
@@ -177,6 +195,7 @@ test.before(async () => {
       ALLOW_DEV_LOGIN: '1',
       JWT_SECRET: 'test-secret-at-least-32-characters-long',
       DATABASE_PATH: databasePath,
+      PUBLIC_BASE_URL: baseUrl,
       WX_APP_ID: '',
       WX_APP_SECRET: '',
       AI_API_URL: `${upstreamUrl}/v1/chat/completions`,
@@ -186,6 +205,7 @@ test.before(async () => {
       AI_REQUEST_TIMEOUT_MS: '1500',
       AI_ACTION_TTL_MS: '60000',
       STT_API_URL: `${upstreamUrl}/v1/audio/transcriptions`,
+      STT_PROVIDER: 'dashscope_async',
       STT_API_KEY: 'mock-stt-key',
       STT_MODEL: 'mock-stt-model',
       STT_UPSTREAM_TIMEOUT_MS: '500',
@@ -544,7 +564,10 @@ test('TTS 使用独立配置和模拟上游', async () => {
     body: { text: '请按确认卡核对药名和剂量。' },
   })
   assert.equal(result.status, 200)
-  assert.equal(result.data.audioUrl, 'https://audio.example.test/answer.mp3')
+  assert.match(result.data.audioUrl, new RegExp(`^${baseUrl}/ai-media/`))
+  const audio = await fetch(result.data.audioUrl)
+  assert.equal(audio.status, 200)
+  assert.equal(await audio.text(), 'mock-audio')
   const request = mockRequests.find((item) => item.url === '/v1/audio/speech')
   assert.ok(request)
   assert.equal(request.body.model, 'mock-tts-model')

@@ -70,12 +70,19 @@ Page({
       } else {
         store.setFamilyId(selectedId)
       }
-      const [overview, recordsData, remindersData, alertData] = await Promise.all([
+      const [overview, recordsData, remindersData] = await Promise.all([
         api.families.overview(selectedId),
         api.records.list({ family: selectedId }),
         api.reminders.list({ family: selectedId, status: 'pending' }),
-        api.alerts.list({ unread: true }),
       ])
+      // 健康提醒是新增能力。生产后端尚未升级时可能返回 404，不能因此丢弃
+      // 已经成功加载的家庭、老人、用药和提醒数据。
+      let alertData = { unreadCount: 0 }
+      try {
+        alertData = await api.alerts.list({ unread: true })
+      } catch (error) {
+        if (error.statusCode !== 404) console.warn('加载健康提醒失败', error)
+      }
       const elders = overview.elders || []
       const records = unwrap(recordsData).slice(0, 5)
       const reminders = unwrap(remindersData)
