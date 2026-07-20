@@ -109,8 +109,18 @@ function createUpstreamServer() {
       return
     }
 
+    const systemText = Array.isArray(body.messages)
+      ? body.messages.filter((item) => item.role === 'system').map((item) => item.content || '').join('\n')
+      : ''
     let message
-    if (!hasToolResult && mockMode === 'tool_mark') message = toolMessage('propose_mark_taken')
+    if (systemText.includes('适老化陪伴短句助手')) {
+      message = {
+        role: 'assistant',
+        content: mockMode === 'companion_unsafe'
+          ? JSON.stringify({ companion: '每天多吃两片，血压会降得更快' })
+          : JSON.stringify({ companion: '今天也要保持好心情' }),
+      }
+    } else if (!hasToolResult && mockMode === 'tool_mark') message = toolMessage('propose_mark_taken')
     else if (!hasToolResult && (mockMode === 'tool_symptom' || mockMode === 'followup_fail')) {
       message = toolMessage('propose_record_symptom', { symptom: '头晕', severity: 'normal' })
     } else if (!hasToolResult && mockMode === 'tool_adherence') {
@@ -215,6 +225,7 @@ test.before(async () => {
       TTS_API_KEY: 'mock-tts-key',
       TTS_MODEL: 'mock-tts-model',
       TTS_VOICE: 'mock-voice',
+      TTS_VOICE_MAP: 'dialect_dongbei:mock-dongbei-voice,dialect_sichuan:mock-sichuan-voice,female_warm:mock-voice',
       TTS_UPSTREAM_TIMEOUT_MS: '500',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -593,12 +604,23 @@ test('紧急症状确认后形成家属可见、可标记已读的闭环', async
   assert.equal(elderForbidden.status, 403)
 })
 
+test('TTS 未经隐私同意时拒绝调用上游', async () => {
+  resetMock('normal')
+  const result = await api(`/homes/${context.homeId}/ai/speech`, {
+    token: context.elder.token,
+    method: 'POST',
+    body: { text: '请按时吃药。' },
+  })
+  assert.equal(result.status, 400)
+  assert.ok(!mockRequests.some((item) => item.url === '/v1/audio/speech'))
+})
+
 test('TTS 使用独立配置和模拟上游', async () => {
   resetMock('normal')
   const result = await api(`/homes/${context.homeId}/ai/speech`, {
     token: context.elder.token,
     method: 'POST',
-    body: { text: '请按确认卡核对药名和剂量。' },
+    body: { text: '请按确认卡核对药名和剂量。', aiConsent: true },
   })
   assert.equal(result.status, 200)
   assert.match(result.data.audioUrl, new RegExp(`^${baseUrl}/ai-media/`))
@@ -609,6 +631,139 @@ test('TTS 使用独立配置和模拟上游', async () => {
   assert.ok(request)
   assert.equal(request.body.model, 'mock-tts-model')
   assert.equal(request.body.input.voice, 'mock-voice')
+})
+
+test('方言音色会映射到配置的 TTS voice', async () => {
+  resetMock('normal')
+  const result = await api(`/homes/${context.homeId}/ai/speech`, {
+    token: context.elder.token,
+    method: 'POST',
+    body: { text: '秀兰奶奶早上好，该吃降压药了。', tone: 'dialect_dongbei', aiConsent: true },
+  })
+  assert.equal(result.status, 200)
+  const request = mockRequests.filter((item) => item.url === '/v1/audio/speech').at(-1)
+  assert.ok(request)
+  assert.equal(request.body.input.voice, 'mock-dongbei-voice')
+  assert.equal(result.data.voice, 'mock-dongbei-voice')
+})
+
+test('可重生成 AI 温情陪伴播报文案', async () => {
+  resetMock('normal')
+  const listed = await api(`/homes/${context.homeId}/reminders?status=pending`, {
+    token: context.owner.token,
+  })
+  assert.equal(listed.status, 200)
+  assert.ok(listed.data.reminders.length >= 1)
+  const reminderId = listed.data.reminders[0].id
+
+  const result = await api(`/homes/${context.homeId}/reminders/${reminderId}/regenerate-voice`, {
+    token: context.owner.token,
+    method: 'POST',
+    body: { preferAi: true, aiConsent: true },
+  })
+  assert.equal(result.status, 200)
+  assert.match(result.data.reminder.voiceText, /测试降压药/)
+  assert.ok(result.data.reminder.voiceGeneratedOn)
+  assert.equal(result.data.reminder.voiceGenerationSource, 'ai')
+  assert.match(result.data.reminder.voiceText, /好心情|家人|慢慢来/)
+
+  const refresh = await api(`/homes/${context.homeId}/reminders/refresh-companion`, {
+    token: context.elder.token,
+    method: 'POST',
+    body: { preferAi: true, aiConsent: true },
+  })
+  assert.equal(refresh.status, 200)
+  assert.ok(refresh.data.reminders.every((item) => item.voiceGenerationSource === 'ai'))
+
+  const repeated = await api(`/homes/${context.homeId}/reminders/refresh-companion`, {
+    token: context.elder.token,
+    method: 'POST',
+    body: { preferAi: true, aiConsent: true },
+  })
+  assert.equal(repeated.status, 200)
+  assert.equal(repeated.data.refreshed, 0)
+})
+
+test('温情文案刷新限制权限、强制刷新和隐私同意', async () => {
+  const viewer = await api(`/homes/${context.homeId}/reminders/refresh-companion`, {
+    token: context.viewer.token,
+    method: 'POST',
+    body: { preferAi: false },
+  })
+  assert.equal(viewer.status, 403)
+
+  const elderForce = await api(`/homes/${context.homeId}/reminders/refresh-companion`, {
+    token: context.elder.token,
+    method: 'POST',
+    body: { force: true, preferAi: false },
+  })
+  assert.equal(elderForce.status, 403)
+
+  const noConsent = await api(`/homes/${context.homeId}/reminders/refresh-companion`, {
+    token: context.elder.token,
+    method: 'POST',
+    body: { preferAi: true },
+  })
+  assert.equal(noConsent.status, 400)
+})
+
+test('AI 返回医疗或剂量建议时回退安全模板', async () => {
+  resetMock('companion_unsafe')
+  const listed = await api(`/homes/${context.homeId}/reminders`, { token: context.owner.token })
+  const reminderId = listed.data.reminders[0].id
+  const result = await api(`/homes/${context.homeId}/reminders/${reminderId}/regenerate-voice`, {
+    token: context.owner.token,
+    method: 'POST',
+    body: { preferAi: true, aiConsent: true },
+  })
+  assert.equal(result.status, 200)
+  assert.equal(result.data.reminder.voiceGenerationSource, 'template')
+  assert.ok(!/两片|血压|停药|疗程/.test(result.data.reminder.voiceText))
+
+  // 模型临时返回不安全内容时只标记为模板；当天恢复后仍会再次尝试 AI。
+  resetMock('normal')
+  const retry = await api(`/homes/${context.homeId}/reminders/refresh-companion`, {
+    token: context.owner.token,
+    method: 'POST',
+    body: { elderId: context.elderId, preferAi: true, aiConsent: true },
+  })
+  assert.equal(retry.status, 200)
+  const regenerated = retry.data.reminders.find((item) => item.id === reminderId)
+  assert.equal(regenerated?.voiceGenerationSource, 'ai')
+})
+
+test('陪伴文案上游请求同时受服务端超时控制', async () => {
+  resetMock('slow')
+  const listed = await api(`/homes/${context.homeId}/reminders`, { token: context.owner.token })
+  const startedAt = Date.now()
+  const result = await api(`/homes/${context.homeId}/reminders/${listed.data.reminders[0].id}/regenerate-voice`, {
+    token: context.owner.token,
+    method: 'POST',
+    body: { preferAi: true, aiConsent: true },
+  })
+  assert.equal(result.status, 200)
+  assert.equal(result.data.reminder.voiceGenerationSource, 'template')
+  assert.ok(Date.now() - startedAt < 850)
+})
+
+test('AI 温情文案按用户限制刷新频率', async () => {
+  resetMock('normal')
+  const listed = await api(`/homes/${context.homeId}/reminders`, { token: context.editor.token })
+  const reminderId = listed.data.reminders[0].id
+  for (let index = 0; index < 4; index += 1) {
+    const allowed = await api(`/homes/${context.homeId}/reminders/${reminderId}/regenerate-voice`, {
+      token: context.editor.token,
+      method: 'POST',
+      body: { preferAi: true, aiConsent: true },
+    })
+    assert.equal(allowed.status, 200)
+  }
+  const limited = await api(`/homes/${context.homeId}/reminders/${reminderId}/regenerate-voice`, {
+    token: context.editor.token,
+    method: 'POST',
+    body: { preferAi: true, aiConsent: true },
+  })
+  assert.equal(limited.status, 429)
 })
 
 test('老人录音通过独立 STT 配置识别为文字', async () => {

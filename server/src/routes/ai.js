@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { config } from '../config.js'
 import { getDb } from '../db.js'
 import { HttpError, assert } from '../errors.js'
+import { resolveTtsVoice } from '../companion-voice.js'
 import { getElderInHome } from '../domain.js'
 import { requireAuth, requireHomeMember } from '../middleware.js'
 import { deleteAiMedia, storeAiMedia } from '../ai-media.js'
@@ -423,8 +424,10 @@ ai.post('/:homeId/ai/speech', requireHomeMember('caregiver_view'), async (c) => 
   enforceAiRateLimit(c, 'speech', 30)
   if (!config.ttsApiUrl || !config.ttsApiKey || !config.ttsModel) throw new HttpError(503, '语音合成服务尚未配置')
   const body = await c.req.json().catch(() => ({}))
+  assert(body.aiConsent === true, 400, '使用第三方语音合成前需要用户明确同意隐私说明')
   const text = cleanText(body.text, 1800)
   assert(text, 400, '播报文字不能为空')
+  const voice = resolveTtsVoice(body.voice || body.tone || body.voiceTone) || config.ttsVoice
   let response
   try {
     response = await fetch(config.ttsApiUrl, {
@@ -433,7 +436,7 @@ ai.post('/:homeId/ai/speech', requireHomeMember('caregiver_view'), async (c) => 
       headers: { Authorization: `Bearer ${config.ttsApiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: config.ttsModel,
-        input: { text, voice: config.ttsVoice, language_type: 'Chinese' },
+        input: { text, voice, language_type: 'Chinese' },
       }),
     })
   } catch (error) {
@@ -444,7 +447,7 @@ ai.post('/:homeId/ai/speech', requireHomeMember('caregiver_view'), async (c) => 
   const audioUrl = data.audioUrl || data.url || data?.output?.audio?.url || ''
   if (!response.ok || !audioUrl) throw new HttpError(502, data?.message || '语音合成失败')
   const token = storeAiMedia({ remoteUrl: audioUrl, contentType: 'audio/mpeg' })
-  return c.json({ audioUrl: publicMediaUrl(token) })
+  return c.json({ audioUrl: publicMediaUrl(token), voice })
 })
 
 export default ai

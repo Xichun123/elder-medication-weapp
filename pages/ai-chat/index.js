@@ -1,10 +1,9 @@
 const api = require('../../utils/api')
+const aiPrivacy = require('../../utils/ai-privacy')
 const config = require('../../utils/config')
 const session = require('../../utils/session')
 const voice = require('../../utils/voice')
 const { showError } = require('../../utils/helpers')
-
-const PRIVACY_KEY = 'yao_ling_tong.ai_privacy_consent_v1'
 
 function makeMessage(role, content, extra = {}) {
   return { role, content: String(content || ''), audioUrl: '', pendingAction: null, candidates: [], ...extra }
@@ -55,29 +54,11 @@ Page({
     }
   },
 
-  ensurePrivacyConsent() {
-    if (wx.getStorageSync(PRIVACY_KEY)) {
-      this.setData({ privacyConsented: true })
-      return Promise.resolve(true)
-    }
-    return new Promise((resolve) => {
-      wx.showModal({
-        title: 'AI 隐私说明',
-        content: '为回答问题，相关用药记录、过敏史、症状、对话内容和主动录制的语音会发送给已配置的第三方 AI/语音服务处理。请确认知情后继续。',
-        confirmText: '同意',
-        cancelText: '取消',
-        success: (res) => {
-          if (!res.confirm) { resolve(false); return }
-          wx.setStorageSync(PRIVACY_KEY, true)
-          this.setData({ privacyConsented: true })
-          resolve(true)
-        },
-        fail: () => {
-          wx.showToast({ title: '无法打开隐私确认，请重试', icon: 'none' })
-          resolve(false)
-        },
-      })
-    })
+  async ensurePrivacyConsent() {
+    const consented = await aiPrivacy.ensureConsent()
+    this.setData({ privacyConsented: consented })
+    if (!consented) wx.showToast({ title: '未启用 AI，可继续查看普通提醒', icon: 'none' })
+    return consented
   },
 
   initializePage() {
@@ -177,11 +158,12 @@ Page({
   async speakText(text, existingAudioUrl = '') {
     const value = String(text || '').trim()
     if (!value || this.data.speaking) return
+    if (!this.data.privacyConsented && !(await this.ensurePrivacyConsent())) return
     this.setData({ speaking: true })
     try {
       let audioUrl = existingAudioUrl
       if (!audioUrl) {
-        const result = await api.ai.speech(value)
+        const result = await api.ai.speech(value, { aiConsent: true })
         audioUrl = result.audioUrl
       }
       await voice.playUrl(audioUrl)

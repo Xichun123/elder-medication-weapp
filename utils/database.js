@@ -145,11 +145,50 @@ function contraindicationView(item) {
   }
 }
 
-function generateVoiceText(elder, drug) {
-  const category = label('drug_category', drug.category)
-  return category && category !== '其他'
-    ? `${elder.name}，该服${category}${drug.generic_name}了`
-    : `${elder.name}，该服${drug.generic_name}了`
+function companionHonorific(elder = {}) {
+  const full = String(elder.name || '').trim()
+  if (/(?:爷爷|奶奶|外公|外婆|叔叔|阿姨)$/.test(full)) return full
+  const name = full.length > 2 ? full.slice(-2) : (full || '亲爱的')
+  const relationship = String(elder.relationship || '')
+  const gender = elder.gender === 'male' ? 'male' : 'female'
+  if (/父|爷|公|叔|舅|爹/.test(relationship) || gender === 'male') return `${name}爷爷`
+  if (/母|奶|婆|姨|姑|妈/.test(relationship) || gender === 'female') return `${name}奶奶`
+  return name
+}
+
+function greetingByRemindTime(remindTime) {
+  const match = String(remindTime || '').match(/(\d{1,2}):(\d{2})/)
+  const hour = match ? Number(match[1]) : new Date().getHours()
+  if (hour < 6) return '凌晨好'
+  if (hour < 11) return '早上好'
+  if (hour < 14) return '中午好'
+  if (hour < 18) return '下午好'
+  return '晚上好'
+}
+
+function careTip(salt = '') {
+  const tips = ['别着急，慢慢来', '今天也要保持好心情', '家人一直惦记着您', '每一天都要好好照顾自己', '我会一直陪着您']
+  let hash = 0
+  const key = String(salt || '')
+  for (let i = 0; i < key.length; i += 1) hash = (hash * 31 + key.charCodeAt(i)) >>> 0
+  return tips[hash % tips.length]
+}
+
+function generateVoiceText(elder, drug, remindTime = '') {
+  const category = drug.category || 'other'
+  const categoryLabel = label('drug_category', category)
+  const medicine = categoryLabel && categoryLabel !== '其他'
+    ? `${categoryLabel}${drug.generic_name}`
+    : drug.generic_name
+  const tip = careTip(`${remindTime}:${drug.generic_name}`)
+  const tone = elder.voice_tone || 'female_warm'
+  const flavorEnd = {
+    dialect_dongbei: '啊，我可惦记着您呢',
+    dialect_sichuan: '噻，我一直陪到您',
+    dialect_cantonese: '啦，慢慢食药，唔使急',
+    dialect_henan: '中不中？我一直陪着您',
+  }[tone] || '我一直陪着您'
+  return `${companionHonorific(elder)}${greetingByRemindTime(remindTime)}，该吃${medicine}了。${tip}，${flavorEnd}。`
 }
 
 function autoCreateReminders(record) {
@@ -174,7 +213,7 @@ function autoCreateReminders(record) {
       medication_record: record.record_id,
       remind_time: remindTime,
       status: 'pending',
-      voice_text: generateVoiceText(elder, drug),
+      voice_text: generateVoiceText(elder, drug, remindTime),
       created_at: now(),
     }
     rows.push(item)

@@ -91,6 +91,8 @@ function mapReminder(item) {
     status: item.status,
     status_label: item.statusLabel || label('reminder_status', item.status),
     voice_text: item.voiceText,
+    voice_generated_on: item.voiceGeneratedOn || '',
+    voice_generation_source: item.voiceGenerationSource || 'template',
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   }
@@ -384,12 +386,26 @@ const api = {
       const result = await remote.request({ path: homePath(`/reminders/${id}/skip`), method: 'POST' })
       return mapReminder(result.reminder)
     },
-    async regenerateVoice(id) {
+    async regenerateVoice(id, options = {}) {
       const result = await remote.request({
         path: homePath(`/reminders/${id}/regenerate-voice`),
         method: 'POST',
+        data: {
+          preferAi: options.preferAi === true,
+          aiConsent: options.aiConsent === true,
+        },
+        timeout: config.aiRequestTimeout,
       })
       return mapReminder(result.reminder)
+    },
+    async refreshCompanion(data = {}) {
+      const result = await remote.request({
+        path: homePath('/reminders/refresh-companion'),
+        method: 'POST',
+        data,
+        timeout: config.aiRequestTimeout,
+      })
+      return result
     },
   },
 
@@ -490,8 +506,18 @@ const api = {
     async transcribe(data) {
       return remote.request({ path: homePath('/ai/transcribe'), method: 'POST', data, timeout: config.sttRequestTimeout })
     },
-    async speech(text) {
-      return remote.request({ path: homePath('/ai/speech'), method: 'POST', data: { text }, timeout: config.ttsRequestTimeout })
+    async speech(text, options = {}) {
+      return remote.request({
+        path: homePath('/ai/speech'),
+        method: 'POST',
+        data: {
+          text,
+          tone: options.tone || options.voiceTone || '',
+          voice: options.voice || '',
+          aiConsent: options.aiConsent === true,
+        },
+        timeout: config.ttsRequestTimeout,
+      })
     },
   },
 

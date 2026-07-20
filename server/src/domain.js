@@ -1,7 +1,15 @@
+import {
+  generateCompanionVoice,
+  generateCompanionVoiceText,
+  resolveCaregiverName,
+} from './companion-voice.js'
 import { getDb, nowIso } from './db.js'
 import { HttpError, assert } from './errors.js'
 import { newId } from './ids.js'
 import { label } from './labels.js'
+
+export const generateVoiceText = generateCompanionVoiceText
+export { generateCompanionVoice, generateCompanionVoiceText, resolveCaregiverName }
 
 export const FREQUENCY_TIMES = {
   每日1次: ['早8:00'],
@@ -24,13 +32,6 @@ function reminderMinutes(value) {
   const match = String(value || '').match(/(\d{1,2}):(\d{2})/)
   if (!match) return Number.MAX_SAFE_INTEGER
   return Number(match[1]) * 60 + Number(match[2])
-}
-
-export function generateVoiceText(elderName, drug) {
-  const category = label('drug_category', drug.category)
-  return category && category !== '其他'
-    ? `${elderName}，该服${category}${drug.generic_name}了`
-    : `${elderName}，该服${drug.generic_name}了`
 }
 
 export function assertElderScope(membership, elderProfileId) {
@@ -126,6 +127,8 @@ export function mapReminder(row, today = localDate()) {
     status,
     statusLabel: label('reminder_status', status),
     voiceText: row.voice_text,
+    voiceGeneratedOn: row.voice_generated_on || '',
+    voiceGenerationSource: row.voice_generation_source || 'template',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -267,15 +270,23 @@ export function createRemindersForRecord(record, elder, drug) {
   const ts = nowIso()
   const created = []
 
+  const caregiverName = resolveCaregiverName(record.home_id)
+  const dayKey = localDate()
   times.forEach((remindTime) => {
     const id = newId('T')
-    const voiceText = generateVoiceText(elder.name, drug)
+    const voiceText = generateVoiceText({
+      elder,
+      drug,
+      remindTime,
+      caregiverName,
+      dayKey,
+    })
     db.prepare(`
       INSERT INTO reminder_rules (
         id, home_id, elder_profile_id, record_id, remind_time, status, status_date,
-        voice_text, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, 'pending', NULL, ?, ?, ?)
-    `).run(id, record.home_id, record.elder_profile_id, record.id, remindTime, voiceText, ts, ts)
+        voice_text, voice_generated_on, voice_generation_source, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, 'pending', NULL, ?, ?, 'template', ?, ?)
+    `).run(id, record.home_id, record.elder_profile_id, record.id, remindTime, voiceText, dayKey, ts, ts)
     created.push(mapReminder({
       id,
       home_id: record.home_id,
@@ -285,7 +296,10 @@ export function createRemindersForRecord(record, elder, drug) {
       drug_name: drug.generic_name,
       remind_time: remindTime,
       status: 'pending',
+      status_date: null,
       voice_text: voiceText,
+      voice_generated_on: dayKey,
+      voice_generation_source: 'template',
       created_at: ts,
       updated_at: ts,
     }))

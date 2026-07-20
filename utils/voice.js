@@ -1,12 +1,21 @@
-// 本地提醒保留大字弹窗降级；AI 回答通过服务端 TTS URL 使用 InnerAudioContext 播放。
-function speak(text) {
-  const value = String(text || '').trim()
-  if (!value) return Promise.resolve()
-  try { wx.vibrateShort({ type: 'medium' }) } catch (error) { console.warn(error) }
+// 优先走服务端 TTS（支持方言音色）；失败时降级为大字弹窗。
+const api = require('./api')
+const aiPrivacy = require('./ai-privacy')
+const config = require('./config')
+
+let audioContext
+let speaking = false
+
+function getAudioContext() {
+  if (!audioContext) audioContext = wx.createInnerAudioContext({ useWebAudioImplement: true })
+  return audioContext
+}
+
+function showModalFallback(text) {
   return new Promise((resolve) => {
     wx.showModal({
-      title: '🔊 用药提醒',
-      content: value,
+      title: '🔊 温情用药提醒',
+      content: text,
       showCancel: false,
       confirmText: '我知道了',
       complete: resolve,
@@ -14,13 +23,35 @@ function speak(text) {
   })
 }
 
-function stop() {}
+function speak(text, options = {}) {
+  const value = String(text || '').trim()
+  if (!value) return Promise.resolve()
+  try { wx.vibrateShort({ type: 'medium' }) } catch (error) { console.warn(error) }
 
-let audioContext
+  const preferTts = options.preferTts !== false && !config.useLocalApi && api.ai && typeof api.ai.speech === 'function'
+  if (!preferTts) return showModalFallback(value)
 
-function getAudioContext() {
-  if (!audioContext) audioContext = wx.createInnerAudioContext({ useWebAudioImplement: true })
-  return audioContext
+  if (speaking) return Promise.resolve()
+  speaking = true
+  return aiPrivacy.ensureConsent()
+    .then((consented) => {
+      if (!consented) return showModalFallback(value)
+      return api.ai.speech(value, {
+        tone: options.tone || options.voiceTone || '',
+        aiConsent: true,
+      }).then((result) => playUrl(result.audioUrl))
+    })
+    .catch((error) => {
+      console.warn('TTS 播报失败，已降级弹窗', error)
+      return showModalFallback(value)
+    })
+    .finally(() => {
+      speaking = false
+    })
+}
+
+function stop() {
+  stopRemote()
 }
 
 function playUrl(url) {
@@ -41,6 +72,7 @@ function destroy() {
     audioContext.destroy()
     audioContext = null
   }
+  speaking = false
 }
 
 module.exports = { speak, stop, playUrl, stopRemote, destroy }

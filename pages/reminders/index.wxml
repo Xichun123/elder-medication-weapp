@@ -1,5 +1,5 @@
 <view class="page with-safe-bottom">
-  <text class="page-title">提醒规则</text><text class="page-subtitle">可远程标记已服 / 跳过，保留语音播报文本</text>
+  <text class="page-title">提醒规则</text><text class="page-subtitle">温情陪伴播报 · 可重生成今日文案 · 远程标记已服/跳过</text>
   <view class="status-grid">
     <view class="status-card pending {{status === 'pending' ? 'active' : ''}}" data-value="pending" bindtap="toggleStatus"><text class="status-num">{{counts.pending}}</text><text>⏰ 待服</text></view>
     <view class="status-card taken {{status === 'taken' ? 'active' : ''}}" data-value="taken" bindtap="toggleStatus"><text class="status-num">{{counts.taken}}</text><text>✓ 已服</text></view>
@@ -10,10 +10,10 @@
   <view wx:for="{{list}}" wx:key="rule_id" class="list-card reminder {{item.status}}">
     <view class="row between gap"><view><text class="remind-time">{{item.remind_time}}</text><text class="list-title">{{item.drug_name}}</text></view><text class="tag {{item.status === 'pending' ? 'warning' : item.status === 'taken' ? 'success' : item.status === 'abnormal' ? 'danger' : ''}}">{{item.status_label}}</text></view>
     <view class="list-subtitle">{{item.elder_name}} · 规则 {{item.rule_id}}</view>
-    <view class="voice">🔊 {{item.voice_text}}</view>
+    <view class="voice">💛 {{item.voice_text}}</view>
     <view class="actions">
-      <button class="btn small" data-id="{{item.rule_id}}" bindtap="play">播报</button>
-      <button wx:if="{{canEdit}}" class="btn small" data-id="{{item.rule_id}}" bindtap="regenerate">重生成文本</button>
+      <button class="btn small" data-id="{{item.rule_id}}" bindtap="play">温情播报</button>
+      <button wx:if="{{canEdit}}" class="btn small" data-id="{{item.rule_id}}" bindtap="regenerate">重生成温情文案</button>
       <button wx:if="{{canTake && item.status === 'pending'}}" class="btn success small" data-id="{{item.rule_id}}" bindtap="take">✓ 已服</button>
       <button wx:if="{{canTake && item.status === 'pending'}}" class="btn small" data-id="{{item.rule_id}}" bindtap="skip">⊘ 跳过</button>
       <button class="btn teal small" data-elder="{{item.elder}}" bindtap="openElderly">老人端</button>

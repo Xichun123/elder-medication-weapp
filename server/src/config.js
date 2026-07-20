@@ -65,7 +65,25 @@ export const config = {
   ttsApiKey: process.env.TTS_API_KEY || '',
   ttsModel: process.env.TTS_MODEL || '',
   ttsVoice: process.env.TTS_VOICE || '',
+  // 例：female_warm:longxiaochun,male:longshu,dialect_dongbei:longlaotie
+  ttsVoiceMap: parseVoiceMap(process.env.TTS_VOICE_MAP || ''),
   ttsUpstreamTimeoutMs: Number(process.env.TTS_UPSTREAM_TIMEOUT_MS || 15_000),
+}
+
+function parseVoiceMap(raw) {
+  const map = {}
+  String(raw || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .forEach((pair) => {
+      const index = pair.indexOf(':')
+      if (index <= 0) return
+      const key = pair.slice(0, index).trim()
+      const value = pair.slice(index + 1).trim()
+      if (key && value) map[key] = value
+    })
+  return map
 }
 
 function assertInteger(name, value, minimum) {

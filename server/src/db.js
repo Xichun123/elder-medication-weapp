@@ -99,6 +99,8 @@ CREATE TABLE IF NOT EXISTS reminder_rules (
   status TEXT NOT NULL DEFAULT 'pending',
   status_date TEXT,
   voice_text TEXT NOT NULL DEFAULT '',
+  voice_generated_on TEXT NOT NULL DEFAULT '',
+  voice_generation_source TEXT NOT NULL DEFAULT 'template',
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -263,6 +265,12 @@ function migrateSchema(database) {
   const reminderColumns = database.prepare('PRAGMA table_info(reminder_rules)').all()
   if (!reminderColumns.some((column) => column.name === 'status_date')) {
     database.exec('ALTER TABLE reminder_rules ADD COLUMN status_date TEXT')
+  }
+  if (!reminderColumns.some((column) => column.name === 'voice_generated_on')) {
+    database.exec("ALTER TABLE reminder_rules ADD COLUMN voice_generated_on TEXT NOT NULL DEFAULT ''")
+  }
+  if (!reminderColumns.some((column) => column.name === 'voice_generation_source')) {
+    database.exec("ALTER TABLE reminder_rules ADD COLUMN voice_generation_source TEXT NOT NULL DEFAULT 'template'")
   }
 
   const drugColumns = database.prepare('PRAGMA table_info(drugs)').all()

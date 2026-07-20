@@ -33,6 +33,10 @@ const dictionaries = {
   voice_tone: [
     { value: 'female_warm', label: '女声温和' },
     { value: 'male', label: '男声' },
+    { value: 'dialect_dongbei', label: '东北话' },
+    { value: 'dialect_sichuan', label: '四川话' },
+    { value: 'dialect_cantonese', label: '粤语' },
+    { value: 'dialect_henan', label: '河南话' },
   ],
   severity: [
     { value: 'light', label: '轻' },
@@ -86,11 +90,11 @@ function createSeedData() {
       { record_id: 'R05', elder: 'E04', drug: 'D02', dose: '10mg', frequency: '每日2次', start_date: '2026-02-01', end_date: '2026-12-31' },
     ],
     reminders: [
-      { rule_id: 'T01', elder: 'E01', medication_record: 'R01', remind_time: '早8:00', status: 'pending', voice_text: '李秀兰，该服降压药硝苯地平了' },
-      { rule_id: 'T02', elder: 'E01', medication_record: 'R02', remind_time: '午12:00', status: 'pending', voice_text: '李秀兰，该服降糖药二甲双胍了' },
-      { rule_id: 'T03', elder: 'E02', medication_record: 'R03', remind_time: '早8:00', status: 'pending', voice_text: '王建国，该服抗血小板阿司匹林了' },
-      { rule_id: 'T04', elder: 'E03', medication_record: 'R04', remind_time: '早8:00', status: 'pending', voice_text: '张桂芳，该服抗生素阿莫西林了' },
-      { rule_id: 'T05', elder: 'E04', medication_record: 'R05', remind_time: '晚20:00', status: 'pending', voice_text: '陈志远，该服降压药硝苯地平了' },
+      { rule_id: 'T01', elder: 'E01', medication_record: 'R01', remind_time: '早8:00', status: 'pending', voice_text: '秀兰奶奶早上好，该吃降压药硝苯地平了。今天也要保持好心情，是李明让我提醒您的。' },
+      { rule_id: 'T02', elder: 'E01', medication_record: 'R02', remind_time: '午12:00', status: 'pending', voice_text: '秀兰奶奶中午好，该吃降糖药二甲双胍了。别着急，慢慢来，我一直陪着您。' },
+      { rule_id: 'T03', elder: 'E02', medication_record: 'R03', remind_time: '早8:00', status: 'pending', voice_text: '建国爷爷早上好，该吃抗血小板阿司匹林了。家人一直惦记着您，是王晓让我提醒您的。' },
+      { rule_id: 'T04', elder: 'E03', medication_record: 'R04', remind_time: '早8:00', status: 'pending', voice_text: '桂芳奶奶早上好，该吃抗生素阿莫西林了。每一天都要好好照顾自己，我一直陪着您。' },
+      { rule_id: 'T05', elder: 'E04', medication_record: 'R05', remind_time: '晚20:00', status: 'pending', voice_text: '志远爷爷晚上好，该吃降压药硝苯地平了。今天也要保持好心情，是陈静让我提醒您的。' },
     ],
     contraindications: [
       { relation_id: 'C01', drug_a: 'D04', drug_b: '', drug_b_text: '布洛芬', contra_type: 'co_administration', severity: 'severe', note: '增加消化道出血风险' },

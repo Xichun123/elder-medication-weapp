@@ -1,7 +1,7 @@
 <view class="page with-safe-bottom">
   <view wx:if="{{!editing}}">
     <view class="row between gap">
-      <view><text class="page-title">老人管理</text><text class="page-subtitle">维护长辈基本信息、过敏史与音色偏好</text></view>
+      <view><text class="page-title">老人管理</text><text class="page-subtitle">维护长辈基本信息、过敏史与方言温情播报音色</text></view>
       <button wx:if="{{canEdit}}" class="btn primary small" bindtap="openCreate">＋ 新增</button>
     </view>
     <view class="filter-bar"><input class="search flex-1" value="{{keyword}}" placeholder="搜索姓名 / 关系" bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearch"/><button class="btn small" bindtap="onSearch">搜索</button></view>
@@ -26,7 +26,7 @@
       <view class="field"><text class="field-label required">与家属关系</text><input class="input" value="{{form.relationship}}" placeholder="如 母亲 / 父亲 / 祖母" data-field="relationship" bindinput="onInput"/></view>
       <view class="field"><text class="field-label">性别</text><view class="radio-row"><view class="choice {{form.gender === 'female' ? 'active' : ''}}" data-field="gender" data-value="female" bindtap="choose">女</view><view class="choice {{form.gender === 'male' ? 'active' : ''}}" data-field="gender" data-value="male" bindtap="choose">男</view></view></view>
       <view class="field"><text class="field-label">过敏史</text><textarea class="textarea" value="{{form.allergy_note}}" data-field="allergy_note" bindinput="onInput"/></view>
-      <view class="field"><text class="field-label">音色偏好</text><view class="radio-row"><view class="choice {{form.voice_tone === 'female_warm' ? 'active' : ''}}" data-field="voice_tone" data-value="female_warm" bindtap="choose">女声温和</view><view class="choice {{form.voice_tone === 'male' ? 'active' : ''}}" data-field="voice_tone" data-value="male" bindtap="choose">男声</view></view></view>
+      <view class="field"><text class="field-label">音色 / 方言</text><view class="radio-row wrap"><view class="choice {{form.voice_tone === 'female_warm' ? 'active' : ''}}" data-field="voice_tone" data-value="female_warm" bindtap="choose">女声温和</view><view class="choice {{form.voice_tone === 'male' ? 'active' : ''}}" data-field="voice_tone" data-value="male" bindtap="choose">男声</view><view class="choice {{form.voice_tone === 'dialect_dongbei' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_dongbei" bindtap="choose">东北话</view><view class="choice {{form.voice_tone === 'dialect_sichuan' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_sichuan" bindtap="choose">四川话</view><view class="choice {{form.voice_tone === 'dialect_cantonese' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_cantonese" bindtap="choose">粤语</view><view class="choice {{form.voice_tone === 'dialect_henan' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_henan" bindtap="choose">河南话</view></view><text class="field-hint">方言会用于温情播报 TTS；未配置对应音色时回落到默认女声。</text></view>
       <view class="form-actions"><button class="btn" bindtap="closeForm">取消</button><button class="btn primary" loading="{{saving}}" bindtap="save">保存</button></view>
     </view>
   </view>

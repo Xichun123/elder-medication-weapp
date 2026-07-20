@@ -1,4 +1,5 @@
 const api = require('../../utils/api')
+const aiPrivacy = require('../../utils/ai-privacy')
 const remote = require('../../utils/remote')
 const session = require('../../utils/session')
 const voice = require('../../utils/voice')
@@ -74,14 +75,67 @@ Page({
   async loadReminders() {
     try {
       const reminders = await api.reminders.list()
-      const pending = reminders.filter((item) => item.status === 'pending')
-      const now = new Date()
-      const nowMinutes = now.getHours() * 60 + now.getMinutes()
-      const due = pending.filter((item) => this.reminderMinutes(item.remind_time) <= nowMinutes)
-      const current = due[due.length - 1] || pending[0] || null
-      this.setData({ reminders, pending, current, currentDue: due.length > 0 })
+      this.applyReminders(reminders)
+      this.refreshCompanionInBackground()
     } catch (error) {
       showError(error)
+    }
+  },
+
+  applyReminders(reminders) {
+    const pending = reminders.filter((item) => item.status === 'pending')
+    const now = new Date()
+    const nowMinutes = now.getHours() * 60 + now.getMinutes()
+    const due = pending.filter((item) => this.reminderMinutes(item.remind_time) <= nowMinutes)
+    const current = due[due.length - 1] || pending[0] || null
+    this.setData({ reminders, pending, current, currentDue: due.length > 0 })
+  },
+
+  localDayKey() {
+    const date = new Date()
+    const pad = (value) => String(value).padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  },
+
+  async refreshCompanionInBackground() {
+    if (!api.reminders.refreshCompanion || this._companionRefreshing) return
+    const dayKey = this.localDayKey()
+    const savedConsent = aiPrivacy.hasConsent()
+    if (this._companionDay === dayKey && (!savedConsent || this._companionMode === 'ai')) return
+
+    this._companionRefreshing = true
+    try {
+      let consented = savedConsent
+      if (!consented && !this._privacyPrompted) {
+        this._privacyPrompted = true
+        consented = await aiPrivacy.ensureConsent()
+      }
+
+      let refreshed = 0
+      let aiGenerated = 0
+      let hasMore = true
+      let rounds = 0
+      let serverDay = dayKey
+      while (hasMore && rounds < 4) {
+        const result = await api.reminders.refreshCompanion({
+          preferAi: consented,
+          aiConsent: consented,
+        })
+        refreshed += Number(result.refreshed || 0)
+        aiGenerated += Number(result.aiGenerated || 0)
+        hasMore = result.hasMore === true
+        serverDay = result.date || serverDay
+        rounds += 1
+      }
+
+      this._companionDay = serverDay
+      this._companionMode = consented && aiGenerated === refreshed && !hasMore ? 'ai' : 'template'
+      if (refreshed > 0) this.applyReminders(await api.reminders.list())
+    } catch (error) {
+      // 可选 AI 失败不得阻断提醒查看和确认。
+      console.warn('后台刷新温情播报文案失败', error)
+    } finally {
+      this._companionRefreshing = false
     }
   },
 

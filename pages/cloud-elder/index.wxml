@@ -19,9 +19,9 @@
       <text class="current-label">{{currentDue ? '当前待服药物' : '下一次服药提醒'}}</text>
       <text class="current-time">{{current.remind_time}}</text>
       <text class="current-drug">{{current.drug_name}}</text>
-      <text class="current-voice">🔊 {{current.voice_text}}</text>
+      <text class="current-voice">💛 {{current.voice_text}}</text>
       <view class="current-actions">
-        <button class="elder-btn big" bindtap="playCurrent">播报提醒</button>
+        <button class="elder-btn big" bindtap="playCurrent">听温情提醒</button>
         <button class="elder-btn big primary" loading="{{acting}}" bindtap="takeCurrent">我已服药</button>
       </view>
     </view>
