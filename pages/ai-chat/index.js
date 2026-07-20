@@ -23,7 +23,7 @@ Page({
       return
     }
     this.setData({ mode: options.mode === 'elder' ? 'elder' : 'caregiver', elderId: options.elder || '' })
-    this.initializeRecorder()
+    try { this.initializeRecorder() } catch (error) { console.warn('当前环境无法初始化录音', error) }
     this.ensurePrivacyConsent()
   },
 
@@ -35,17 +35,24 @@ Page({
 
   initializeRecorder() {
     if (!wx.getRecorderManager) return
-    this.recorder = wx.getRecorderManager()
-    this.recorder.onStart(() => this.setData({ recording: true }))
-    this.recorder.onStop((result) => {
+    const recorder = wx.getRecorderManager()
+    if (!recorder
+      || typeof recorder.start !== 'function'
+      || typeof recorder.stop !== 'function'
+      || typeof recorder.onStop !== 'function') return
+    this.recorder = recorder
+    if (typeof recorder.onStart === 'function') recorder.onStart(() => this.setData({ recording: true }))
+    recorder.onStop((result) => {
       this.setData({ recording: false })
       if (!this.unloading) this.transcribeRecording(result)
     })
-    this.recorder.onError((error) => {
-      console.warn('录音失败', error)
-      this.setData({ recording: false, transcribing: false })
-      wx.showToast({ title: '录音失败，请检查麦克风权限', icon: 'none' })
-    })
+    if (typeof recorder.onError === 'function') {
+      recorder.onError((error) => {
+        console.warn('录音失败', error)
+        this.setData({ recording: false, transcribing: false })
+        wx.showToast({ title: '录音失败，请检查麦克风权限', icon: 'none' })
+      })
+    }
   },
 
   ensurePrivacyConsent() {
