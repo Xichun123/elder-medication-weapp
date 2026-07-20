@@ -163,7 +163,14 @@ Page({
       this.setData({ input: text, transcribing: false }, () => this.send())
     } catch (error) {
       this.setData({ transcribing: false })
-      showError(error)
+      if (error.statusCode === 404) {
+        wx.showModal({
+          title: '语音接口未部署',
+          content: '录音已经完成，但生产服务器仍是旧版本，尚无语音识别接口。部署最新 server 后即可使用百炼 Fun-ASR。',
+          showCancel: false,
+          confirmText: '知道了',
+        })
+      } else showError(error)
     }
   },
 
