@@ -1,4 +1,4 @@
-<view class="page ai-page" wx:if="{{privacyReady}}">
+<view class="page ai-page">
   <view class="notice">相关用药、过敏史、症状、对话和主动录制的语音会发送给第三方 AI/语音服务处理。AI 仅供参考，紧急不适请立即就医。</view>
 
   <view class="elder-picker" wx:if="{{elders.length}}">
@@ -61,10 +61,9 @@
   </scroll-view>
 
   <view class="composer">
-    <button wx:if="{{mode === 'elder'}}" class="voice-input {{recording ? 'recording' : ''}}" disabled="{{sending || transcribing}}" bindtap="toggleRecording">{{recording ? '■' : '🎤'}}</button>
+    <button wx:if="{{mode === 'elder'}}" class="voice-input {{recording ? 'recording' : ''}}" disabled="{{sending || transcribing || !privacyConsented}}" bindtap="toggleRecording">{{recording ? '■' : '🎤'}}</button>
     <input value="{{input}}" placeholder="输入问题" bindinput="onInput" bindconfirm="send" confirm-type="send" />
-    <button loading="{{sending}}" disabled="{{sending}}" bindtap="send">发送</button>
+    <button loading="{{sending}}" disabled="{{sending || !privacyConsented}}" bindtap="send">发送</button>
   </view>
   <view wx:if="{{mode === 'elder' && (recording || transcribing)}}" class="voice-status">{{recording ? '正在录音，再点一次结束' : '正在识别，请稍候…'}}</view>
 </view>
-<view wx:else class="privacy-loading">正在打开 AI 用药管家…</view>

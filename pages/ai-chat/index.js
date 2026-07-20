@@ -14,7 +14,7 @@ Page({
   data: {
     mode: 'caregiver', elderId: '', elders: [], elderIndex: -1,
     input: '', sending: false, speaking: false, recording: false, transcribing: false,
-    messages: [], privacyReady: false,
+    messages: [], privacyConsented: false,
   },
 
   onLoad(options) {
@@ -23,7 +23,7 @@ Page({
       return
     }
     this.setData({ mode: options.mode === 'elder' ? 'elder' : 'caregiver', elderId: options.elder || '' })
-    try { this.initializeRecorder() } catch (error) { console.warn('当前环境无法初始化录音', error) }
+    this.initializePage()
     this.ensurePrivacyConsent()
   },
 
@@ -57,7 +57,7 @@ Page({
 
   ensurePrivacyConsent() {
     if (wx.getStorageSync(PRIVACY_KEY)) {
-      this.initializePage()
+      this.setData({ privacyConsented: true })
       return
     }
     wx.showModal({
@@ -68,8 +68,9 @@ Page({
       success: (res) => {
         if (!res.confirm) { wx.navigateBack(); return }
         wx.setStorageSync(PRIVACY_KEY, true)
-        this.initializePage()
+        this.setData({ privacyConsented: true })
       },
+      fail: () => wx.showToast({ title: '无法打开隐私确认，请返回重试', icon: 'none' }),
     })
   },
 
@@ -77,7 +78,7 @@ Page({
     const content = this.data.mode === 'elder'
       ? '您好，我是用药小助手。您可以告诉我“我刚吃了药”或“我头晕”。涉及记录修改时，我会先请您核对并确认。'
       : '您好，我可以查询服药历史和药品注意事项。涉及服药状态或症状记录时，需要您在确认卡上再次确认。'
-    this.setData({ privacyReady: true, messages: [makeMessage('assistant', content)] })
+    this.setData({ messages: [makeMessage('assistant', content)] })
     this.loadElders()
   },
 
@@ -100,7 +101,10 @@ Page({
   usePhrase(event) { this.setData({ input: event.currentTarget.dataset.text }, () => this.send()) },
 
   toggleRecording() {
-    if (this.data.sending || this.data.transcribing || !this.data.privacyReady) return
+    if (this.data.sending || this.data.transcribing || !this.data.privacyConsented) return
+    if (!this.recorder) {
+      try { this.initializeRecorder() } catch (error) { console.warn('当前环境无法初始化录音', error) }
+    }
     if (!this.recorder) { wx.showToast({ title: '当前微信版本不支持录音', icon: 'none' }); return }
     if (this.data.recording) {
       this.recorder.stop()
@@ -108,13 +112,16 @@ Page({
     }
     wx.authorize({
       scope: 'scope.record',
-      success: () => this.recorder.start({
-        duration: 15000,
-        sampleRate: 16000,
-        numberOfChannels: 1,
-        encodeBitRate: 48000,
-        format: 'mp3',
-      }),
+      success: () => {
+        this.recorder.start({
+          duration: 15000,
+          sampleRate: 16000,
+          numberOfChannels: 1,
+          encodeBitRate: 48000,
+          format: 'mp3',
+        })
+        this.setData({ recording: true })
+      },
       fail: () => wx.showModal({
         title: '需要麦克风权限',
         content: '请在设置中允许使用麦克风，才能通过语音和用药助手对话。',
@@ -172,7 +179,7 @@ Page({
 
   async send() {
     const text = String(this.data.input || '').trim()
-    if (!text || this.data.sending || !this.data.privacyReady) return
+    if (!text || this.data.sending || !this.data.privacyConsented) return
     if (!api.ai || !api.ai.chat) { wx.showToast({ title: 'AI 对话需要云端模式', icon: 'none' }); return }
 
     // history 只包含请求前已经存在的消息；当前问题由 message 字段单独发送。
