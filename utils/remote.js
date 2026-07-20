@@ -61,6 +61,17 @@ function getLoginCode() {
 }
 
 async function login() {
+  if (config.devLogin) {
+    const result = await request({
+      path: '/auth/wx-login',
+      method: 'POST',
+      data: { devOpenid: config.devOpenid, nickname: config.devNickname },
+      authenticated: false,
+    })
+    if (!result || !result.token) throw new Error('本地服务器未返回登录态')
+    setToken(result.token)
+    return result
+  }
   // wx.login 的 code 有效期短且只能使用一次，获取后立即换取服务端登录态。
   const code = await getLoginCode()
   const result = await request({
