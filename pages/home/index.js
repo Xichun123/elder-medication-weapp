@@ -16,6 +16,7 @@ Page({
     totalMeds: 0,
     totalPending: 0,
     totalRisks: 0,
+    unreadAlertCount: 0,
     greeting: '您好',
     canEdit: true,
     isRemote: false,
@@ -74,6 +75,14 @@ Page({
         api.records.list({ family: selectedId }),
         api.reminders.list({ family: selectedId, status: 'pending' }),
       ])
+      // 健康提醒是新增能力。生产后端尚未升级时可能返回 404，不能因此丢弃
+      // 已经成功加载的家庭、老人、用药和提醒数据。
+      let alertData = { unreadCount: 0 }
+      try {
+        alertData = await api.alerts.list({ unread: true })
+      } catch (error) {
+        if (error.statusCode !== 404) console.warn('加载健康提醒失败', error)
+      }
       const elders = overview.elders || []
       const records = unwrap(recordsData).slice(0, 5)
       const reminders = unwrap(remindersData)
@@ -87,10 +96,12 @@ Page({
         totalMeds: elders.reduce((sum, item) => sum + (item.medication_count || 0), 0),
         totalPending: elders.reduce((sum, item) => sum + (item.reminder_pending_count || 0), 0),
         totalRisks: elders.reduce((sum, item) => sum + (item.contraindication_count || 0), 0),
+        unreadAlertCount: Number(alertData.unreadCount || 0),
         canEdit: store.canEdit(),
         isRemote: !config.useLocalApi,
         roleLabel: overview.family.role_label || '',
       })
+      this.syncAlertBadge(Number(alertData.unreadCount || 0))
     } catch (error) {
       if (error.statusCode === 401) {
         wx.reLaunch({ url: '/pages/launch/index' })
@@ -132,6 +143,22 @@ Page({
 
   openCloudHome() {
     wx.navigateTo({ url: '/pages/cloud-home/index' })
+  },
+
+  openAi() {
+    wx.navigateTo({ url: '/pages/ai-chat/index' })
+  },
+
+  openAlerts() {
+    wx.navigateTo({ url: '/pages/alerts/index' })
+  },
+
+  syncAlertBadge(count) {
+    if (count > 0 && wx.setTabBarBadge) {
+      wx.setTabBarBadge({ index: 0, text: String(Math.min(count, 99)), fail: () => {} })
+    } else if (wx.removeTabBarBadge) {
+      wx.removeTabBarBadge({ index: 0, fail: () => {} })
+    }
   },
 
   navigate(event) {

@@ -90,7 +90,7 @@ Home ── Invite
 | GET | `/homes/:homeId/overview` | 家庭概览（长辈/用药/待服/风险计数） |
 | GET/POST/PATCH/DELETE | `/homes/:homeId/drugs` | 药物（含系统药库只读 + 家庭药库） |
 | GET/POST/PATCH/DELETE | `/homes/:homeId/records` | 用药记录；创建/改频次同步提醒 |
-| GET + take/skip/regenerate-voice | `/homes/:homeId/reminders` | 提醒；老人可确认本人已服 |
+| GET + take/skip/regenerate-voice/refresh-companion | `/homes/:homeId/reminders` | 提醒；授权后 AI 陪伴短句、未授权安全模板；老人可确认本人已服 |
 | GET | `/homes/:homeId/elders/:elderId/dashboard` | 长辈禁忌看板 |
 | GET/POST/PATCH/DELETE | `/homes/:homeId/contraindications` | 禁忌 |
 | GET/DELETE | `/homes/:homeId/invites` | 邀请列表/撤销（owner） |

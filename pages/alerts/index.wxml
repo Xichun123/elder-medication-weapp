@@ -1,0 +1,33 @@
+<view class="page with-safe-bottom">
+  <view class="row between gap">
+    <view class="flex-1">
+      <text class="page-title">家属健康提醒</text>
+      <text class="page-subtitle">老人确认记录症状后，会在这里生成应用内提醒</text>
+    </view>
+    <button wx:if="{{unreadCount}}" class="btn small" loading="{{markingAll}}" bindtap="markAllRead">全部已读</button>
+  </view>
+
+  <view class="notice alert-notice">应用内提醒不等于消息已经送达。胸痛、呼吸困难、昏厥等紧急症状应立即就医或拨打 120，不要等待家属查看。</view>
+
+  <view wx:for="{{alerts}}" wx:key="id" class="alert-card {{item.severity === 'urgent' ? 'urgent' : ''}} {{item.readAt ? 'read' : 'unread'}}">
+    <view class="row between gap">
+      <view class="row gap flex-1">
+        <view class="severity-icon">{{item.severity === 'urgent' ? '🚑' : '🩺'}}</view>
+        <view class="flex-1">
+          <view class="row gap wrap">
+            <text class="list-title">{{item.elderName || '老人'}}的症状反馈</text>
+            <text class="tag {{item.severity === 'urgent' ? 'danger' : 'warning'}}">{{item.severityLabel}}</text>
+            <text wx:if="{{!item.readAt}}" class="unread-dot"></text>
+          </view>
+          <text class="alert-content">{{item.content}}</text>
+          <text class="list-meta">{{item.createdAtLabel}}{{item.readAt ? ' · 已读' : ' · 未读'}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{item.severity === 'urgent'}}" class="urgent-tip">请立即联系老人并建议就医；若老人情况危急，请拨打 120。</view>
+    <view wx:if="{{!item.readAt}}" class="actions"><button class="btn primary small" data-id="{{item.id}}" bindtap="markRead">标记已读</button></view>
+  </view>
+
+  <view wx:if="{{!loading && !alerts.length}}" class="card empty"><text class="empty-icon">🔔</text><text>暂无健康提醒</text></view>
+  <view wx:if="{{loading}}" class="loading">正在加载…</view>
+</view>

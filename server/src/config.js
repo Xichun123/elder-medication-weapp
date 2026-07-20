@@ -46,28 +46,71 @@ export const config = {
   wxAppSecret: process.env.WX_APP_SECRET || '',
   allowDevLogin: bool(process.env.ALLOW_DEV_LOGIN, false),
   databasePath,
+  publicBaseUrl: String(process.env.PUBLIC_BASE_URL || '').replace(/\/$/, ''),
+
+  aiApiUrl: process.env.AI_API_URL || '',
+  aiApiKey: process.env.AI_API_KEY || '',
+  aiModel: process.env.AI_MODEL || '',
+  aiUpstreamTimeoutMs: Number(process.env.AI_UPSTREAM_TIMEOUT_MS || 12_000),
+  aiRequestTimeoutMs: Number(process.env.AI_REQUEST_TIMEOUT_MS || 25_000),
+  aiActionTtlMs: Number(process.env.AI_ACTION_TTL_MS || 5 * 60_000),
+
   recognitionApiUrl: process.env.RECOGNITION_API_URL || '',
   recognitionApiKey: process.env.RECOGNITION_API_KEY || '',
   recognitionModel: process.env.RECOGNITION_MODEL || '',
   recognitionTimeoutMs: Number(process.env.RECOGNITION_TIMEOUT_MS || 30_000),
+
+  sttApiUrl: process.env.STT_API_URL || '',
+  sttProvider: process.env.STT_PROVIDER || 'openai_multipart',
+  sttApiKey: process.env.STT_API_KEY || process.env.AI_API_KEY || '',
+  sttModel: process.env.STT_MODEL || '',
+  sttUpstreamTimeoutMs: Number(process.env.STT_UPSTREAM_TIMEOUT_MS || 15_000),
+
+  ttsApiUrl: process.env.TTS_API_URL || '',
+  ttsApiKey: process.env.TTS_API_KEY || '',
+  ttsModel: process.env.TTS_MODEL || '',
+  ttsVoice: process.env.TTS_VOICE || '',
+  // 例：female_warm:longxiaochun,male:longshu,dialect_dongbei:longlaotie
+  ttsVoiceMap: parseVoiceMap(process.env.TTS_VOICE_MAP || ''),
+  ttsUpstreamTimeoutMs: Number(process.env.TTS_UPSTREAM_TIMEOUT_MS || 15_000),
+}
+
+function parseVoiceMap(raw) {
+  const map = {}
+  String(raw || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .forEach((pair) => {
+      const index = pair.indexOf(':')
+      if (index <= 0) return
+      const key = pair.slice(0, index).trim()
+      const value = pair.slice(index + 1).trim()
+      if (key && value) map[key] = value
+    })
+  return map
+}
+
+function assertInteger(name, value, minimum) {
+  if (!Number.isInteger(value) || value < minimum) throw new Error(`${name} 必须是不小于 ${minimum} 的整数`)
 }
 
 export function validateConfig() {
   if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) {
     throw new Error('PORT 必须是 1-65535 的整数')
   }
-  if (!Number.isInteger(config.jwtExpiresInSec) || config.jwtExpiresInSec < 300) {
-    throw new Error('JWT_EXPIRES_IN_SEC 必须是不小于 300 的整数')
+  assertInteger('JWT_EXPIRES_IN_SEC', config.jwtExpiresInSec, 300)
+  assertInteger('AI_UPSTREAM_TIMEOUT_MS', config.aiUpstreamTimeoutMs, 500)
+  assertInteger('AI_REQUEST_TIMEOUT_MS', config.aiRequestTimeoutMs, 1_000)
+  assertInteger('AI_ACTION_TTL_MS', config.aiActionTtlMs, 100)
+  assertInteger('STT_UPSTREAM_TIMEOUT_MS', config.sttUpstreamTimeoutMs, 500)
+  assertInteger('TTS_UPSTREAM_TIMEOUT_MS', config.ttsUpstreamTimeoutMs, 500)
+  if (config.isProd && config.jwtSecret.length < 32) throw new Error('生产环境 JWT_SECRET 至少需要 32 个字符')
+  if (config.isProd && config.allowDevLogin) throw new Error('生产环境禁止开启 ALLOW_DEV_LOGIN')
+  if (config.isProd && (config.sttProvider === 'dashscope_async' || config.ttsApiUrl) && !config.publicBaseUrl) {
+    throw new Error('生产环境启用语音能力时必须配置 PUBLIC_BASE_URL')
   }
-  if (config.isProd && config.jwtSecret.length < 32) {
-    throw new Error('生产环境 JWT_SECRET 至少需要 32 个字符')
-  }
-  if (config.isProd && config.allowDevLogin) {
-    throw new Error('生产环境禁止开启 ALLOW_DEV_LOGIN')
-  }
-  if (!Number.isInteger(config.recognitionTimeoutMs) || config.recognitionTimeoutMs < 5_000) {
-    throw new Error('RECOGNITION_TIMEOUT_MS 必须是不小于 5000 的整数')
-  }
+  assertInteger('RECOGNITION_TIMEOUT_MS', config.recognitionTimeoutMs, 5_000)
 }
 
 export default config

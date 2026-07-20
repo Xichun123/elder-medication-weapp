@@ -270,6 +270,11 @@ test('用药记录、提醒重建、禁忌与权限', async () => {
   assert.equal(createdRecord.status, 201)
   assert.equal(createdRecord.data.autoCreatedReminders.length, 2)
   assert.equal(createdRecord.data.record.drugName, '阿司匹林')
+  const warmVoice = createdRecord.data.autoCreatedReminders[0].voiceText || ''
+  assert.match(warmVoice, /阿司匹林/)
+  assert.match(warmVoice, /该吃/)
+  assert.ok(!warmVoice.includes('该服'))
+  assert.equal(createdRecord.data.autoCreatedReminders[0].voiceGenerationSource, 'template')
   const recordId = createdRecord.data.record.id
   const reminderId = createdRecord.data.autoCreatedReminders[0].id
 

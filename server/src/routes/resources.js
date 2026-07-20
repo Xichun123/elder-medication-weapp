@@ -5,6 +5,7 @@ import {
   buildDashboard,
   buildOverview,
   createRemindersForRecord,
+  generateCompanionVoice,
   generateVoiceText,
   getDrugVisible,
   getElderInHome,
@@ -26,10 +27,15 @@ import { getDb, nowIso } from '../db.js'
 import { HttpError, assert } from '../errors.js'
 import { newId } from '../ids.js'
 import { requireAuth, requireHomeMember } from '../middleware.js'
+import { confirmMedicationStatus } from '../medication-events.js'
 import { createPackageImagePath, sanitizePackageImage } from '../package-images.js'
+import { createFixedWindowRateLimiter } from '../rate-limit.js'
 import { recognizeMedicationImage } from '../recognition.js'
 
 const resources = new Hono()
+const companionRefreshRateLimiter = createFixedWindowRateLimiter({ windowMs: 60 * 60_000 })
+const COMPANION_REFRESH_LIMIT = 4
+const COMPANION_BATCH_SIZE = 6
 resources.use('*', requireAuth)
 
 const recognitionUsage = new Map()
@@ -50,6 +56,30 @@ async function requireRecognitionQuota(c, next) {
   }
   recognitionUsage.set(key, [...recent, now])
   await next()
+}
+
+function enforceCompanionRefreshRateLimit(c) {
+  const user = c.get('user')
+  const result = companionRefreshRateLimiter.consume(`companion:${user.id}`, COMPANION_REFRESH_LIMIT)
+  if (!result.allowed) {
+    const minutes = Math.max(1, Math.ceil(result.retryAfterMs / 60_000))
+    throw new HttpError(429, `温情文案刷新过于频繁，请 ${minutes} 分钟后重试`)
+  }
+}
+
+async function mapWithConcurrency(items, concurrency, worker) {
+  const results = new Array(items.length)
+  let cursor = 0
+  async function run() {
+    while (cursor < items.length) {
+      const index = cursor
+      cursor += 1
+      results[index] = await worker(items[index])
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => run())
+  await Promise.all(workers)
+  return results
 }
 
 function parseOptionalDate(value, fieldName) {
@@ -151,8 +181,9 @@ resources.post('/:homeId/drugs', requireHomeMember('caregiver_edit'), async (c) 
   getDb().prepare(`
     INSERT INTO drugs (
       id, home_id, generic_name, trade_name, aliases, category, ingredient,
-      dosage_text, contraindication_note, interaction_note, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      dosage_text, contraindication_note, interaction_note, primary_package_image_url,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id,
     membership.home_id,
@@ -164,6 +195,7 @@ resources.post('/:homeId/drugs', requireHomeMember('caregiver_edit'), async (c) 
     String(body.dosageText || body.dosage_text || ''),
     String(body.contraindicationNote || body.contraindication_note || ''),
     String(body.interactionNote || body.interaction_note || ''),
+    String(body.primaryPackageImageUrl || body.primary_package_image_url || '').slice(0, 1000),
     ts,
     ts,
   )
@@ -193,6 +225,7 @@ resources.patch('/:homeId/drugs/:drugId', requireHomeMember('caregiver_edit'), a
       dosage_text = ?,
       contraindication_note = ?,
       interaction_note = ?,
+      primary_package_image_url = ?,
       updated_at = ?
     WHERE id = ? AND home_id = ?
   `).run(
@@ -212,6 +245,9 @@ resources.patch('/:homeId/drugs/:drugId', requireHomeMember('caregiver_edit'), a
     body.interactionNote !== undefined || body.interaction_note !== undefined
       ? String(body.interactionNote ?? body.interaction_note ?? '')
       : drug.interaction_note,
+    body.primaryPackageImageUrl !== undefined || body.primary_package_image_url !== undefined
+      ? String(body.primaryPackageImageUrl ?? body.primary_package_image_url ?? '').slice(0, 1000)
+      : drug.primary_package_image_url,
     ts,
     drugId,
     membership.home_id,
@@ -493,44 +529,112 @@ resources.get('/:homeId/reminders/:reminderId', requireHomeMember('caregiver_vie
 
 function updateReminderStatus(c, status) {
   const membership = c.get('membership')
+  const user = c.get('user')
   const reminderId = c.req.param('reminderId')
-  const row = getReminder(membership.home_id, reminderId)
-  assertElderScope(membership, row.elder_profile_id)
-
-  // 老人可确认本人已服/跳过；只读家属禁止写。
-  if (membership.role === 'caregiver_view') throw new HttpError(403, '权限不足')
-  if (membership.role === 'elder' && membership.elder_profile_id !== row.elder_profile_id) {
-    throw new HttpError(403, '只能操作本人提醒')
-  }
-  if (!['owner', 'caregiver_edit', 'elder'].includes(membership.role)) {
-    throw new HttpError(403, '权限不足')
-  }
-
-  const ts = nowIso()
-  getDb().prepare(`
-    UPDATE reminder_rules SET status = ?, status_date = ?, updated_at = ?
-    WHERE id = ? AND home_id = ?
-  `).run(status, localDate(), ts, reminderId, membership.home_id)
+  confirmMedicationStatus({
+    homeId: membership.home_id,
+    reminderId,
+    membership,
+    actorUserId: user.id,
+    status,
+    source: 'manual',
+  })
   return c.json({ reminder: mapReminder(getReminder(membership.home_id, reminderId)) })
 }
 
 resources.post('/:homeId/reminders/:reminderId/take', requireHomeMember('caregiver_view'), (c) => updateReminderStatus(c, 'taken'))
 resources.post('/:homeId/reminders/:reminderId/skip', requireHomeMember('caregiver_view'), (c) => updateReminderStatus(c, 'skipped'))
 
-resources.post('/:homeId/reminders/:reminderId/regenerate-voice', requireHomeMember('caregiver_edit'), (c) => {
-  const membership = c.get('membership')
-  const reminderId = c.req.param('reminderId')
-  const row = getReminder(membership.home_id, reminderId)
-  const elder = getElderInHome(membership.home_id, row.elder_profile_id)
+async function writeCompanionVoice(homeId, reminderId, { preferAi = false, signal } = {}) {
+  const row = getReminder(homeId, reminderId)
+  const elder = getElderInHome(homeId, row.elder_profile_id)
   const record = getDb().prepare('SELECT * FROM medication_records WHERE id = ?').get(row.record_id)
   const drug = getDb().prepare('SELECT * FROM drugs WHERE id = ?').get(record.drug_id)
-  const voiceText = generateVoiceText(elder.name, drug)
+  const generated = preferAi
+    ? await generateCompanionVoice({
+      elder,
+      drug,
+      remindTime: row.remind_time,
+      homeId,
+      signal,
+    })
+    : {
+      text: generateVoiceText({
+        elder,
+        drug,
+        remindTime: row.remind_time,
+        homeId,
+        dayKey: localDate(),
+      }),
+      source: 'template',
+    }
   const ts = nowIso()
+  const dayKey = localDate()
   getDb().prepare(`
-    UPDATE reminder_rules SET voice_text = ?, updated_at = ?
+    UPDATE reminder_rules
+    SET voice_text = ?, voice_generated_on = ?, voice_generation_source = ?, updated_at = ?
     WHERE id = ? AND home_id = ?
-  `).run(voiceText, ts, reminderId, membership.home_id)
-  return c.json({ reminder: mapReminder(getReminder(membership.home_id, reminderId)) })
+  `).run(generated.text, dayKey, generated.source, ts, reminderId, homeId)
+  return mapReminder(getReminder(homeId, reminderId))
+}
+
+resources.post('/:homeId/reminders/:reminderId/regenerate-voice', requireHomeMember('caregiver_edit'), async (c) => {
+  const membership = c.get('membership')
+  const body = await c.req.json().catch(() => ({}))
+  const preferAi = body.preferAi === true
+  if (preferAi) {
+    assert(body.aiConsent === true, 400, '使用 AI 生成文案前需要用户明确同意隐私说明')
+    enforceCompanionRefreshRateLimit(c)
+  }
+  const reminder = await writeCompanionVoice(membership.home_id, c.req.param('reminderId'), {
+    preferAi,
+    signal: c.req.raw.signal,
+  })
+  return c.json({ reminder })
+})
+
+// 老人本人可刷新自己的文案；owner/edit 可刷新家庭文案；只读家属不可触发写入。
+resources.post('/:homeId/reminders/refresh-companion', requireHomeMember('caregiver_view'), async (c) => {
+  const membership = c.get('membership')
+  const body = await c.req.json().catch(() => ({}))
+  const canEdit = membership.role === 'owner' || membership.role === 'caregiver_edit'
+  assert(membership.role === 'elder' || canEdit, 403, '只读家属不能刷新提醒文案')
+
+  const force = body.force === true
+  assert(!force || canEdit, 403, '只有可编辑家属才能强制刷新文案')
+  const preferAi = body.preferAi === true
+  if (preferAi) assert(body.aiConsent === true, 400, '使用 AI 生成文案前需要用户明确同意隐私说明')
+
+  const today = localDate()
+  const elderId = membership.role === 'elder'
+    ? membership.elder_profile_id
+    : (body.elderId || undefined)
+  if (elderId) {
+    assertElderScope(membership, elderId)
+    getElderInHome(membership.home_id, elderId)
+  }
+
+  const rows = listReminders(membership.home_id, { elderId })
+  const targets = rows.filter((row) => force
+    || row.voiceGeneratedOn !== today
+    || (preferAi && row.voiceGenerationSource !== 'ai'))
+  if (preferAi && targets.length) enforceCompanionRefreshRateLimit(c)
+
+  const batch = targets.slice(0, COMPANION_BATCH_SIZE)
+  const updated = await mapWithConcurrency(batch, 3, (row) => writeCompanionVoice(
+    membership.home_id,
+    row.id,
+    { preferAi, signal: c.req.raw.signal },
+  ))
+  const aiGenerated = updated.filter((row) => row.voiceGenerationSource === 'ai').length
+  return c.json({
+    refreshed: updated.length,
+    aiGenerated,
+    templateGenerated: updated.length - aiGenerated,
+    hasMore: targets.length > batch.length,
+    reminders: updated,
+    date: today,
+  })
 })
 
 // ── Dashboard / contraindications ─────────────────────────
@@ -744,6 +848,56 @@ resources.delete('/:homeId/members/:memberId', requireHomeMember('owner'), (c) =
   })
   tx()
   return c.json({ ok: true })
+})
+
+// ── Care alerts ───────────────────────────────────────────
+function mapAlert(row) {
+  return {
+    id: row.id,
+    homeId: row.home_id,
+    elderProfileId: row.elder_profile_id,
+    elderName: row.elder_name || '',
+    kind: row.kind,
+    severity: row.severity || 'normal',
+    content: row.content,
+    readAt: row.read_at,
+    readBy: row.read_by,
+    createdAt: row.created_at,
+  }
+}
+
+resources.get('/:homeId/alerts', requireHomeMember('caregiver_view'), (c) => {
+  const membership = c.get('membership')
+  if (membership.role === 'elder') throw new HttpError(403, '老人端不能查看全体家属提醒')
+  const unreadOnly = ['1', 'true'].includes(String(c.req.query('unread') || '').toLowerCase())
+  const rows = getDb().prepare(`
+    SELECT a.*, e.name AS elder_name
+    FROM care_alerts a
+    JOIN elder_profiles e ON e.id = a.elder_profile_id
+    WHERE a.home_id = ? ${unreadOnly ? 'AND a.read_at IS NULL' : ''}
+    ORDER BY a.created_at DESC
+    LIMIT 100
+  `).all(membership.home_id)
+  return c.json({ alerts: rows.map(mapAlert), unreadCount: rows.filter((row) => !row.read_at).length })
+})
+
+resources.patch('/:homeId/alerts/:alertId/read', requireHomeMember('caregiver_view'), (c) => {
+  const membership = c.get('membership')
+  const user = c.get('user')
+  if (membership.role === 'elder') throw new HttpError(403, '老人端不能修改家属提醒')
+  const alertId = c.req.param('alertId')
+  const row = getDb().prepare('SELECT * FROM care_alerts WHERE id = ? AND home_id = ?').get(alertId, membership.home_id)
+  assert(row, 404, '健康提醒不存在')
+  if (!row.read_at) {
+    getDb().prepare('UPDATE care_alerts SET read_at = ?, read_by = ? WHERE id = ? AND home_id = ? AND read_at IS NULL')
+      .run(nowIso(), user.id, alertId, membership.home_id)
+  }
+  const updated = getDb().prepare(`
+    SELECT a.*, e.name AS elder_name FROM care_alerts a
+    JOIN elder_profiles e ON e.id = a.elder_profile_id
+    WHERE a.id = ? AND a.home_id = ?
+  `).get(alertId, membership.home_id)
+  return c.json({ alert: mapAlert(updated) })
 })
 
 export default resources

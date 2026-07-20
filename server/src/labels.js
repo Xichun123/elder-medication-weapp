@@ -24,6 +24,10 @@ export const dictionaries = {
   voice_tone: [
     { value: 'female_warm', label: '女声温和' },
     { value: 'male', label: '男声' },
+    { value: 'dialect_dongbei', label: '东北话' },
+    { value: 'dialect_sichuan', label: '四川话' },
+    { value: 'dialect_cantonese', label: '粤语' },
+    { value: 'dialect_henan', label: '河南话' },
   ],
   severity: [
     { value: 'light', label: '轻' },

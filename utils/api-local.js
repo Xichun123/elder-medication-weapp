@@ -234,8 +234,11 @@ const api = {
       const elder = db.requireItem('elders', 'elder_id', reminder.elder, '老人不存在')
       const record = db.requireItem('records', 'record_id', reminder.medication_record, '用药记录不存在')
       const drug = db.requireItem('drugs', 'drug_id', record.drug, '药物不存在')
-      return asyncValue(db.reminderView(db.update('reminders', 'rule_id', id, { voice_text: db.generateVoiceText(elder, drug) })))
+      return asyncValue(db.reminderView(db.update('reminders', 'rule_id', id, {
+        voice_text: db.generateVoiceText(elder, drug, reminder.remind_time),
+      })))
     },
+    refreshCompanion: async () => ({ refreshed: 0, reminders: [] }),
   },
   contraindications: {
     list: (params) => asyncValue(listContraindications(params)),
@@ -245,6 +248,10 @@ const api = {
   },
   dashboard: (elderId) => asyncValue(buildDashboard(elderId)),
   dataDictionary: () => asyncValue(db.dictionaries),
+  alerts: {
+    list: () => asyncValue({ alerts: [], unreadCount: 0 }),
+    markRead: () => asyncValue(null),
+  },
   local: {
     reset: () => asyncValue(db.reset()),
     export: () => asyncValue(db.exportData()),

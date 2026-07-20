@@ -1,8 +1,16 @@
 <view class="elderly-page {{highContrast ? 'high-contrast' : ''}}">
   <view class="elderly-tools"><picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="tool-btn">{{elderIndex >= 0 ? elders[elderIndex].name + ' 长辈' : '选择长辈'}} ▾</view></picker><button class="tool-btn" bindtap="toggleContrast">{{highContrast ? '标准模式' : '高对比'}}</button></view>
   <view wx:if="{{elder}}" class="elderly-main">
+    <view class="ai-entry" bindtap="openAi" hover-class="ai-entry--pressed">
+      <view class="ai-entry-icon">🎙️</view>
+      <view class="ai-entry-main">
+        <text class="ai-entry-title">语音用药助手</text>
+        <text class="ai-entry-desc">说“我刚吃了药”或“我头晕”</text>
+      </view>
+      <view class="ai-entry-arrow">›</view>
+    </view>
     <view class="greeting"><text class="greeting-avatar">{{elder.gender === 'male' ? '👴' : '👵'}}</text><view><text class="elder-title">您好，{{elder.name}}</text><text class="elder-sub">{{greeting}}，今天是 {{today}}</text></view></view>
-    <view wx:if="{{currentReminder}}" class="current-card"><text class="current-label">该吃药了</text><image wx:if="{{currentReminder.package_image_url}}" class="current-package-image" src="{{currentReminder.package_image_url}}" mode="aspectFit"/><view wx:else class="current-package-placeholder">暂无药品包装照片</view><text class="current-drug">{{currentReminder.drug_name}}</text><text wx:if="{{currentReminder.dose}}" class="current-dose">剂量：{{currentReminder.dose}}</text><text class="current-voice">🔊 {{currentReminder.voice_text}}</text><button class="play-btn" bindtap="playCurrent">🔊 再播一次</button><text class="current-tip">请对照包装、药名与剂量，散装药片不能仅凭外观确认</text></view>
+    <view wx:if="{{currentReminder}}" class="current-card"><text class="current-label">温情陪伴提醒</text><image wx:if="{{currentReminder.package_image_url}}" class="current-package-image" src="{{currentReminder.package_image_url}}" mode="aspectFit"/><view wx:else class="current-package-placeholder">暂无药品包装照片</view><text class="current-drug">{{currentReminder.drug_name}}</text><text wx:if="{{currentReminder.dose}}" class="current-dose">剂量：{{currentReminder.dose}}</text><text class="current-voice">💛 {{currentReminder.voice_text}}</text><button class="play-btn" bindtap="playCurrent">💛 再听一次</button><text class="current-tip">请对照包装、药名与剂量，散装药片不能仅凭外观确认</text></view>
     <view wx:else class="current-card resting"><text class="current-drug">今日已无待服提醒</text><text class="current-label">请安心休息</text></view>
     <view class="today"><text class="elder-section-title">今日提醒</text><view wx:for="{{reminders}}" wx:key="rule_id" class="elder-reminder {{item.status}}" data-id="{{item.rule_id}}" bindtap="playReminder"><view><text class="reminder-time">{{item.remind_time}}</text><text class="reminder-drug">{{item.drug_name}}</text></view><text class="reminder-status">{{item.status === 'pending' ? '⏰ 待服' : item.status === 'taken' ? '✓ 已服' : item.status === 'skipped' ? '⊘ 跳过' : '⚠ 异常'}}</text></view><view wx:if="{{!reminders.length}}" class="elder-empty">今日暂无提醒，请安心休息</view></view>
     <view class="auto-card"><view class="row between gap"><view><text class="auto-title">自动提醒播报</text><text class="auto-desc">每分钟检查并振动提示待服提醒</text></view><switch checked="{{autoPlay}}" color="#e87a5d" bindchange="onAutoChange"/></view><view wx:if="{{autoPlay}}" class="auto-tip">✅ 已开启，下一提醒：{{nextReminder ? nextReminder.remind_time + ' ' + nextReminder.drug_name : '无'}}</view></view>

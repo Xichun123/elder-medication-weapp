@@ -36,6 +36,21 @@ curl -s http://127.0.0.1:8787/auth/wx-login \
 5. Caddy 反代到 `127.0.0.1:8787`，开启 HTTPS。
 6. 微信公众平台将 `https://api.0721online.net` 分别配置为 request、uploadFile 与 downloadFile 合法域名（不要显式写 `:443`）；包装图签名地址由 `<image>` 下载，遗漏 downloadFile 会导致正式版无法显示。域名需按官方要求完成 ICP 备案。
 
+## AI、语音与隐私配置
+
+- 文本模型使用 OpenAI Chat Completions 兼容配置：`AI_API_URL`、`AI_API_KEY`、`AI_MODEL`。
+- 语音识别使用独立的 OpenAI Audio Transcriptions 兼容配置：`STT_API_URL`、`STT_API_KEY`、`STT_MODEL`；`STT_API_KEY` 留空时复用 `AI_API_KEY`。
+- 语音合成使用独立的 `TTS_API_URL`、`TTS_API_KEY`、`TTS_MODEL`、`TTS_VOICE`。
+- 方言音色映射：`TTS_VOICE_MAP=female_warm:xxx,male:yyy,dialect_dongbei:zzz,...`；未命中时回落 `TTS_VOICE`。
+- 提醒支持温情陪伴文案：创建时使用不含医疗建议的本地模板；用户明确同意后，`regenerate-voice` / `refresh-companion` 才会调用 AI 生成每日陪伴短句，失败自动回落模板并保留来源状态。
+- AI 只接收方言风格和允许主题并生成非医疗陪伴短句，不发送老人姓名、药名或家属昵称；个性化称呼、药名与提醒主句由服务端确定性拼装。含剂量、停换药、饮食、运动或诊疗内容的模型输出会被拒绝。
+- 文案刷新仅允许 owner/edit 或老人本人；强制刷新仅允许 owner/edit，AI 刷新按用户限流并分批并发处理。
+- 各上游均有独立超时配置；不要在代码中硬编码供应商 URL 或密钥。
+
+AI 问答、个性化陪伴短句和语音能力会把所需的老人姓名与关系、家属昵称、用药记录、过敏史、症状、对话内容及用户主动录制的语音发送给所配置的第三方服务。小程序在发送前使用统一隐私确认；拒绝后仅使用本地模板和大字弹窗。上线前仍必须在小程序隐私保护指引中披露处理目的、数据范围、第三方供应商和保存策略。
+
+模型无权直接写入服药状态或症状记录。写操作先生成短时有效且归属于当前用户的 `pendingAction`，用户核对药品包装照片、药名、剂量和提醒时间后，再调用确定性确认接口；服务端会重新校验角色、老人范围、提醒状态、用药有效期、幂等性并记录审计。
+
 ### systemd 示例
 
 ```ini
@@ -81,9 +96,11 @@ api.0721online.net {
 - `GET/POST/DELETE /homes/:homeId/drugs/:drugId/package-image`（主包装图查询、保存/替换、删除）
 - `GET /package-images/:imageId?...`（15 分钟有效的签名图片地址）
 - 药物 / 用药记录 / 提醒 / 禁忌 / 长辈 dashboard（均带 `home_id` 范围与角色校验）
+- AI 对话、待确认操作、语音识别、语音合成
+- 家属健康提醒列表与标记已读
 
 权限摘要：`owner` 全量 + 成员管理；`caregiver_edit` 可写业务；`caregiver_view` 只读；`elder` 仅本人档案，可确认已服。
-创建用药记录时自动生成提醒；仅修改频次会重建提醒，只改剂量不重置状态。提醒状态按 `Asia/Shanghai` 自然日计算，跨天自动恢复待服；今日列表只包含处于 `start_date/end_date` 有效期内的用药。
+创建用药记录时自动生成提醒；仅修改频次会重建提醒，只改剂量不重置状态。提醒状态按 `Asia/Shanghai` 自然日计算，跨天自动恢复待服；今日列表只包含处于 `start_date/end_date` 有效期内的用药。已服/漏服统计来自保留药名、剂量和提醒时间快照的不可变服药事件，不依赖提醒规则的最新状态。
 
 ### AI 拍药盒识别
 

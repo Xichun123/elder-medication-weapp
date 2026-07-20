@@ -1,4 +1,5 @@
 const api = require('../../utils/api')
+const aiPrivacy = require('../../utils/ai-privacy')
 const config = require('../../utils/config')
 const session = require('../../utils/session')
 const store = require('../../utils/store')
@@ -56,11 +57,21 @@ Page({
   async action(name, id, message) { try { await api.reminders[name](id); toast(message, 'success'); await this.load() } catch (error) { showError(error) } },
   async regenerate(event) {
     if (!store.canEdit()) { toast('当前角色仅可查看'); return }
-    try { await api.reminders.regenerateVoice(event.currentTarget.dataset.id); toast('语音文本已更新', 'success'); await this.load() } catch (error) { showError(error) }
+    try {
+      const consented = await aiPrivacy.ensureConsent()
+      const reminder = await api.reminders.regenerateVoice(event.currentTarget.dataset.id, {
+        preferAi: consented,
+        aiConsent: consented,
+      })
+      toast(reminder.voice_generation_source === 'ai' ? 'AI 温情文案已更新' : '本地温情文案已更新', 'success')
+      await this.load()
+    } catch (error) { showError(error) }
   },
   play(event) {
     const row = this.data.allList.find((item) => item.rule_id === event.currentTarget.dataset.id)
-    if (row) voice.speak(row.voice_text).catch(showError)
+    if (!row) return
+    const elder = (this.data.elders || []).find((item) => item.elder_id === row.elder)
+    voice.speak(row.voice_text, { tone: elder && elder.voice_tone }).catch(showError)
   },
   openElderly(event) { wx.navigateTo({ url: `/pages/elderly/index?elder=${event.currentTarget.dataset.elder}` }) },
 })

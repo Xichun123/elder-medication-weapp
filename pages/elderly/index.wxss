@@ -2,3 +2,9 @@
 .current-package-image,.current-package-placeholder { width:100%; height:360rpx; margin:24rpx 0; border-radius:18rpx; background:#fff; }
 .current-package-placeholder { display:flex; align-items:center; justify-content:center; color:#64483f; font-size:30rpx; }
 .current-dose { display:block; font-size:36rpx; font-weight:650; }
+.ai-entry { display:flex; align-items:center; gap:18rpx; margin:0 0 28rpx; padding:22rpx 24rpx; border-radius:24rpx; background:linear-gradient(135deg,#7057c7,#9a7bea); color:#fff; box-shadow:0 12rpx 24rpx rgba(112,87,199,.22); }
+.ai-entry--pressed { opacity:.84; transform:scale(.985); }
+.ai-entry-icon { width:76rpx; height:76rpx; display:flex; align-items:center; justify-content:center; border-radius:50%; background:rgba(255,255,255,.18); font-size:42rpx; }
+.ai-entry-main { flex:1; min-width:0; }
+.ai-entry-title,.ai-entry-desc { display:block; }.ai-entry-title { font-size:34rpx; font-weight:700; letter-spacing:1rpx; }.ai-entry-desc { margin-top:6rpx; font-size:24rpx; opacity:.9; }
+.ai-entry-arrow { font-size:52rpx; font-weight:300; line-height:1; opacity:.9; }

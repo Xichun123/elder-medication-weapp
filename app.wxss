@@ -90,6 +90,7 @@ button::after { border: 0; }
 .form-card { margin-top: 20rpx; }
 .field { margin-bottom: 24rpx; }
 .field-label { display: block; font-weight: 600; margin-bottom: 10rpx; }
+.field-hint { display: block; margin-top: 10rpx; color: var(--muted); font-size: 22rpx; line-height: 1.5; }
 .required::before { content: '*'; color: var(--danger); margin-right: 6rpx; }
 .input, .picker, .textarea { width: 100%; background: #fdfaf6; border: 1rpx solid var(--border); border-radius: 14rpx; padding: 18rpx 20rpx; font-size: 27rpx; color: var(--text); }
 .input, .picker { min-height: 76rpx; }

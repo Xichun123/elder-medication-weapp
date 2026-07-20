@@ -1,0 +1,10 @@
+.alert-notice { margin-top: 22rpx; }
+.alert-card { margin-top: 20rpx; padding: 26rpx; border: 1rpx solid var(--border); border-left: 8rpx solid var(--warning); border-radius: 22rpx; background: #fff; box-shadow: 0 6rpx 18rpx rgba(61,46,31,.05); }
+.alert-card.urgent { border-left-color: var(--danger); }
+.alert-card.read { opacity: .7; }
+.alert-card.unread { background: linear-gradient(135deg,#fff,#fffaf3); }
+.severity-icon { width: 72rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 20rpx; background: var(--warning-soft); font-size: 36rpx; }
+.urgent .severity-icon { background: var(--danger-soft); }
+.alert-content { display: block; margin-top: 12rpx; font-size: 28rpx; }
+.unread-dot { width: 16rpx; height: 16rpx; border-radius: 50%; background: var(--danger); }
+.urgent-tip { margin-top: 18rpx; padding: 16rpx 18rpx; color: var(--danger); background: var(--danger-soft); border-radius: 14rpx; font-size: 24rpx; }

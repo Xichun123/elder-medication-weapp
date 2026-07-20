@@ -53,8 +53,9 @@ function mapDrug(item) {
     dosage_text: item.dosageText,
     contraindication_note: item.contraindicationNote,
     interaction_note: item.interactionNote,
-    package_image_url: apiUrl(item.packageImagePath),
-    has_package_image: Boolean(item.packageImagePath),
+    package_image_url: apiUrl(item.packageImagePath || item.primaryPackageImageUrl),
+    has_package_image: Boolean(item.packageImagePath || item.primaryPackageImageUrl),
+    primary_package_image_url: item.primaryPackageImageUrl || '',
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   }
@@ -96,6 +97,8 @@ function mapReminder(item) {
     status: item.status,
     status_label: item.statusLabel || label('reminder_status', item.status),
     voice_text: item.voiceText,
+    voice_generated_on: item.voiceGeneratedOn || '',
+    voice_generation_source: item.voiceGenerationSource || 'template',
     created_at: item.createdAt,
     updated_at: item.updatedAt,
   }
@@ -291,6 +294,7 @@ const api = {
           dosageText: data.dosage_text,
           contraindicationNote: data.contraindication_note,
           interactionNote: data.interaction_note,
+          primaryPackageImageUrl: data.primary_package_image_url,
         },
       })
       return mapDrug(result.drug)
@@ -308,6 +312,7 @@ const api = {
           dosageText: data.dosage_text,
           contraindicationNote: data.contraindication_note,
           interactionNote: data.interaction_note,
+          primaryPackageImageUrl: data.primary_package_image_url,
         },
       })
       return mapDrug(result.drug)
@@ -415,12 +420,26 @@ const api = {
       const result = await remote.request({ path: homePath(`/reminders/${id}/skip`), method: 'POST' })
       return mapReminder(result.reminder)
     },
-    async regenerateVoice(id) {
+    async regenerateVoice(id, options = {}) {
       const result = await remote.request({
         path: homePath(`/reminders/${id}/regenerate-voice`),
         method: 'POST',
+        data: {
+          preferAi: options.preferAi === true,
+          aiConsent: options.aiConsent === true,
+        },
+        timeout: config.aiRequestTimeout,
       })
       return mapReminder(result.reminder)
+    },
+    async refreshCompanion(data = {}) {
+      const result = await remote.request({
+        path: homePath('/reminders/refresh-companion'),
+        method: 'POST',
+        data,
+        timeout: config.aiRequestTimeout,
+      })
+      return result
     },
   },
 
@@ -495,6 +514,57 @@ const api = {
   },
 
   dataDictionary: () => Promise.resolve(dictionaries),
+
+  ai: {
+    async chat(data) {
+      try {
+        return await remote.request({ path: homePath('/ai/chat'), method: 'POST', data, timeout: config.aiRequestTimeout })
+      } catch (error) {
+        // 兼容生产环境旧后端：本地缓存的 elderId 可能已不属于当前家庭，
+        // 旧后端会返回 404。去掉 elderId 后，单老人家庭可由服务端自动选择，
+        // 药品安全等不依赖具体老人的问题也能继续回答。
+        if (error.statusCode === 404 && data && data.elderId) {
+          const fallback = { ...data }
+          delete fallback.elderId
+          return remote.request({ path: homePath('/ai/chat'), method: 'POST', data: fallback, timeout: config.aiRequestTimeout })
+        }
+        throw error
+      }
+    },
+    async createPendingAction(data) {
+      return remote.request({ path: homePath('/ai/pending-actions'), method: 'POST', data })
+    },
+    async confirmPendingAction(actionId) {
+      return remote.request({ path: homePath(`/ai/pending-actions/${actionId}/confirm`), method: 'POST' })
+    },
+    async transcribe(data) {
+      return remote.request({ path: homePath('/ai/transcribe'), method: 'POST', data, timeout: config.sttRequestTimeout })
+    },
+    async speech(text, options = {}) {
+      return remote.request({
+        path: homePath('/ai/speech'),
+        method: 'POST',
+        data: {
+          text,
+          tone: options.tone || options.voiceTone || '',
+          voice: options.voice || '',
+          aiConsent: options.aiConsent === true,
+        },
+        timeout: config.ttsRequestTimeout,
+      })
+    },
+  },
+
+  alerts: {
+    async list({ unread = false } = {}) {
+      const result = await remote.request({ path: homePath(`/alerts${unread ? '?unread=1' : ''}`) })
+      return result
+    },
+    async markRead(alertId) {
+      const result = await remote.request({ path: homePath(`/alerts/${alertId}/read`), method: 'PATCH' })
+      return result.alert
+    },
+  },
 
   local: {
     reset() {

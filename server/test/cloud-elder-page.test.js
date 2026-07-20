@@ -31,7 +31,10 @@ function loadPage(initialNow = '2026-07-20T07:59:00+08:00') {
     '../../utils/api': {
       reminders: {
         list: async () => reminders,
-        take: async (id) => calls.taken.push(id),
+        take: async (id) => {
+          calls.taken.push(id)
+          reminders = reminders.filter((item) => item.rule_id !== id)
+        },
       },
     },
     '../../utils/remote': {
@@ -110,9 +113,16 @@ test('真实老人页未到时间不弹窗，到点后显示包装图和剂量',
   assert.equal(calls.spoken.length, 1)
 
   page.closeMedicationPrompt()
+  setNow('2026-07-20T08:09:00+08:00')
   await page.loadReminders()
   assert.equal(page.data.showMedicationPrompt, false)
   assert.equal(calls.spoken.length, 1)
+
+  setNow('2026-07-20T08:10:00+08:00')
+  await page.loadReminders()
+  assert.equal(page.data.showMedicationPrompt, true)
+  assert.equal(page.data.promptReminder.rule_id, 'T1')
+  assert.equal(calls.spoken.length, 2)
 })
 
 test('前一条仍待服时，同日后续提醒到点仍会弹出', async () => {
@@ -125,12 +135,27 @@ test('前一条仍待服时，同日后续提醒到点仍会弹出', async () =>
 
   setNow('2026-07-20T19:59:00+08:00')
   await page.loadReminders()
-  assert.equal(page.data.showMedicationPrompt, false)
+  assert.equal(page.data.showMedicationPrompt, true)
+  assert.equal(page.data.promptReminder.rule_id, 'T1')
+  page.closeMedicationPrompt()
 
   setNow('2026-07-20T20:00:00+08:00')
   await page.loadReminders()
   assert.equal(page.data.showMedicationPrompt, true)
   assert.equal(page.data.promptReminder.rule_id, 'T2')
+})
+
+test('确认当前弹窗后仍会保留下一条到点提醒', async () => {
+  const { calls, page, setReminders } = loadPage('2026-07-20T20:00:00+08:00')
+  setReminders([reminder('T1', '08:00'), reminder('T2', '20:00')])
+
+  await page.loadReminders()
+  assert.equal(page.data.promptReminder.rule_id, 'T2')
+  await page.takePrompt()
+
+  assert.deepEqual(calls.taken, ['T2'])
+  assert.equal(page.data.showMedicationPrompt, true)
+  assert.equal(page.data.promptReminder.rule_id, 'T1')
 })
 
 test('关闭自动语音后，定时刷新仍会触发视觉提醒', async () => {
@@ -152,4 +177,5 @@ test('真实老人页模板展示包装图、剂量和到点确认卡', () => {
   assert.match(pageTemplate, /current\.dose/)
   assert.match(pageTemplate, /showMedicationPrompt/)
   assert.match(pageTemplate, /takePrompt/)
+  assert.match(pageTemplate, /10 分钟后提醒/)
 })
