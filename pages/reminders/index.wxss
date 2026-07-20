@@ -1,1 +1,15 @@
-.status-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10rpx; margin-top: 24rpx; }.status-card { min-width: 0; padding: 18rpx 4rpx; text-align: center; border: 2rpx solid transparent; border-radius: 18rpx; background: #fff; color: var(--muted); font-size: 21rpx; }.status-card.active { border-color: var(--primary); transform: translateY(-3rpx); }.status-num { display: block; color: var(--text); font-size: 36rpx; font-weight: 700; }.reminder { border-left: 8rpx solid var(--border); }.reminder.pending { border-left-color: var(--warning); }.reminder.taken { border-left-color: var(--success); opacity: .75; }.reminder.abnormal { border-left-color: var(--danger); }.remind-time { display: block; color: var(--primary); font-size: 30rpx; font-weight: 700; }.voice { margin-top: 18rpx; padding: 18rpx; border-radius: 14rpx; background: var(--soft); font-size: 25rpx; }
+.status-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12rpx; margin-top: 26rpx; }
+.status-card { min-width: 0; min-height: 128rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18rpx 4rpx; text-align: center; border: 2rpx solid var(--border); border-radius: 20rpx; background: #fff; color: var(--muted); }
+.status-card.active { border-color: var(--primary); background: var(--primary-soft); }
+.status-card.pending.active { border-color: var(--warning); background: var(--warning-soft); }
+.status-card.taken.active { border-color: var(--success); background: var(--success-soft); }
+.status-card.abnormal.active { border-color: var(--danger); background: var(--danger-soft); }
+.status-num { display: block; color: var(--text); font-size: 40rpx; font-weight: 700; line-height: 1.1; }
+.status-label { display: block; margin-top: 6rpx; font-size: 26rpx; }
+.reminder { border-left: 8rpx solid var(--border); }
+.reminder.pending { border-left-color: var(--warning); }
+.reminder.taken { border-left-color: var(--success); }
+.reminder.skipped { border-left-color: var(--light); }
+.reminder.abnormal { border-left-color: var(--danger); }
+.remind-time { display: block; color: var(--primary); font-size: 32rpx; font-weight: 700; }
+.voice { margin-top: 18rpx; padding: 20rpx; border-radius: 16rpx; background: var(--soft); font-size: 26rpx; line-height: 1.55; }

@@ -6,16 +6,16 @@
     </view>
     <view class="filter-bar"><input class="search flex-1" value="{{keyword}}" placeholder="搜索姓名 / 关系" bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearch"/><button class="btn small" bindtap="onSearch">搜索</button></view>
     <view wx:for="{{filteredList}}" wx:key="elder_id" class="list-card">
-      <view class="row gap" data-id="{{item.elder_id}}" bindtap="openDetail">
-        <view class="avatar">{{item.gender === 'male' ? '👴' : '👵'}}</view>
+      <view class="row gap pressable" hover-class="pressable-hover" data-id="{{item.elder_id}}" bindtap="openDetail" aria-role="button" aria-label="查看长辈 {{item.name}}">
+        <view class="avatar"><image src="{{item.gender === 'male' ? '/assets/brand/avatar-grandpa.png' : '/assets/brand/avatar-grandma.png'}}" mode="aspectFit" aria-role="img" aria-label="长辈头像"/></view>
         <view class="flex-1"><text class="list-title">{{item.name}}</text><view class="list-subtitle">{{item.gender_label}} · {{item.age}}岁 · {{item.relationship}}</view><view class="list-meta">{{item.voice_tone_label}} · 用药 {{item.medication_count}}</view></view>
         <text>›</text>
       </view>
-      <view wx:if="{{item.allergy_note && item.allergy_note !== '无'}}" class="allergy">⚠️ 过敏史：{{item.allergy_note}}</view>
+      <view wx:if="{{item.allergy_note && item.allergy_note !== '无'}}" class="allergy">过敏史：{{item.allergy_note}}</view>
       <view wx:if="{{canEdit}}" class="actions"><button class="btn small" data-id="{{item.elder_id}}" catchtap="openEdit">编辑</button><button class="btn danger small" data-id="{{item.elder_id}}" catchtap="remove">删除</button></view>
     </view>
-    <view wx:if="{{!loading && !filteredList.length}}" class="card empty"><text class="empty-icon">👵</text>暂无老人数据</view>
-    <view wx:if="{{loading}}" class="loading">正在加载…</view>
+    <view wx:if="{{!loading && !filteredList.length}}" class="card empty"><image class="empty-icon" src="/assets/icons/line-empty-box.png" mode="aspectFit" aria-role="img" aria-label="空状态"/>暂无老人数据</view>
+    <view wx:if="{{loading}}" class="loading" aria-role="status">正在加载…</view>
   </view>
 
   <view wx:else>
@@ -24,9 +24,9 @@
       <view class="field"><text class="field-label required">姓名</text><input class="input" value="{{form.name}}" placeholder="老人姓名" data-field="name" bindinput="onInput"/></view>
       <view class="field"><text class="field-label required">年龄</text><input class="input" type="number" value="{{form.age}}" data-field="age" bindinput="onInput"/></view>
       <view class="field"><text class="field-label required">与家属关系</text><input class="input" value="{{form.relationship}}" placeholder="如 母亲 / 父亲 / 祖母" data-field="relationship" bindinput="onInput"/></view>
-      <view class="field"><text class="field-label">性别</text><view class="radio-row"><view class="choice {{form.gender === 'female' ? 'active' : ''}}" data-field="gender" data-value="female" bindtap="choose">女</view><view class="choice {{form.gender === 'male' ? 'active' : ''}}" data-field="gender" data-value="male" bindtap="choose">男</view></view></view>
+      <view class="field"><text class="field-label">性别</text><view class="radio-row"><view class="choice {{form.gender === 'female' ? 'active' : ''}}" data-field="gender" data-value="female" bindtap="choose" hover-class="pressable-hover">女</view><view class="choice {{form.gender === 'male' ? 'active' : ''}}" data-field="gender" data-value="male" bindtap="choose" hover-class="pressable-hover">男</view></view></view>
       <view class="field"><text class="field-label">过敏史</text><textarea class="textarea" value="{{form.allergy_note}}" data-field="allergy_note" bindinput="onInput"/></view>
-      <view class="field"><text class="field-label">音色 / 方言</text><view class="radio-row wrap"><view class="choice {{form.voice_tone === 'female_warm' ? 'active' : ''}}" data-field="voice_tone" data-value="female_warm" bindtap="choose">女声温和</view><view class="choice {{form.voice_tone === 'male' ? 'active' : ''}}" data-field="voice_tone" data-value="male" bindtap="choose">男声</view><view class="choice {{form.voice_tone === 'dialect_dongbei' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_dongbei" bindtap="choose">东北话</view><view class="choice {{form.voice_tone === 'dialect_sichuan' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_sichuan" bindtap="choose">四川话</view><view class="choice {{form.voice_tone === 'dialect_cantonese' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_cantonese" bindtap="choose">粤语</view><view class="choice {{form.voice_tone === 'dialect_henan' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_henan" bindtap="choose">河南话</view></view><text class="field-hint">方言会用于温情播报 TTS；未配置对应音色时回落到默认女声。</text></view>
+      <view class="field"><text class="field-label">音色 / 方言</text><view class="radio-row wrap"><view class="choice {{form.voice_tone === 'female_warm' ? 'active' : ''}}" data-field="voice_tone" data-value="female_warm" bindtap="choose" hover-class="pressable-hover">女声温和</view><view class="choice {{form.voice_tone === 'male' ? 'active' : ''}}" data-field="voice_tone" data-value="male" bindtap="choose" hover-class="pressable-hover">男声</view><view class="choice {{form.voice_tone === 'dialect_dongbei' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_dongbei" bindtap="choose" hover-class="pressable-hover">东北话</view><view class="choice {{form.voice_tone === 'dialect_sichuan' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_sichuan" bindtap="choose" hover-class="pressable-hover">四川话</view><view class="choice {{form.voice_tone === 'dialect_cantonese' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_cantonese" bindtap="choose" hover-class="pressable-hover">粤语</view><view class="choice {{form.voice_tone === 'dialect_henan' ? 'active' : ''}}" data-field="voice_tone" data-value="dialect_henan" bindtap="choose" hover-class="pressable-hover">河南话</view></view><text class="field-hint">方言会用于温情播报 TTS；未配置对应音色时回落到默认女声。</text></view>
       <view class="form-actions"><button class="btn" bindtap="closeForm">取消</button><button class="btn primary" loading="{{saving}}" bindtap="save">保存</button></view>
     </view>
   </view>

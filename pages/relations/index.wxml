@@ -11,7 +11,7 @@
 
     <view wx:for="{{members}}" wx:key="id" class="list-card">
       <view class="row gap">
-        <view class="avatar">👤</view>
+        <view class="avatar"><image class="member-avatar-img" src="/assets/icons/line-check.png" mode="aspectFit"/></view>
         <view class="flex-1">
           <text class="list-title">{{item.nickname || '微信成员'}}</text>
           <text class="list-subtitle">{{item.roleLabel}}</text>
@@ -43,7 +43,7 @@
     </view>
 
     <view wx:if="{{!loading && !members.length}}" class="card empty">暂无成员</view>
-    <view wx:if="{{loading}}" class="loading">正在加载…</view>
+    <view wx:if="{{loading}}" class="loading" aria-role="status">正在加载…</view>
   </block>
 
   <!-- 本地关联管理 -->
@@ -70,7 +70,7 @@
         </view>
       </view>
       <view wx:if="{{!loading && !list.length}}" class="card empty">暂无关联关系</view>
-      <view wx:if="{{loading}}" class="loading">正在加载…</view>
+      <view wx:if="{{loading}}" class="loading" aria-role="status">正在加载…</view>
     </view>
     <view wx:else>
       <text class="page-title">{{isEdit ? '编辑关联关系' : '新增关联关系'}}</text>
@@ -78,8 +78,8 @@
         <view class="field"><text class="field-label required">关系ID</text><input class="input" value="{{form.relation_id}}" disabled="{{isEdit}}" data-field="relation_id" bindinput="onInput"/></view>
         <view class="field"><text class="field-label required">家属</text><picker disabled="{{isEdit}}" range="{{families}}" range-key="name" value="{{familyIndex}}" bindchange="onFamilyChange"><view class="picker">{{families[familyIndex].name || '请选择'}} ▾</view></picker></view>
         <view class="field"><text class="field-label required">老人</text><picker disabled="{{isEdit}}" range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="picker">{{elders[elderIndex].name || '请选择'}} ▾</view></picker></view>
-        <view class="field"><text class="field-label">关系类型</text><view class="radio-row"><view wx:for="{{roleOptions}}" wx:key="value" class="choice {{form.relation_type === item.value ? 'active' : ''}}" data-field="relation_type" data-value="{{item.value}}" bindtap="choose">{{item.label}}</view></view></view>
-        <view class="field"><text class="field-label">权限级别</text><view class="radio-row"><view class="choice {{form.permission_level === 'editable' ? 'active' : ''}}" data-field="permission_level" data-value="editable" bindtap="choose">可录入</view><view class="choice {{form.permission_level === 'readonly' ? 'active' : ''}}" data-field="permission_level" data-value="readonly" bindtap="choose">仅查看</view></view></view>
+        <view class="field"><text class="field-label">关系类型</text><view class="radio-row"><view wx:for="{{roleOptions}}" wx:key="value" class="choice {{form.relation_type === item.value ? 'active' : ''}}" data-field="relation_type" data-value="{{item.value}}" bindtap="choose" hover-class="pressable-hover">{{item.label}}</view></view></view>
+        <view class="field"><text class="field-label">权限级别</text><view class="radio-row"><view class="choice {{form.permission_level === 'editable' ? 'active' : ''}}" data-field="permission_level" data-value="editable" bindtap="choose" hover-class="pressable-hover">可录入</view><view class="choice {{form.permission_level === 'readonly' ? 'active' : ''}}" data-field="permission_level" data-value="readonly" bindtap="choose" hover-class="pressable-hover">仅查看</view></view></view>
         <view class="form-actions"><button class="btn" bindtap="cancel">取消</button><button class="btn primary" loading="{{saving}}" bindtap="save">保存</button></view>
       </view>
     </view>

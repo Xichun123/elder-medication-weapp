@@ -5,7 +5,7 @@
         <text class="hero-title">{{home.name}}</text>
         <text class="hero-subtitle">云端家庭空间 · {{roleLabel}}</text>
       </view>
-      <text class="cloud-mark">☁️</text>
+      <image class="cloud-mark" src="/assets/icons/line-home.png" mode="aspectFit"/>
     </view>
     <view class="hero-metrics">
       <view class="hero-metric"><text class="hero-metric-number">{{elders.length}}</text><text class="hero-metric-label">长辈</text></view>
@@ -28,25 +28,25 @@
       <view class="field"><text class="field-label required">姓名</text><input class="input" maxlength="50" value="{{form.name}}" data-field="name" bindinput="onInput"/></view>
       <view class="field"><text class="field-label required">年龄</text><input class="input" type="number" value="{{form.age}}" data-field="age" bindinput="onInput"/></view>
       <view class="field"><text class="field-label required">与家属关系</text><input class="input" value="{{form.relationship}}" placeholder="如 母亲 / 父亲" data-field="relationship" bindinput="onInput"/></view>
-      <view class="field"><text class="field-label">性别</text><view class="radio-row"><view class="choice {{form.gender === 'female' ? 'active' : ''}}" data-value="female" bindtap="chooseGender">女</view><view class="choice {{form.gender === 'male' ? 'active' : ''}}" data-value="male" bindtap="chooseGender">男</view></view></view>
+      <view class="field"><text class="field-label">性别</text><view class="radio-row"><view class="choice {{form.gender === 'female' ? 'active' : ''}}" data-value="female" bindtap="chooseGender" hover-class="pressable-hover">女</view><view class="choice {{form.gender === 'male' ? 'active' : ''}}" data-value="male" bindtap="chooseGender" hover-class="pressable-hover">男</view></view></view>
       <view class="form-actions"><button class="btn" bindtap="closeCreate">取消</button><button class="btn primary" loading="{{saving}}" bindtap="createElder">保存</button></view>
     </view>
 
     <view wx:for="{{elders}}" wx:key="id" class="list-card">
       <view class="row gap">
-        <view class="avatar">{{item.gender === 'male' ? '👴' : '👵'}}</view>
+        <view class="avatar"><image src="{{item.gender === 'male' ? '/assets/brand/avatar-grandpa.png' : '/assets/brand/avatar-grandma.png'}}" mode="aspectFit" aria-role="img" aria-label="长辈头像"/></view>
         <view class="flex-1"><text class="list-title">{{item.name}}</text><text class="list-subtitle">{{item.relationship || '长辈'}} · {{item.age}}岁</text><text class="list-meta">{{item.linkedUserId ? '已绑定老人账号' : '尚未绑定老人账号'}}</text></view>
         <text class="tag {{item.linkedUserId ? 'success' : 'warning'}}">{{item.linkedUserId ? '已绑定' : '待绑定'}}</text>
       </view>
       <view wx:if="{{isOwner && !item.linkedUserId}}" class="actions"><button class="btn teal small" data-id="{{item.id}}" bindtap="createElderInvite">生成老人邀请码</button></view>
     </view>
-    <view wx:if="{{!loading && !elders.length && !creating}}" class="card empty"><text class="empty-icon">👵</text>还没有长辈档案</view>
+    <view wx:if="{{!loading && !elders.length && !creating}}" class="card empty"><image class="empty-icon" src="/assets/icons/line-empty-box.png" mode="aspectFit" aria-role="img" aria-label="空状态"/>还没有长辈档案</view>
   </view>
 
   <view class="section">
     <view class="section-head"><text class="section-title">家庭成员</text></view>
     <view wx:for="{{members}}" wx:key="id" class="member-row">
-      <view class="member-avatar">👤</view>
+      <view class="member-avatar"><image class="member-avatar-img" src="/assets/icons/line-check.png" mode="aspectFit"/></view>
       <view class="flex-1"><text class="list-title member-name">{{item.nickname || '微信成员'}}</text><text class="list-subtitle">{{item.role === 'owner' ? '家庭创建人' : item.role === 'caregiver_edit' ? '可录入家属' : item.role === 'caregiver_view' ? '只读家属' : '老人本人'}}</text></view>
     </view>
     <view wx:if="{{isOwner}}" class="invite-actions">
@@ -69,5 +69,5 @@
     </view>
   </view>
 
-  <view wx:if="{{loading}}" class="loading">正在同步云端数据…</view>
+  <view wx:if="{{loading}}" class="loading" aria-role="status">正在同步云端数据…</view>
 </view>

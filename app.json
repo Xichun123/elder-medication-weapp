@@ -24,22 +24,47 @@
   },
   "window": {
     "navigationBarTitleText": "药灵通",
-    "navigationBarBackgroundColor": "#e87a5d",
+    "navigationBarBackgroundColor": "#176B5B",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#faf5ef",
+    "backgroundColor": "#F7FAF8",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
-    "color": "#7a6648",
-    "selectedColor": "#e87a5d",
+    "color": "#8A9B94",
+    "selectedColor": "#176B5B",
     "backgroundColor": "#ffffff",
     "borderStyle": "white",
     "list": [
-      { "pagePath": "pages/home/index", "text": "概览" },
-      { "pagePath": "pages/elders/index", "text": "长辈" },
-      { "pagePath": "pages/medication/index", "text": "录入" },
-      { "pagePath": "pages/reminders/index", "text": "提醒" },
-      { "pagePath": "pages/risks/index", "text": "禁忌" }
+      {
+        "pagePath": "pages/home/index",
+        "text": "概览",
+        "iconPath": "assets/icons/tab/home.png",
+        "selectedIconPath": "assets/icons/tab/home-on.png"
+      },
+      {
+        "pagePath": "pages/elders/index",
+        "text": "长辈",
+        "iconPath": "assets/icons/tab/elder.png",
+        "selectedIconPath": "assets/icons/tab/elder-on.png"
+      },
+      {
+        "pagePath": "pages/medication/index",
+        "text": "录入",
+        "iconPath": "assets/icons/tab/med.png",
+        "selectedIconPath": "assets/icons/tab/med-on.png"
+      },
+      {
+        "pagePath": "pages/reminders/index",
+        "text": "提醒",
+        "iconPath": "assets/icons/tab/bell.png",
+        "selectedIconPath": "assets/icons/tab/bell-on.png"
+      },
+      {
+        "pagePath": "pages/risks/index",
+        "text": "禁忌",
+        "iconPath": "assets/icons/tab/shield.png",
+        "selectedIconPath": "assets/icons/tab/shield-on.png"
+      }
     ]
   },
   "style": "v2",

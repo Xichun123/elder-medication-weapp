@@ -4,7 +4,7 @@
   <view class="elder-picker" wx:if="{{elders.length}}">
     <text>当前咨询对象</text>
     <picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange">
-      <view class="elder-picker-value">👴 {{elders[elderIndex].name}} <text>切换 ›</text></view>
+      <view class="elder-picker-value" aria-role="button" aria-label="切换咨询对象">{{elders[elderIndex].name}} <text>切换 ›</text></view>
     </picker>
   </view>
 
@@ -21,7 +21,10 @@
     <view wx:for="{{messages}}" wx:key="index" class="bubble-wrap {{item.role}}">
       <view class="bubble {{item.role}}">
         <text>{{item.content}}</text>
-        <view wx:if="{{item.role === 'assistant' && item.content}}" class="play-audio" data-text="{{item.content}}" data-audio="{{item.audioUrl}}" bindtap="playMessage">🔊 播放语音</view>
+        <view wx:if="{{item.role === 'assistant' && item.content}}" class="play-audio pressable" hover-class="pressable-hover" data-text="{{item.content}}" data-audio="{{item.audioUrl}}" bindtap="playMessage" aria-role="button" aria-label="播放这条语音">
+          <image class="play-audio-icon" src="/assets/icons/line-speaker.png" mode="aspectFit"/>
+          <text>播放语音</text>
+        </view>
 
         <view wx:if="{{item.pendingAction}}" class="confirm-card">
           <block wx:if="{{item.pendingAction.type === 'mark_taken'}}">
@@ -61,12 +64,13 @@
   </scroll-view>
 
   <view class="composer">
-    <button class="voice-input {{recording ? 'recording' : ''}}" disabled="{{sending || transcribing}}" bindtap="toggleRecording">
-      <text class="voice-input-icon">{{recording ? '■' : '🎤'}}</text>
+    <button class="voice-input {{recording ? 'recording' : ''}}" disabled="{{sending || transcribing}}" bindtap="toggleRecording" aria-label="{{recording ? '结束录音' : '开始语音输入'}}">
+      <text wx:if="{{recording}}" class="voice-input-icon">■</text>
+      <image wx:else class="voice-input-img" src="/assets/icons/line-mic.png" mode="aspectFit"/>
     </button>
-    <input value="{{input}}" placeholder="输入问题" bindinput="onInput" bindconfirm="send" confirm-type="send" />
+    <input value="{{input}}" placeholder="输入问题" bindinput="onInput" bindconfirm="send" confirm-type="send" aria-label="输入问题"/>
     <button loading="{{sending}}" disabled="{{sending}}" bindtap="send">发送</button>
   </view>
   <view wx:if="{{mode === 'elder' && !recording && !transcribing}}" class="voice-hint">点击左下角麦克风，直接说出您的问题</view>
-  <view wx:if="{{mode === 'elder' && (recording || transcribing)}}" class="voice-status">{{recording ? '正在录音，再点一次结束' : '正在识别，请稍候…'}}</view>
+  <view wx:if="{{mode === 'elder' && (recording || transcribing)}}" class="voice-status" aria-role="status">{{recording ? '正在录音，再点一次结束' : '正在识别，请稍候…'}}</view>
 </view>

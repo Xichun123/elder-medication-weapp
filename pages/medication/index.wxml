@@ -1,16 +1,14 @@
 <view class="page with-safe-bottom">
-  <text class="page-title">药物录入</text>
-  <text class="page-subtitle">药名模糊匹配主数据，保存后自动创建提醒规则</text>
   <view wx:if="{{canEdit}}" class="scan-card">
     <view class="scan-top">
-      <view class="scan-icon">AI</view>
+      <image class="scan-icon" src="/assets/icons/quick-camera.png" mode="aspectFit"/>
       <view class="scan-copy">
         <view class="scan-eyebrow">AI 拍药盒识别</view>
         <view class="scan-title">拍一下，少填好几项</view>
         <view class="scan-subtitle">自动提取药名、规格与包装文字，再匹配家庭药库</view>
       </view>
     </view>
-    <button class="scan-button" loading="{{recognizing}}" disabled="{{recognizing}}" bindtap="chooseMedicationPhoto">{{recognizing ? '正在识别包装…' : '拍照 / 从相册选择'}}</button>
+    <button class="scan-button" loading="{{recognizing}}" disabled="{{recognizing}}" bindtap="chooseMedicationPhoto" aria-label="拍照或从相册选择药盒照片">{{recognizing ? '正在识别包装…' : '拍照 / 从相册选择'}}</button>
     <view class="scan-footnote">照片会上传至第三方 AI 服务处理，可能包含姓名和健康信息；请遮挡无关个人信息。识别结果仅作录入草稿。</view>
   </view>
 
@@ -22,9 +20,9 @@
           <view class="recognition-kicker">AI 识别草稿</view>
           <view class="recognition-heading">{{recognitionResult ? '请核对后再保存' : '正在读取药盒文字'}}</view>
         </view>
-        <text class="review-badge {{recognitionConfirmed ? 'confirmed' : ''}}">{{recognitionConfirmed ? '已确认' : '待核对'}}</text>
+        <text class="review-badge {{recognitionConfirmed ? 'confirmed' : ''}}">{{recognitionConfirmed ? '✓ 已确认' : '待核对'}}</text>
       </view>
-      <view wx:if="{{recognizing}}" class="recognition-loading"><view class="recognition-dot"></view>图像分析通常需要几秒钟</view>
+      <view wx:if="{{recognizing}}" class="recognition-loading" aria-role="status"><view class="recognition-dot"></view>图像分析通常需要几秒钟</view>
       <view wx:if="{{recognitionResult}}">
         <view class="recognition-grid">
           <view wx:for="{{recognitionDetails}}" wx:key="label" class="recognition-row">
@@ -46,12 +44,12 @@
     <view class="manual-heading"><text>确认用药信息</text><text class="manual-tag">人工核对</text></view>
     <view class="field"><text class="field-label required">选择老人</text><picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="picker">{{elderIndex >= 0 ? elders[elderIndex].name + '（' + elders[elderIndex].relationship + '）' : '请选择长辈'}} ▾</view></picker></view>
     <view class="field"><text class="field-label required">输入药名</text><input class="input" value="{{keyword}}" placeholder="通用名 / 商品名 / 别名" bindinput="onKeywordInput"/></view>
-    <view wx:if="{{matching}}" class="loading mini">正在匹配主数据…</view>
+    <view wx:if="{{matching}}" class="loading mini" aria-role="status">正在匹配主数据…</view>
     <view wx:if="{{matchedDrugs.length}}" class="match-list">
-      <view wx:for="{{matchedDrugs}}" wx:key="drug_id" class="match-item" data-id="{{item.drug_id}}" bindtap="pickDrug">
+      <view wx:for="{{matchedDrugs}}" wx:key="drug_id" class="match-item pressable" hover-class="pressable-hover" data-id="{{item.drug_id}}" bindtap="pickDrug" aria-role="button" aria-label="选择药品 {{item.generic_name}}">
         <view class="row between gap"><text class="list-title">{{item.generic_name}}</text><text class="tag primary">{{item.category_label}}</text></view>
         <view class="list-subtitle">商品名：{{item.trade_name || '—'}} · 别名：{{item.aliases || '—'}}</view>
-        <view wx:if="{{item.contraindication_note}}" class="contra">⚠️ {{item.contraindication_note}}</view>
+        <view wx:if="{{item.contraindication_note}}" class="contra">⚠ {{item.contraindication_note}}</view>
       </view>
     </view>
     <view wx:if="{{recognitionResult && !selectedDrug}}" class="create-drug-hint">
@@ -62,14 +60,14 @@
       <view class="row between"><view><text class="list-title">{{selectedDrug.generic_name}}</text><view class="list-subtitle">{{selectedDrug.drug_id}} · {{selectedDrug.category_label}}</view></view><button class="btn small" bindtap="clearDrug">重选</button></view>
     </view>
     <view class="field"><text class="field-label required">剂量</text><input class="input" value="{{dose}}" placeholder="如 10mg / 0.5g" bindinput="onDoseInput"/></view>
-    <view class="field"><text class="field-label">频次</text><view class="radio-row"><view wx:for="{{frequencyOptions}}" wx:key="*this" class="choice {{frequency === item ? 'active' : ''}}" data-value="{{item}}" bindtap="chooseFrequency">{{item}}</view></view></view>
+    <view class="field"><text class="field-label">频次</text><view class="radio-row"><view wx:for="{{frequencyOptions}}" wx:key="*this" class="choice {{frequency === item ? 'active' : ''}}" data-value="{{item}}" bindtap="chooseFrequency" aria-role="button" aria-label="频次 {{item}}" hover-class="pressable-hover">{{item}}</view></view></view>
     <view class="field"><text class="field-label required">开始日期</text><picker mode="date" value="{{startDate}}" bindchange="onStartDate"><view class="picker">{{startDate}} ▾</view></picker></view>
     <view class="field"><text class="field-label">结束日期</text><view class="row gap"><picker class="flex-1" mode="date" value="{{endDate || startDate}}" bindchange="onEndDate"><view class="picker">{{endDate || '长期 / 点击选择'}} ▾</view></picker><button wx:if="{{endDate}}" class="btn small" bindtap="clearEndDate">清空</button></view></view>
     <view wx:if="{{recognitionReviewRequired}}" class="review-confirmation {{recognitionConfirmed ? 'confirmed' : ''}}">
       <view class="review-confirmation-title">AI 信息需要人工确认</view>
       <checkbox-group bindchange="onRecognitionConfirmChange">
         <label class="review-confirmation-check">
-          <checkbox value="confirmed" checked="{{recognitionConfirmed}}" color="#3e9183"/>
+          <checkbox value="confirmed" checked="{{recognitionConfirmed}}" color="#176B5B"/>
           <text>我已对照药盒和医生处方，核对药品、剂量与频次</text>
         </label>
       </checkbox-group>
@@ -88,9 +86,10 @@
   </view>
 
   <view wx:if="{{showResult}}" class="mask">
-    <view class="result-card">
-      <text class="page-title">✅ 保存成功</text><text class="page-subtitle">已自动生成 {{createdReminders.length}} 条提醒规则</text>
-      <view wx:for="{{createdReminders}}" wx:key="rule_id" class="result-item"><text class="tag warning">{{item.remind_time}}</text><text class="result-text">🔊 {{item.voice_text}}</text></view>
+    <view class="result-card" aria-role="dialog" aria-modal="true" aria-label="保存成功">
+      <view class="result-head"><image class="result-check" src="/assets/icons/line-check.png" mode="aspectFit"/><text class="result-title">保存成功</text></view>
+      <text class="page-subtitle">已自动生成 {{createdReminders.length}} 条提醒规则</text>
+      <view wx:for="{{createdReminders}}" wx:key="rule_id" class="result-item"><text class="tag warning">{{item.remind_time}}</text><text class="result-text">{{item.voice_text}}</text></view>
       <view class="form-actions"><button class="btn" bindtap="closeResult">继续录入</button><button class="btn primary" bindtap="goReminders">查看提醒</button></view>
     </view>
   </view>

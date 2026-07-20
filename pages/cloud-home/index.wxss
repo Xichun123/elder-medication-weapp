@@ -1,11 +1,12 @@
-.cloud-mark { font-size: 54rpx; }
+.cloud-mark { width: 72rpx; height: 72rpx; padding: 14rpx; border-radius: 20rpx; background: rgba(255,255,255,.16); }
 .cloud-notice { margin-top: 24rpx; }
-.member-row { display: flex; align-items: center; gap: 16rpx; padding: 20rpx 0; border-bottom: 1rpx solid var(--border); }
+.member-row { display: flex; align-items: center; gap: 16rpx; padding: 22rpx 0; border-bottom: 1rpx solid var(--border); }
 .member-row:last-child { border-bottom: 0; }
-.member-avatar { width: 64rpx; height: 64rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--soft); }
-.member-name { display: block; font-size: 27rpx; }
-.invite-actions { display: flex; gap: 12rpx; flex-wrap: wrap; margin-top: 22rpx; }
+.member-avatar { width: 72rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--soft); }
+.member-avatar-img { width: 40rpx; height: 40rpx; }
+.member-name { display: block; font-size: 28rpx; }
+.invite-actions { display: flex; gap: 14rpx; flex-wrap: wrap; margin-top: 24rpx; }
 .account-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; }
-.invite-mask { position: fixed; z-index: 20; inset: 0; display: flex; align-items: center; justify-content: center; padding: 36rpx; background: rgba(35,26,19,.56); }
+.invite-mask { position: fixed; z-index: 20; inset: 0; display: flex; align-items: center; justify-content: center; padding: 36rpx; background: rgba(24,48,43,.56); }
 .invite-card { width: 100%; max-width: 640rpx; padding: 34rpx; border-radius: 26rpx; background: #fff; }
 .invite-code { display: block; margin: 38rpx 0; text-align: center; color: var(--primary); font-size: 62rpx; font-weight: 750; letter-spacing: 10rpx; }

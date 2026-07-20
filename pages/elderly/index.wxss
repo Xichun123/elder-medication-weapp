@@ -1,10 +1,41 @@
-.elderly-page { min-height: 100vh; padding-bottom: 50rpx; background: var(--bg); }.elderly-page.high-contrast { --bg:#fff; --text:#000; --muted:#222; --border:#000; background:#fff; color:#000; }.elderly-tools { display:flex; justify-content:space-between; gap:14rpx; padding:20rpx 24rpx; background:#fff; border-bottom:2rpx solid var(--border); }.tool-btn { min-height:68rpx; padding:0 20rpx; display:flex; align-items:center; border:2rpx solid var(--border); border-radius:14rpx; background:#fff; color:var(--text); font-size:27rpx; }.elderly-main { padding:30rpx 24rpx; }.greeting { display:flex; align-items:center; gap:20rpx; margin-bottom:32rpx; }.greeting-avatar { font-size:94rpx; }.elder-title { display:block; font-size:48rpx; font-weight:700; }.elder-sub { display:block; color:var(--muted); font-size:30rpx; }.current-card { padding:48rpx 30rpx; color:#fff; text-align:center; border-radius:30rpx; background:linear-gradient(135deg,var(--primary),var(--primary-deep)); box-shadow:0 16rpx 36rpx rgba(232,122,93,.23); }.current-card.resting { background:linear-gradient(135deg,#6fbbac,#5ba89a); }.current-label { display:block; font-size:32rpx; }.current-drug { display:block; margin:14rpx 0; font-size:66rpx; line-height:1.15; font-weight:700; }.current-voice { display:block; margin:24rpx 0; padding:20rpx; border-radius:18rpx; background:rgba(255,255,255,.18); font-size:34rpx; }.play-btn { min-height:92rpx; padding:0 40rpx; border:3rpx solid #fff; border-radius:22rpx; background:rgba(255,255,255,.16); color:#fff; font-size:34rpx; font-weight:650; }.current-tip { display:block; margin-top:20rpx; opacity:.86; font-size:25rpx; }.today { margin-top:38rpx; }.elder-section-title { display:block; margin-bottom:18rpx; font-size:40rpx; font-weight:700; }.elder-reminder { display:flex; align-items:center; justify-content:space-between; gap:20rpx; margin-bottom:16rpx; padding:28rpx; border:3rpx solid var(--border); border-radius:22rpx; background:#fff; }.elder-reminder.taken,.elder-reminder.skipped { opacity:.62; }.reminder-time { display:block; color:var(--primary); font-size:38rpx; font-weight:700; }.reminder-drug { display:block; font-size:32rpx; }.reminder-status { font-size:28rpx; }.elder-empty { padding:50rpx; text-align:center; font-size:32rpx; }.auto-card { margin-top:34rpx; padding:28rpx; border:3rpx solid var(--border); border-radius:22rpx; background:#fff; }.auto-title { display:block; font-size:34rpx; font-weight:700; }.auto-desc { display:block; color:var(--muted); font-size:26rpx; }.auto-tip { margin-top:18rpx; padding:18rpx; border-radius:14rpx; background:var(--success-soft); color:var(--success); font-size:26rpx; }.elderly-loading { font-size:34rpx; }
-.current-package-image,.current-package-placeholder { width:100%; height:360rpx; margin:24rpx 0; border-radius:18rpx; background:#fff; }
-.current-package-placeholder { display:flex; align-items:center; justify-content:center; color:#64483f; font-size:30rpx; }
-.current-dose { display:block; font-size:36rpx; font-weight:650; }
-.ai-entry { display:flex; align-items:center; gap:18rpx; margin:0 0 28rpx; padding:22rpx 24rpx; border-radius:24rpx; background:linear-gradient(135deg,#7057c7,#9a7bea); color:#fff; box-shadow:0 12rpx 24rpx rgba(112,87,199,.22); }
-.ai-entry--pressed { opacity:.84; transform:scale(.985); }
-.ai-entry-icon { width:76rpx; height:76rpx; display:flex; align-items:center; justify-content:center; border-radius:50%; background:rgba(255,255,255,.18); font-size:42rpx; }
+.elderly-page { min-height: 100vh; padding-bottom: 50rpx; background: var(--bg); }
+.elderly-page.high-contrast { --bg:#FFFFFF; --text:#000000; --muted:#1F1F1F; --border:#000000; background:#FFFFFF; color:#000000; }
+.elderly-tools { display:flex; justify-content:space-between; gap:14rpx; padding:22rpx 24rpx; background:#fff; border-bottom:2rpx solid var(--border); }
+.tool-btn { min-height:96rpx; padding:0 24rpx; display:flex; align-items:center; border:2rpx solid var(--border); border-radius:18rpx; background:#fff; color:var(--text); font-size:30rpx; }
+.elderly-main { padding:32rpx 26rpx; }
+.greeting { display:flex; align-items:center; gap:22rpx; margin-bottom:34rpx; }
+.greeting-avatar { width:132rpx; height:132rpx; border-radius:50%; }
+.elder-title { display:block; font-size:50rpx; font-weight:700; }
+.elder-sub { display:block; color:var(--muted); font-size:30rpx; }
+.current-card { padding:48rpx 32rpx; color:#fff; text-align:center; border-radius:30rpx; background:linear-gradient(135deg,#C05339,#B94A32); box-shadow:0 16rpx 36rpx rgba(185,74,50,.22); }
+.current-card.resting { background:linear-gradient(135deg,#1F8F79,#176B5B); }
+.current-label { display:block; font-size:32rpx; }
+.current-drug { display:block; margin:16rpx 0; font-size:64rpx; line-height:1.2; font-weight:700; }
+.current-dose { display:block; font-size:36rpx; }
+.current-voice { display:block; margin:26rpx 0; padding:22rpx; border-radius:18rpx; background:rgba(255,255,255,.18); font-size:34rpx; line-height:1.6; }
+.play-btn { min-height:120rpx; padding:0 48rpx; border:3rpx solid #fff; border-radius:24rpx; background:rgba(255,255,255,.16); color:#fff; font-size:36rpx; font-weight:650; }
+.current-tip { display:block; margin-top:22rpx; opacity:.92; font-size:28rpx; line-height:1.55; }
+.today { margin-top:40rpx; }
+.elder-section-title { display:block; margin-bottom:20rpx; font-size:42rpx; font-weight:700; }
+.elder-reminder { display:flex; align-items:center; justify-content:space-between; gap:20rpx; margin-bottom:18rpx; padding:30rpx; border:3rpx solid var(--border); border-radius:24rpx; background:#fff; }
+.elder-reminder.taken,.elder-reminder.skipped { opacity:.68; }
+.reminder-time { display:block; color:var(--primary); font-size:40rpx; font-weight:700; }
+.reminder-drug { display:block; font-size:34rpx; }
+.reminder-status { font-size:30rpx; }
+.elder-empty { padding:56rpx; text-align:center; font-size:32rpx; }
+.auto-card { margin-top:36rpx; padding:30rpx; border:3rpx solid var(--border); border-radius:24rpx; background:#fff; }
+.auto-title { display:block; font-size:34rpx; font-weight:700; }
+.auto-desc { display:block; color:var(--muted); font-size:28rpx; }
+.auto-tip { margin-top:20rpx; padding:20rpx; border-radius:16rpx; background:var(--success-soft); color:var(--success); font-size:28rpx; }
+.elderly-loading { font-size:34rpx; }
+.ai-entry { display:flex; align-items:center; gap:20rpx; margin:0 0 30rpx; padding:26rpx 26rpx; border-radius:26rpx; background:linear-gradient(135deg,#6F5BD8,#5D4BC3); color:#fff; box-shadow:0 12rpx 24rpx rgba(93,75,195,.22); }
+.ai-entry--pressed { opacity:.85; transform:scale(.985); }
+.ai-entry-icon { width:88rpx; height:88rpx; display:flex; align-items:center; justify-content:center; flex:none; border-radius:24rpx; background:rgba(255,255,255,.18); }
+.ai-entry-icon-img { width:52rpx; height:52rpx; }
 .ai-entry-main { flex:1; min-width:0; }
-.ai-entry-title,.ai-entry-desc { display:block; }.ai-entry-title { font-size:34rpx; font-weight:700; letter-spacing:1rpx; }.ai-entry-desc { margin-top:6rpx; font-size:24rpx; opacity:.9; }
-.ai-entry-arrow { font-size:52rpx; font-weight:300; line-height:1; opacity:.9; }
+.ai-entry-title,.ai-entry-desc { display:block; }
+.ai-entry-title { font-size:38rpx; font-weight:700; }
+.ai-entry-desc { margin-top:6rpx; font-size:28rpx; opacity:.92; }
+.ai-entry-arrow { font-size:52rpx; opacity:.85; }
+.current-package-image,.current-package-placeholder { width:100%; height:380rpx; margin:26rpx 0; border-radius:20rpx; background:#fff; }
+.current-package-placeholder { display:flex; align-items:center; justify-content:center; color:#52665F; font-size:30rpx; }

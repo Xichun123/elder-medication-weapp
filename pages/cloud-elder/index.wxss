@@ -1,57 +1,58 @@
-.elder-cloud-page { min-height: 100vh; padding: 44rpx 30rpx calc(50rpx + env(safe-area-inset-bottom)); background: #f1f8f6; color: #173a34; }
+.elder-cloud-page { min-height: 100vh; padding: 44rpx 30rpx calc(50rpx + env(safe-area-inset-bottom)); background: #F2F8F5; color: #17352F; }
 .elder-cloud-main { max-width: 720rpx; margin: 0 auto; }
-.elder-greeting { display: flex; flex-direction: column; align-items: center; padding: 30rpx 0 42rpx; text-align: center; }
-.elder-avatar { font-size: 108rpx; }
-.elder-name { margin-top: 14rpx; font-size: 48rpx; font-weight: 750; }
-.elder-home { margin-top: 8rpx; color: #52766f; font-size: 27rpx; }
-.ai-assistant-entry { display: flex; align-items: center; gap: 18rpx; margin-bottom: 24rpx; padding: 26rpx; border-radius: 26rpx; color: #fff; background: linear-gradient(135deg,#6f5bd3,#7057c7); box-shadow: 0 12rpx 28rpx rgba(112,87,199,.24); }
-.ai-assistant-entry-pressed { opacity: .82; transform: scale(.99); }
-.ai-assistant-icon { width: 82rpx; height: 82rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 24rpx; background: rgba(255,255,255,.18); font-size: 43rpx; }
-.ai-assistant-title { display: block; font-size: 36rpx; font-weight: 750; }
-.ai-assistant-desc { display: block; margin-top: 5rpx; font-size: 25rpx; opacity: .9; }
-.ai-assistant-arrow { font-size: 52rpx; opacity: .82; }
-.status-card, .current-card { padding: 34rpx; border: 2rpx solid #cde2dd; border-radius: 28rpx; background: #fff; box-shadow: 0 8rpx 24rpx rgba(23,58,52,.06); text-align: center; }
-.status-icon { display: block; font-size: 70rpx; }
-.status-title { display: block; margin-top: 12rpx; font-size: 38rpx; font-weight: 700; }
-.status-desc { display: block; margin-top: 12rpx; color: #52766f; font-size: 29rpx; line-height: 1.7; }
-.current-card { border-color: #5ba89a; background: linear-gradient(180deg, #eefaf7, #fff); }
-.current-label { display: block; color: #3d7f74; font-size: 28rpx; font-weight: 650; }
-.current-time { display: block; margin-top: 10rpx; font-size: 56rpx; font-weight: 800; color: #0f3d36; }
-.current-package-image, .current-package-placeholder { width: 100%; height: 320rpx; margin: 22rpx 0; border: 2rpx solid #cde2dd; border-radius: 20rpx; background: #fff; }
-.current-package-placeholder { display: flex; align-items: center; justify-content: center; color: #52766f; font-size: 28rpx; }
-.current-drug { display: block; margin-top: 8rpx; font-size: 42rpx; font-weight: 750; }
-.current-dose { display: block; margin-top: 8rpx; font-size: 32rpx; font-weight: 650; }
-.current-voice { display: block; margin-top: 16rpx; color: #52766f; font-size: 30rpx; line-height: 1.6; }
-.current-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; margin-top: 28rpx; }
-.safety-tip { display: block; margin-top: 20rpx; color: #a74d37; font-size: 24rpx; line-height: 1.6; }
-.auto-card { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; margin-top: 24rpx; padding: 24rpx; border: 2rpx solid #d7e8e4; border-radius: 22rpx; background: #fff; }
+.elder-greeting { display: flex; flex-direction: column; align-items: center; padding: 26rpx 0 40rpx; text-align: center; }
+.elder-avatar { width: 150rpx; height: 150rpx; border-radius: 50%; box-shadow: 0 8rpx 20rpx rgba(23,107,91,.14); }
+.elder-name { margin-top: 18rpx; font-size: 52rpx; font-weight: 750; }
+.elder-home { margin-top: 10rpx; color: #4A645D; font-size: 30rpx; }
+.ai-assistant-entry { display: flex; align-items: center; gap: 20rpx; margin-bottom: 26rpx; padding: 28rpx; border-radius: 28rpx; color: #fff; background: linear-gradient(135deg,#6F5BD8,#5D4BC3); box-shadow: 0 12rpx 28rpx rgba(93,75,195,.24); }
+.ai-assistant-entry-pressed { opacity: .85; transform: scale(.99); }
+.ai-assistant-icon { width: 88rpx; height: 88rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 24rpx; background: rgba(255,255,255,.18); }
+.ai-assistant-icon-img { width: 52rpx; height: 52rpx; }
+.ai-assistant-title { display: block; font-size: 38rpx; font-weight: 750; }
+.ai-assistant-desc { display: block; margin-top: 6rpx; font-size: 28rpx; opacity: .92; }
+.ai-assistant-arrow { font-size: 52rpx; opacity: .85; }
+.status-card, .current-card { padding: 36rpx; border: 2rpx solid #C9E2DA; border-radius: 30rpx; background: #fff; box-shadow: 0 8rpx 24rpx rgba(23,53,47,.06); text-align: center; }
+.status-icon { display: block; width: 96rpx; height: 96rpx; margin: 0 auto; }
+.status-title { display: block; margin-top: 14rpx; font-size: 40rpx; font-weight: 700; }
+.status-desc { display: block; margin-top: 14rpx; color: #4A645D; font-size: 30rpx; line-height: 1.7; }
+.current-card { border-color: #176B5B; background: linear-gradient(180deg, #EAF6F1, #fff); }
+.current-label { display: block; color: #14604F; font-size: 30rpx; font-weight: 650; }
+.current-time { display: block; margin-top: 12rpx; font-size: 64rpx; font-weight: 800; color: #0E3B33; }
+.current-package-image, .current-package-placeholder { width: 100%; height: 340rpx; margin: 24rpx 0; border: 2rpx solid #C9E2DA; border-radius: 22rpx; background: #fff; }
+.current-package-placeholder { display: flex; align-items: center; justify-content: center; color: #4A645D; font-size: 30rpx; }
+.current-drug { display: block; margin-top: 10rpx; font-size: 48rpx; font-weight: 750; }
+.current-dose { display: block; margin-top: 10rpx; font-size: 36rpx; font-weight: 650; }
+.current-voice { display: block; margin-top: 18rpx; color: #4A645D; font-size: 32rpx; line-height: 1.6; }
+.current-actions { display: grid; grid-template-columns: 1fr; gap: 18rpx; margin-top: 30rpx; }
+.safety-tip { display: block; margin-top: 22rpx; color: #9C4223; font-size: 28rpx; line-height: 1.6; }
+.auto-card { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; margin-top: 26rpx; padding: 26rpx; border: 2rpx solid #D4E7E1; border-radius: 24rpx; background: #fff; }
 .auto-copy { min-width: 0; }
-.auto-title { display: block; font-size: 30rpx; font-weight: 700; }
-.auto-desc { display: block; margin-top: 6rpx; color: #52766f; font-size: 24rpx; line-height: 1.5; }
-.section-block { margin-top: 28rpx; }
-.section-title { display: block; margin-bottom: 14rpx; font-size: 32rpx; font-weight: 700; }
-.reminder-row { display: flex; align-items: center; gap: 16rpx; padding: 22rpx; margin-bottom: 14rpx; border-radius: 22rpx; background: #fff; border: 2rpx solid #d7e8e4; }
-.reminder-row.taken { opacity: .72; }
-.reminder-time { display: block; font-size: 34rpx; font-weight: 750; }
-.reminder-drug { display: block; margin-top: 4rpx; font-size: 30rpx; }
-.reminder-status { display: block; margin-top: 4rpx; color: #52766f; font-size: 24rpx; }
-.row-actions { display: flex; flex-direction: column; gap: 10rpx; }
-.empty-tip { padding: 24rpx; text-align: center; color: #52766f; }
-.elder-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 18rpx; margin-top: 30rpx; }
-.elder-btn { min-height: 92rpx; border-radius: 20rpx; background: #5ba89a; color: #fff; font-size: 30rpx; font-weight: 650; }
-.elder-btn.secondary { background: #dfeeea; color: #315e56; }
-.elder-btn.primary { background: #e87a5d; }
-.elder-btn.big { min-height: 100rpx; font-size: 32rpx; }
-.elder-btn.mini { min-height: 64rpx; padding: 0 18rpx; font-size: 24rpx; border-radius: 14rpx; }
-.elder-loading { padding: 180rpx 30rpx; text-align: center; color: #52766f; font-size: 32rpx; }
-.medication-prompt-mask { position: fixed; z-index: 50; inset: 0; display: flex; align-items: center; padding: 28rpx; background: rgba(18,45,40,.76); }
-.medication-prompt { width: 100%; max-height: 92vh; overflow-y: auto; padding: 30rpx; text-align: center; border-radius: 28rpx; background: #fff; color: #173a34; }
-.prompt-label { display: block; color: #3d7f74; font-size: 32rpx; font-weight: 700; }
-.prompt-package-image, .prompt-package-placeholder { width: 100%; height: 500rpx; margin: 24rpx 0; border: 2rpx solid #cde2dd; border-radius: 20rpx; background: #f7fbfa; }
-.prompt-package-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10rpx; color: #52766f; font-size: 29rpx; }
-.prompt-drug { display: block; font-size: 54rpx; line-height: 1.2; font-weight: 750; }
-.prompt-dose { display: block; margin-top: 12rpx; font-size: 36rpx; }
-.prompt-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; margin-top: 26rpx; }
-.prompt-play { background: #5ba89a; }
-.prompt-close { min-height: 76rpx; margin-top: 16rpx; border: 2rpx solid #cde2dd; border-radius: 18rpx; background: #fff; color: #315e56; font-size: 28rpx; }
-.prompt-warning { display: block; margin-top: 20rpx; color: #a74d37; font-size: 25rpx; line-height: 1.6; }
+.auto-title { display: block; font-size: 32rpx; font-weight: 700; }
+.auto-desc { display: block; margin-top: 8rpx; color: #4A645D; font-size: 28rpx; line-height: 1.5; }
+.section-block { margin-top: 30rpx; }
+.section-title { display: block; margin-bottom: 16rpx; font-size: 34rpx; font-weight: 700; }
+.reminder-row { display: flex; align-items: center; gap: 16rpx; padding: 24rpx; margin-bottom: 14rpx; border-radius: 24rpx; background: #fff; border: 2rpx solid #D4E7E1; }
+.reminder-row.taken { opacity: .75; }
+.reminder-time { display: block; font-size: 36rpx; font-weight: 750; }
+.reminder-drug { display: block; margin-top: 6rpx; font-size: 32rpx; }
+.reminder-status { display: block; margin-top: 6rpx; color: #4A645D; font-size: 28rpx; }
+.row-actions { display: flex; flex-direction: column; gap: 12rpx; }
+.empty-tip { padding: 28rpx; text-align: center; color: #4A645D; font-size: 30rpx; }
+.elder-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 18rpx; margin-top: 32rpx; }
+.elder-btn { min-height: 110rpx; border-radius: 22rpx; background: #176B5B; color: #fff; font-size: 32rpx; font-weight: 650; }
+.elder-btn.secondary { background: #DCEDE7; color: #234E45; }
+.elder-btn.primary { background: #B94A32; }
+.elder-btn.big { min-height: 130rpx; font-size: 36rpx; }
+.elder-btn.mini { min-height: 96rpx; padding: 0 24rpx; font-size: 30rpx; border-radius: 18rpx; }
+.elder-loading { padding: 180rpx 30rpx; text-align: center; color: #4A645D; font-size: 34rpx; }
+.medication-prompt-mask { position: fixed; z-index: 50; inset: 0; display: flex; align-items: center; padding: 28rpx; background: rgba(14,45,39,.78); }
+.medication-prompt { width: 100%; max-height: 92vh; overflow-y: auto; padding: 32rpx; text-align: center; border-radius: 30rpx; background: #fff; color: #17352F; }
+.prompt-label { display: block; color: #14604F; font-size: 34rpx; font-weight: 700; }
+.prompt-package-image, .prompt-package-placeholder { width: 100%; height: 500rpx; margin: 26rpx 0; border: 2rpx solid #C9E2DA; border-radius: 22rpx; background: #F6FAF8; }
+.prompt-package-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12rpx; color: #4A645D; font-size: 30rpx; }
+.prompt-drug { display: block; font-size: 56rpx; line-height: 1.25; font-weight: 750; }
+.prompt-dose { display: block; margin-top: 14rpx; font-size: 38rpx; }
+.prompt-actions { display: grid; grid-template-columns: 1fr; gap: 18rpx; margin-top: 28rpx; }
+.prompt-play { background: #176B5B; }
+.prompt-close { min-height: 110rpx; margin-top: 18rpx; border: 2rpx solid #C9E2DA; border-radius: 20rpx; background: #fff; color: #234E45; font-size: 30rpx; }
+.prompt-warning { display: block; margin-top: 22rpx; color: #9C4223; font-size: 28rpx; line-height: 1.6; }

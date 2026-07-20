@@ -1,8 +1,8 @@
 <view class="page launch-page">
   <view class="brand">
-    <view class="brand-icon">💊</view>
+    <image class="brand-logo" src="/assets/brand/logo.png" mode="aspectFit" aria-role="img" aria-label="药灵通品牌标识"/>
     <text class="brand-title">药灵通</text>
-    <text class="brand-subtitle">家属与长辈，共享一份用药记录</text>
+    <text class="brand-subtitle">每一次按时服药，都有人安心守护</text>
   </view>
 
   <view wx:if="{{signedOut}}" class="card signed-out-card">
@@ -11,9 +11,9 @@
     <button class="btn primary block retry-btn" bindtap="loginAgain">微信登录</button>
   </view>
 
-  <view wx:elif="{{loading}}" class="card loading-card">
-    <text class="loading-icon">⏳</text>
-    <text>正在通过微信安全登录…</text>
+  <view wx:elif="{{loading}}" class="card loading-card" aria-role="status" aria-live="polite">
+    <view class="loading-pulse"><view class="pulse-dot"></view><view class="pulse-dot delay-1"></view><view class="pulse-dot delay-2"></view></view>
+    <text class="loading-text">正在通过微信安全登录…</text>
   </view>
 
   <view wx:elif="{{error && !user}}" class="card">
@@ -24,28 +24,31 @@
   <block wx:else>
     <view class="card welcome-card">
       <text class="list-title">登录成功</text>
-      <text class="list-subtitle">{{user.nickname || '微信用户'}} · 请选择家庭空间</text>
+      <text class="list-subtitle">{{user.nickname || '微信用户'}} · 请选择要进入的家庭空间</text>
     </view>
 
     <view wx:if="{{homes.length}}" class="section">
       <view class="section-head"><text class="section-title">我的家庭</text></view>
-      <view wx:for="{{homes}}" wx:key="id" class="list-card home-card" data-id="{{item.id}}" bindtap="enterHome">
+      <view wx:for="{{homes}}" wx:key="id" class="list-card home-card pressable" hover-class="pressable-hover" data-id="{{item.id}}" bindtap="enterHome" aria-role="button" aria-label="进入家庭 {{item.name}}">
         <view class="row between gap">
           <view class="row gap flex-1">
-            <view class="home-icon">🏠</view>
+            <view class="home-icon {{item.role === 'elder' ? 'elder-role' : ''}}">
+              <image wx:if="{{item.role === 'elder'}}" class="home-icon-img" src="/assets/icons/line-speaker.png" mode="aspectFit"/>
+              <image wx:else class="home-icon-img" src="/assets/icons/line-home.png" mode="aspectFit"/>
+            </view>
             <view class="flex-1">
               <text class="list-title">{{item.name}}</text>
               <text class="list-subtitle">{{item.role === 'owner' ? '家庭创建人' : item.role === 'caregiver_edit' ? '可录入家属' : item.role === 'caregiver_view' ? '只读家属' : '老人本人'}}</text>
             </view>
           </view>
-          <text>›</text>
+          <text class="home-arrow">›</text>
         </view>
       </view>
     </view>
 
     <view wx:if="{{!mode}}" class="actions-grid">
       <button class="btn primary block" data-mode="create" bindtap="chooseMode">创建家庭</button>
-      <button class="btn block" data-mode="join" bindtap="chooseMode">用邀请码加入</button>
+      <button class="btn outline block" data-mode="join" bindtap="chooseMode">用邀请码加入</button>
     </view>
 
     <view wx:if="{{mode === 'create'}}" class="card form-card">

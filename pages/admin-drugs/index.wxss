@@ -1,1 +1,1 @@
-.contra { margin-top:14rpx; padding:14rpx 18rpx; border-radius:12rpx; color:var(--danger); background:var(--danger-soft); font-size:23rpx; }
+.contra { margin-top:14rpx; padding:16rpx 20rpx; border-radius:14rpx; color:var(--danger); background:var(--danger-soft); font-size:26rpx; line-height:1.5; }

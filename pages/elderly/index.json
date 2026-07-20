@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "长辈用药提醒",
-  "navigationBarBackgroundColor": "#5ba89a",
+  "navigationBarBackgroundColor": "#176B5B",
+  "navigationBarTextStyle": "white",
   "disableScroll": false
 }

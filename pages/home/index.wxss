@@ -1,18 +1,24 @@
-.family-picker { padding: 12rpx 18rpx; border-radius: 14rpx; background: rgba(255,255,255,.18); font-size: 23rpx; }
-.quick-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14rpx; }
-.quick { min-height: 142rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8rpx; background: #fff; border: 1rpx solid var(--border); border-radius: 20rpx; font-size: 23rpx; }
-.quick-icon { font-size: 40rpx; }
-.health-alert-entry { display: flex; align-items: center; gap: 18rpx; margin-top: 22rpx; padding: 24rpx; border: 1rpx solid var(--border); border-radius: 22rpx; background: #fff; box-shadow: 0 6rpx 18rpx rgba(61,46,31,.05); }
-.health-alert-entry.has-unread { border-color: #efb0aa; background: linear-gradient(135deg,#fff,#fff4f2); }
-.alert-entry-icon { width: 76rpx; height: 76rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 22rpx; background: var(--danger-soft); font-size: 38rpx; }
-.alert-entry-title { font-size: 29rpx; font-weight: 650; }
-.alert-entry-subtitle { display: block; margin-top: 4rpx; color: var(--muted); font-size: 23rpx; }
-.alert-count { min-width: 38rpx; height: 38rpx; padding: 0 10rpx; display: inline-flex; align-items: center; justify-content: center; border-radius: 999rpx; color: #fff; background: var(--danger); font-size: 21rpx; line-height: 1; }
+.family-picker { min-height: 64rpx; padding: 12rpx 20rpx; display: flex; align-items: center; border-radius: 16rpx; background: rgba(255,255,255,.18); font-size: 26rpx; }
+.quick-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16rpx; }
+.quick { min-height: 176rpx; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 6rpx; padding: 24rpx 26rpx; background: #fff; border: 1rpx solid var(--border); border-radius: 22rpx; }
+.quick-icon { width: 64rpx; height: 64rpx; margin-bottom: 6rpx; }
+.quick-label { font-size: 30rpx; font-weight: 650; color: var(--text); }
+.quick-desc { font-size: 26rpx; color: var(--muted); }
+.health-alert-entry { display: flex; align-items: center; gap: 18rpx; margin-top: 24rpx; padding: 26rpx; border: 1rpx solid var(--border); border-radius: 22rpx; background: #fff; box-shadow: 0 4rpx 16rpx rgba(24,48,43,.04); }
+.health-alert-entry.has-unread { border-color: #EFC7BE; background: linear-gradient(135deg,#fff,#FCEAE4); }
+.alert-entry-icon { width: 80rpx; height: 80rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 22rpx; background: var(--warning-soft); }
+.alert-entry-icon-img { width: 46rpx; height: 46rpx; }
+.alert-entry-title { font-size: 30rpx; font-weight: 650; }
+.alert-entry-subtitle { display: block; margin-top: 4rpx; color: var(--muted); font-size: 26rpx; }
+.alert-count { min-width: 40rpx; height: 40rpx; padding: 0 12rpx; display: inline-flex; align-items: center; justify-content: center; border-radius: 999rpx; color: #fff; background: var(--danger); font-size: 26rpx; line-height: 1; }
 .alert-entry-arrow { color: var(--light); font-size: 48rpx; }
-.elder-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10rpx; margin-top: 22rpx; padding-top: 18rpx; border-top: 1rpx dashed var(--border); text-align: center; }
-.stat-number { display: block; font-size: 36rpx; line-height: 1.1; font-weight: 700; }
-.stat-number.warning { color: var(--warning); }.stat-number.danger { color: var(--danger); }
-.stat-label { display: block; color: var(--muted); font-size: 21rpx; margin-top: 5rpx; }
-.compact-card { padding-top: 4rpx; padding-bottom: 4rpx; }
-.record-row { display: flex; align-items: center; gap: 14rpx; padding: 22rpx 0; border-bottom: 1rpx solid var(--border); }
-.record-row:last-child { border-bottom: 0; }.list-title.small { font-size: 28rpx; }
+.elder-arrow { color: var(--light); font-size: 44rpx; flex: none; }
+.elder-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10rpx; margin-top: 22rpx; padding-top: 20rpx; border-top: 1rpx dashed var(--border); text-align: center; }
+.stat-number { display: block; font-size: 38rpx; line-height: 1.1; font-weight: 700; }
+.stat-number.warning { color: var(--warning); }
+.stat-number.danger { color: var(--danger); }
+.stat-label { display: block; color: var(--muted); font-size: 26rpx; margin-top: 6rpx; }
+.compact-card { padding-top: 6rpx; padding-bottom: 6rpx; }
+.record-row { display: flex; align-items: center; gap: 14rpx; padding: 24rpx 0; border-bottom: 1rpx solid var(--border); }
+.record-row:last-child { border-bottom: 0; }
+.list-title.small { font-size: 28rpx; }

@@ -14,7 +14,7 @@
       <view wx:if="{{canEdit && !item.is_system}}" class="actions"><button class="btn small" data-id="{{item.relation_id}}" bindtap="openEdit">编辑</button><button class="btn danger small" data-id="{{item.relation_id}}" bindtap="remove">删除</button></view>
     </view>
     <view wx:if="{{!loading && !list.length}}" class="card empty">暂无禁忌数据</view>
-    <view wx:if="{{loading}}" class="loading">正在加载…</view>
+    <view wx:if="{{loading}}" class="loading" aria-role="status">正在加载…</view>
   </view>
 
   <view wx:else>

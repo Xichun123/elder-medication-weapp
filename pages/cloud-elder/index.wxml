@@ -1,13 +1,13 @@
 <view class="elder-cloud-page">
   <view wx:if="{{elder}}" class="elder-cloud-main">
     <view class="elder-greeting">
-      <text class="elder-avatar">{{elder.gender === 'male' ? '👴' : '👵'}}</text>
+      <image class="elder-avatar" src="{{elder.gender === 'male' ? '/assets/brand/avatar-grandpa.png' : '/assets/brand/avatar-grandma.png'}}" mode="aspectFit" aria-role="img" aria-label="长辈头像"/>
       <text class="elder-name">您好，{{elder.name}}</text>
       <text class="elder-home">{{home.name}}正在守护您的用药</text>
     </view>
 
-    <view class="ai-assistant-entry" bindtap="openAi" hover-class="ai-assistant-entry-pressed">
-      <view class="ai-assistant-icon">🎙️</view>
+    <view class="ai-assistant-entry" bindtap="openAi" hover-class="ai-assistant-entry-pressed" aria-role="button" aria-label="语音用药助手，点这里直接说话">
+      <view class="ai-assistant-icon"><image class="ai-assistant-icon-img" src="/assets/icons/line-mic.png" mode="aspectFit"/></view>
       <view class="flex-1">
         <text class="ai-assistant-title">语音用药助手</text>
         <text class="ai-assistant-desc">点这里直接说“我刚吃了药”或“我头晕”</text>
@@ -22,15 +22,15 @@
       <view wx:else class="current-package-placeholder">暂无药品包装照片</view>
       <text class="current-drug">{{current.drug_name}}</text>
       <text wx:if="{{current.dose}}" class="current-dose">剂量：{{current.dose}}</text>
-      <text class="current-voice">💛 {{current.voice_text}}</text>
+      <text class="current-voice">{{current.voice_text}}</text>
       <view class="current-actions">
         <button class="elder-btn big" bindtap="playCurrent">听温情提醒</button>
-        <button class="elder-btn big primary" loading="{{acting}}" bindtap="takeCurrent">我已服药</button>
+        <button class="elder-btn big primary" loading="{{acting}}" bindtap="takeCurrent">已核对药盒，我已服药</button>
       </view>
       <text class="safety-tip">请对照包装、药名和医生处方，不要仅凭散装药片外观判断</text>
     </view>
     <view wx:else class="status-card">
-      <text class="status-icon">✅</text>
+      <image class="status-icon" src="/assets/icons/line-check.png" mode="aspectFit" aria-role="img" aria-label="完成"/>
       <text class="status-title">{{reminders.length ? '暂无待服药物' : '还没有用药提醒'}}</text>
       <text class="status-desc">{{reminders.length ? '家属端可看到您已确认的服药状态。' : '请让家属为您录入用药后，这里会显示提醒。'}}</text>
     </view>
@@ -40,7 +40,7 @@
         <text class="auto-title">自动语音播报</text>
         <text class="auto-desc">关闭语音后，到点弹窗和包装图仍会正常显示</text>
       </view>
-      <switch checked="{{autoPlay}}" color="#5ba89a" bindchange="onAutoChange"/>
+      <switch checked="{{autoPlay}}" color="#176B5B" bindchange="onAutoChange" aria-label="自动语音播报开关"/>
     </view>
 
     <view class="section-block">
@@ -64,11 +64,11 @@
       <button class="elder-btn secondary" bindtap="logout">退出登录</button>
     </view>
   </view>
-  <view wx:elif="{{loading}}" class="elder-loading">正在读取我的档案…</view>
+  <view wx:elif="{{loading}}" class="elder-loading" aria-role="status">正在读取我的档案…</view>
   <view wx:else class="elder-loading">未找到绑定的长辈档案，请联系家庭创建人</view>
 
   <view wx:if="{{showMedicationPrompt && promptReminder}}" class="medication-prompt-mask" bindtap="closeMedicationPrompt">
-    <view class="medication-prompt" catchtap="noop">
+    <view class="medication-prompt" catchtap="noop" aria-role="dialog" aria-modal="true" aria-label="服药提醒">
       <text class="prompt-label">服药提醒 · {{promptReminder.remind_time}}</text>
       <image wx:if="{{promptReminder.package_image_url}}" class="prompt-package-image" src="{{promptReminder.package_image_url}}" mode="aspectFit"/>
       <view wx:else class="prompt-package-placeholder">
@@ -79,7 +79,7 @@
       <text wx:if="{{promptReminder.dose}}" class="prompt-dose">本次剂量：{{promptReminder.dose}}</text>
       <view class="prompt-actions">
         <button class="elder-btn prompt-play" bindtap="playPrompt">听温情提醒</button>
-        <button class="elder-btn primary" loading="{{acting}}" bindtap="takePrompt">我已服药</button>
+        <button class="elder-btn primary" loading="{{acting}}" bindtap="takePrompt">已核对药盒，我已服药</button>
       </view>
       <button class="prompt-close" bindtap="closeMedicationPrompt">10 分钟后提醒</button>
       <text class="prompt-warning">请核对药品包装和医生处方，不要仅凭散装药片外观判断</text>

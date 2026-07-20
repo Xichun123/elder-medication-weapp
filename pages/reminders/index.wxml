@@ -1,24 +1,27 @@
 <view class="page with-safe-bottom">
-  <text class="page-title">提醒规则</text><text class="page-subtitle">温情陪伴播报 · 可重生成今日文案 · 远程标记已服/跳过</text>
+  <text class="page-title">服药提醒</text><text class="page-subtitle">今日时间线 · 温情播报 · 远程标记已服/跳过</text>
   <view class="status-grid">
-    <view class="status-card pending {{status === 'pending' ? 'active' : ''}}" data-value="pending" bindtap="toggleStatus"><text class="status-num">{{counts.pending}}</text><text>⏰ 待服</text></view>
-    <view class="status-card taken {{status === 'taken' ? 'active' : ''}}" data-value="taken" bindtap="toggleStatus"><text class="status-num">{{counts.taken}}</text><text>✓ 已服</text></view>
-    <view class="status-card skipped {{status === 'skipped' ? 'active' : ''}}" data-value="skipped" bindtap="toggleStatus"><text class="status-num">{{counts.skipped}}</text><text>⊘ 跳过</text></view>
-    <view class="status-card abnormal {{status === 'abnormal' ? 'active' : ''}}" data-value="abnormal" bindtap="toggleStatus"><text class="status-num">{{counts.abnormal}}</text><text>⚠ 异常</text></view>
+    <view class="status-card pending pressable {{status === 'pending' ? 'active' : ''}}" hover-class="pressable-hover" data-value="pending" bindtap="toggleStatus" aria-role="button" aria-label="待服 {{counts.pending}} 条"><text class="status-num">{{counts.pending}}</text><text class="status-label">待服</text></view>
+    <view class="status-card taken pressable {{status === 'taken' ? 'active' : ''}}" hover-class="pressable-hover" data-value="taken" bindtap="toggleStatus" aria-role="button" aria-label="已服 {{counts.taken}} 条"><text class="status-num">{{counts.taken}}</text><text class="status-label">已服</text></view>
+    <view class="status-card skipped pressable {{status === 'skipped' ? 'active' : ''}}" hover-class="pressable-hover" data-value="skipped" bindtap="toggleStatus" aria-role="button" aria-label="跳过 {{counts.skipped}} 条"><text class="status-num">{{counts.skipped}}</text><text class="status-label">跳过</text></view>
+    <view class="status-card abnormal pressable {{status === 'abnormal' ? 'active' : ''}}" hover-class="pressable-hover" data-value="abnormal" bindtap="toggleStatus" aria-role="button" aria-label="异常 {{counts.abnormal}} 条"><text class="status-num">{{counts.abnormal}}</text><text class="status-label">异常</text></view>
   </view>
   <view class="filter-bar"><picker range="{{elderOptions}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="filter">{{elderOptions[elderIndex].name}} ▾</view></picker><view wx:if="{{status}}" class="filter">状态：{{status === 'pending' ? '待服' : status === 'taken' ? '已服' : status === 'skipped' ? '跳过' : '异常'}}</view></view>
   <view wx:for="{{list}}" wx:key="rule_id" class="list-card reminder {{item.status}}">
     <view class="row between gap"><view><text class="remind-time">{{item.remind_time}}</text><text class="list-title">{{item.drug_name}}</text></view><text class="tag {{item.status === 'pending' ? 'warning' : item.status === 'taken' ? 'success' : item.status === 'abnormal' ? 'danger' : ''}}">{{item.status_label}}</text></view>
     <view class="list-subtitle">{{item.elder_name}} · 规则 {{item.rule_id}}</view>
-    <view class="voice">💛 {{item.voice_text}}</view>
+    <view class="voice">{{item.voice_text}}</view>
     <view class="actions">
-      <button class="btn small" data-id="{{item.rule_id}}" bindtap="play">温情播报</button>
-      <button wx:if="{{canEdit}}" class="btn small" data-id="{{item.rule_id}}" bindtap="regenerate">重生成温情文案</button>
+      <button class="btn small primary" data-id="{{item.rule_id}}" bindtap="play">温情播报</button>
       <button wx:if="{{canTake && item.status === 'pending'}}" class="btn success small" data-id="{{item.rule_id}}" bindtap="take">✓ 已服</button>
-      <button wx:if="{{canTake && item.status === 'pending'}}" class="btn small" data-id="{{item.rule_id}}" bindtap="skip">⊘ 跳过</button>
-      <button class="btn teal small" data-elder="{{item.elder}}" bindtap="openElderly">老人端</button>
+      <button wx:if="{{canTake && item.status === 'pending'}}" class="btn small" data-id="{{item.rule_id}}" bindtap="skip">跳过</button>
+      <button wx:if="{{canEdit}}" class="btn small" data-id="{{item.rule_id}}" bindtap="regenerate">重生成文案</button>
+      <button class="btn small outline" data-elder="{{item.elder}}" bindtap="openElderly">老人端</button>
     </view>
   </view>
-  <view wx:if="{{!loading && !list.length}}" class="card empty"><text class="empty-icon">⏰</text>暂无提醒规则</view>
-  <view wx:if="{{loading}}" class="loading">正在加载…</view>
+  <view wx:if="{{!loading && !list.length}}" class="card empty">
+    <image class="empty-icon" src="/assets/icons/line-empty-box.png" mode="aspectFit" aria-role="img" aria-label="空状态插图"/>
+    <text>暂无提醒规则</text>
+  </view>
+  <view wx:if="{{loading}}" class="loading" aria-role="status">正在加载…</view>
 </view>
