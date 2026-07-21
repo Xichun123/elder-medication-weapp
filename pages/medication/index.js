@@ -6,9 +6,9 @@ const { unwrap, toast, showError, today, makeId } = require('../../utils/helpers
 
 Page({
   data: {
-    elders: [], elderIndex: -1, keyword: '', matchedDrugs: [], selectedDrug: null, matching: false,
+    elders: [], elderIndex: -1, keyword: '', matchedDrugs: [], selectedDrug: null, matching: false, matchAttempted: false,
     dose: '', frequency: '每日2次', frequencyOptions: ['每日1次', '每日2次', '每日3次'], startDate: today(), endDate: '', saving: false, createdReminders: [], showResult: false,
-    recognizing: false, creatingRecognizedDrug: false, savingPackageImage: false, packageImageSaved: false, recognitionImage: '', recognitionResult: null, recognitionDetails: [], recognitionVisibleText: '', recognitionUncertainText: '',
+    recognizing: false, savingPackageImage: false, packageImageSaved: false, recognitionImage: '', recognitionResult: null, recognitionDetails: [], recognitionVisibleText: '', recognitionUncertainText: '',
     recognitionReviewRequired: false, recognitionConfirmed: false,
     canEdit: true,
   },
@@ -88,6 +88,7 @@ Page({
       recognitionDetails: [],
       recognitionConfirmed: false,
       packageImageSaved: false,
+      matchAttempted: false,
     })
     let result
     let keyword
@@ -138,13 +139,14 @@ Page({
           dose: result.dosageText || this.data.dose || exact.dosage_text || '',
           recognitionConfirmed: false,
           packageImageSaved: false,
+          matchAttempted: true,
         })
       } else {
-        this.setData({ matchedDrugs: matches })
+        this.setData({ matchedDrugs: matches, matchAttempted: true })
       }
     } catch (error) {
-      this.setData({ matchedDrugs: [] })
-      toast('识别成功，但药库匹配失败，请手动搜索药名')
+      this.setData({ matchedDrugs: [], matchAttempted: true })
+      toast('识别成功，但药库匹配失败，可新增家庭药品')
     } finally {
       this.setData({ recognizing: false })
     }
@@ -152,49 +154,58 @@ Page({
   clearRecognition() {
     this.setData({ recognitionImage: '', recognitionResult: null, recognitionDetails: [], recognitionVisibleText: '', recognitionUncertainText: '' })
   },
-  async createRecognizedDrug() {
-    const result = this.data.recognitionResult
+  openCreateDrug() {
+    if (!store.canEdit()) { toast('当前角色仅可查看'); return }
     const genericName = String(this.data.keyword || '').trim()
-    if (!result || !genericName) { toast('请先核对并补充通用名'); return }
-    this.setData({ creatingRecognizedDrug: true })
-    try {
-      const drug = await api.drugs.create({
-        generic_name: genericName,
-        trade_name: result.tradeName || '',
-        aliases: '',
-        category: 'other',
-        ingredient: '',
-        dosage_text: result.dosageText || '',
-        contraindication_note: '',
-        interaction_note: '',
-      })
-      this.setData({ selectedDrug: drug, keyword: drug.generic_name, matchedDrugs: [], packageImageSaved: false, ...this.invalidateRecognitionConfirmation() })
-      toast('药品档案已建立，请继续核对剂量')
-    } catch (error) {
-      showError(error)
-    } finally {
-      this.setData({ creatingRecognizedDrug: false })
-    }
+    if (!genericName) { toast('请先输入药品通用名'); return }
+    const recognition = this.data.recognitionResult || {}
+    wx.navigateTo({
+      url: '/pages/admin-drugs/index?mode=create&source=medication',
+      events: {
+        drugCreated: (drug) => this.applyCreatedDrug(drug),
+      },
+      success: (res) => {
+        res.eventChannel.emit('drugCreateDraft', {
+          generic_name: genericName,
+          trade_name: recognition.tradeName || '',
+          dosage_text: recognition.dosageText || this.data.dose || '',
+          category: 'other',
+        })
+      },
+    })
+  },
+  applyCreatedDrug(drug) {
+    if (!drug || !drug.drug_id) return
+    this.setData({
+      selectedDrug: drug,
+      keyword: drug.generic_name,
+      matchedDrugs: [],
+      matchAttempted: true,
+      dose: this.data.dose || drug.dosage_text || '',
+      packageImageSaved: false,
+      ...this.invalidateRecognitionConfirmation(),
+    })
+    toast('新药品已回填，请继续核对用药信息', 'success')
   },
   onKeywordInput(event) {
     const keyword = event.detail.value
-    this.setData({ keyword, selectedDrug: null, packageImageSaved: false, ...this.invalidateRecognitionConfirmation() })
+    this.setData({ keyword, selectedDrug: null, matchAttempted: false, packageImageSaved: false, ...this.invalidateRecognitionConfirmation() })
     if (this.matchTimer) clearTimeout(this.matchTimer)
     this.matchTimer = setTimeout(() => this.match(keyword), 280)
   },
   async match(keyword) {
-    if (!String(keyword).trim()) { this.setData({ matchedDrugs: [] }); return }
+    if (!String(keyword).trim()) { this.setData({ matchedDrugs: [], matchAttempted: false }); return }
     this.setData({ matching: true })
-    try { this.setData({ matchedDrugs: await api.drugs.match(keyword) }) }
-    catch (error) { this.setData({ matchedDrugs: [] }) }
+    try { this.setData({ matchedDrugs: await api.drugs.match(keyword), matchAttempted: true }) }
+    catch (error) { this.setData({ matchedDrugs: [], matchAttempted: true }) }
     finally { this.setData({ matching: false }) }
   },
   pickDrug(event) {
     const drug = this.data.matchedDrugs.find((item) => item.drug_id === event.currentTarget.dataset.id)
     if (!drug) return
-    this.setData({ selectedDrug: drug, keyword: drug.generic_name, matchedDrugs: [], dose: this.data.dose || drug.dosage_text || '', packageImageSaved: false, ...this.invalidateRecognitionConfirmation() })
+    this.setData({ selectedDrug: drug, keyword: drug.generic_name, matchedDrugs: [], matchAttempted: true, dose: this.data.dose || drug.dosage_text || '', packageImageSaved: false, ...this.invalidateRecognitionConfirmation() })
   },
-  clearDrug() { this.setData({ selectedDrug: null, keyword: '', matchedDrugs: [], packageImageSaved: false, ...this.invalidateRecognitionConfirmation() }) },
+  clearDrug() { this.setData({ selectedDrug: null, keyword: '', matchedDrugs: [], matchAttempted: false, packageImageSaved: false, ...this.invalidateRecognitionConfirmation() }) },
   onDoseInput(event) { this.setData({ dose: event.detail.value, ...this.invalidateRecognitionConfirmation() }) },
   chooseFrequency(event) { this.setData({ frequency: event.currentTarget.dataset.value, ...this.invalidateRecognitionConfirmation() }) },
   invalidateRecognitionConfirmation() {
@@ -251,7 +262,7 @@ Page({
   },
   reset(closeResult = true) {
     this.setData({
-      keyword: '', selectedDrug: null, matchedDrugs: [], dose: '', frequency: '每日2次', startDate: today(), endDate: '',
+      keyword: '', selectedDrug: null, matchedDrugs: [], matchAttempted: false, dose: '', frequency: '每日2次', startDate: today(), endDate: '',
       recognitionImage: '', recognitionResult: null, recognitionDetails: [], recognitionVisibleText: '', recognitionUncertainText: '',
       recognitionReviewRequired: false, recognitionConfirmed: false, packageImageSaved: false,
       ...(closeResult ? { showResult: false } : {}),

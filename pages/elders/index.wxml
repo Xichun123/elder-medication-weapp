@@ -34,7 +34,7 @@
           <text class="arrow">›</text>
         </view>
         <view wx:if="{{item.allergy_note && item.allergy_note !== '无'}}" class="allergy">过敏史：{{item.allergy_note}}</view>
-        <view wx:if="{{canEdit}}" class="actions">
+        <view wx:if="{{canEdit}}" class="actions split-actions">
           <button class="btn small" data-id="{{item.elder_id}}" catchtap="openEdit">编辑</button>
           <button class="btn danger small" data-id="{{item.elder_id}}" catchtap="remove">删除</button>
         </view>

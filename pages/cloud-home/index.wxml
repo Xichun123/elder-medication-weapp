@@ -51,7 +51,7 @@
         </view>
         <view class="flex-1"><text class="list-title member-name">{{item.nickname || '微信成员'}}</text><text class="list-subtitle">{{item.role === 'owner' ? '家庭创建人' : item.role === 'caregiver_edit' ? '可录入家属' : item.role === 'caregiver_view' ? '只读家属' : '老人本人'}}</text></view>
       </view>
-      <view wx:if="{{isOwner}}" class="invite-actions">
+      <view wx:if="{{isOwner}}" class="invite-actions split-actions">
         <button class="btn primary small" data-role="caregiver_edit" bindtap="createFamilyInvite">邀请可录入家属</button>
         <button class="btn small" data-role="caregiver_view" bindtap="createFamilyInvite">邀请只读家属</button>
       </view>

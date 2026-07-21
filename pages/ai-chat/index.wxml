@@ -74,7 +74,7 @@
       <image wx:else class="voice-input-img" src="/assets/icons/line-mic.png" mode="aspectFit"/>
     </button>
     <input value="{{input}}" placeholder="输入问题" bindinput="onInput" bindconfirm="send" confirm-type="send" aria-label="输入问题"/>
-    <button loading="{{sending}}" disabled="{{sending}}" bindtap="send">发送</button>
+    <button class="composer-send" loading="{{sending}}" disabled="{{sending}}" bindtap="send">发送</button>
   </view>
   <view wx:if="{{mode === 'elder' && !recording && !transcribing}}" class="voice-hint">点击左下角麦克风，直接说出您的问题</view>
   <view wx:if="{{mode === 'elder' && (recording || transcribing)}}" class="voice-status" aria-role="status">{{recording ? '正在录音，再点一次结束' : '正在识别，请稍候…'}}</view>

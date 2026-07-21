@@ -138,8 +138,9 @@
   padding: 0;
   background: transparent;
   color: var(--muted);
-  font-size: 28rpx;
-  line-height: 88rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.2;
 }
 .sheet-skip::after { border: 0; }
 .sheet-skip[disabled] { opacity: .45; }

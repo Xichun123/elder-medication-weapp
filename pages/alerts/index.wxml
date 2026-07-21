@@ -2,7 +2,6 @@
   <view class="row between gap">
     <view class="flex-1">
       <text class="page-title">家属健康提醒</text>
-      <text class="page-subtitle">老人确认记录症状后，会在这里生成应用内提醒</text>
     </view>
     <button wx:if="{{unreadCount}}" class="btn small" loading="{{markingAll}}" bindtap="markAllRead">全部已读</button>
   </view>

@@ -9,7 +9,7 @@
       <view class="row between gap"><view class="flex-1"><text class="list-title">{{item.generic_name}}</text><view class="list-subtitle">商品名：{{item.trade_name || '—'}}</view></view><text class="tag primary">{{item.is_system ? '系统药库' : item.category_label}}</text></view>
       <view class="list-meta">{{item.drug_id}} · 成分：{{item.ingredient || '—'}} · 别名：{{item.aliases || '—'}}</view>
       <view wx:if="{{item.contraindication_note}}" class="contra">⚠ {{item.contraindication_note}}</view>
-      <view wx:if="{{canEdit && !item.is_system}}" class="actions"><button class="btn small" data-id="{{item.drug_id}}" bindtap="openEdit">编辑</button><button class="btn danger small" data-id="{{item.drug_id}}" bindtap="remove">删除</button></view>
+      <view wx:if="{{canEdit && !item.is_system}}" class="actions split-actions"><button class="btn small" data-id="{{item.drug_id}}" bindtap="openEdit">编辑</button><button class="btn danger small" data-id="{{item.drug_id}}" bindtap="remove">删除</button></view>
     </view>
     <view wx:if="{{!loading && !list.length}}" class="card empty">暂无药物主数据</view><view wx:if="{{loading}}" class="loading" aria-role="status">正在加载…</view>
   </view>

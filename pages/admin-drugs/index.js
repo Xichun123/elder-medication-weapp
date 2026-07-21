@@ -28,6 +28,15 @@ Page({
     editing: false, isEdit: false, saving: false, form: emptyForm(), formCategoryIndex: formCategoryIndexOf('other'),
     canEdit: true, isRemote: false,
   },
+  onLoad(options = {}) {
+    if (options.mode !== 'create' || options.source !== 'medication') return
+    this.returnCreatedDrug = true
+    this.prepareCreateForm()
+    const eventChannel = typeof this.getOpenerEventChannel === 'function' && this.getOpenerEventChannel()
+    if (eventChannel && typeof eventChannel.on === 'function') {
+      eventChannel.on('drugCreateDraft', (draft) => this.prepareCreateForm(draft))
+    }
+  },
   onShow() {
     if (!config.useLocalApi && !session.getHome()) {
       wx.reLaunch({ url: '/pages/launch/index' })
@@ -48,9 +57,24 @@ Page({
   onKeyword(event) { this.setData({ keyword: event.detail.value }) },
   onSearch() { this.load() },
   onCategory(event) { this.setData({ categoryIndex: Number(event.detail.value) }, () => this.load()) },
+  prepareCreateForm(draft = {}) {
+    const category = formCategories.some((item) => item.value === draft.category) ? draft.category : 'other'
+    this.setData({
+      editing: true,
+      isEdit: false,
+      form: {
+        ...emptyForm(),
+        generic_name: String(draft.generic_name || ''),
+        trade_name: String(draft.trade_name || ''),
+        dosage_text: String(draft.dosage_text || ''),
+        category,
+      },
+      formCategoryIndex: formCategoryIndexOf(category),
+    })
+  },
   openCreate() {
     if (!store.canEdit()) { toast('当前角色仅可查看'); return }
-    this.setData({ editing: true, isEdit: false, form: emptyForm(), formCategoryIndex: formCategoryIndexOf('other') })
+    this.prepareCreateForm()
   },
   openEdit(event) {
     if (!store.canEdit()) { toast('当前角色仅可查看'); return }
@@ -59,7 +83,10 @@ Page({
     if (row.is_system) { toast('系统药库只读，请新增家庭药物'); return }
     this.setData({ editing: true, isEdit: true, form: { ...row }, formCategoryIndex: formCategoryIndexOf(row.category) })
   },
-  cancel() { this.setData({ editing: false }) },
+  cancel() {
+    if (this.returnCreatedDrug) { wx.navigateBack(); return }
+    this.setData({ editing: false })
+  },
   onInput(event) { this.setData({ [`form.${event.currentTarget.dataset.field}`]: event.detail.value }) },
   onFormCategory(event) {
     const formCategoryIndex = Number(event.detail.value)
@@ -74,9 +101,16 @@ Page({
     if (config.useLocalApi && !f.drug_id) { toast('请完整填写必填项'); return }
     this.setData({ saving: true })
     try {
-      if (this.data.isEdit) await api.drugs.update(f.drug_id, f)
-      else await api.drugs.create(config.useLocalApi ? f : { ...f, drug_id: undefined })
+      const drug = this.data.isEdit
+        ? await api.drugs.update(f.drug_id, f)
+        : await api.drugs.create(config.useLocalApi ? f : { ...f, drug_id: undefined })
       toast(this.data.isEdit ? '修改成功' : '新增成功', 'success')
+      if (this.returnCreatedDrug && !this.data.isEdit) {
+        const eventChannel = typeof this.getOpenerEventChannel === 'function' && this.getOpenerEventChannel()
+        if (eventChannel && typeof eventChannel.emit === 'function') eventChannel.emit('drugCreated', drug)
+        wx.navigateBack()
+        return
+      }
       this.setData({ editing: false })
       await this.load()
     } catch (error) { showError(error) }

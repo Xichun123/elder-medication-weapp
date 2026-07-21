@@ -21,7 +21,7 @@
         </view>
         <text class="tag">{{item.roleLabel}}</text>
       </view>
-      <view wx:if="{{isOwner && item.role !== 'owner' && item.role !== 'elder'}}" class="actions">
+      <view wx:if="{{isOwner && item.role !== 'owner' && item.role !== 'elder'}}" class="actions split-actions">
         <button wx:if="{{item.role !== 'caregiver_edit'}}" class="btn small" data-id="{{item.id}}" data-role="caregiver_edit" bindtap="changeRole">改为可录入</button>
         <button wx:if="{{item.role !== 'caregiver_view'}}" class="btn small" data-id="{{item.id}}" data-role="caregiver_view" bindtap="changeRole">改为只读</button>
         <button class="btn danger small" data-id="{{item.id}}" bindtap="removeMember">移除</button>
@@ -37,7 +37,7 @@
             <text class="list-subtitle">{{item.role === 'elder' ? '老人邀请' : item.role === 'caregiver_view' ? '只读家属' : '可录入家属'}} · 至 {{item.expiresAt}}</text>
           </view>
         </view>
-        <view class="actions">
+        <view class="actions split-actions">
           <button class="btn small" data-code="{{item.code}}" bindtap="copyInvite">复制</button>
           <button class="btn danger small" data-id="{{item.id}}" bindtap="revokeInvite">撤销</button>
         </view>
@@ -67,7 +67,7 @@
           <text class="tag primary">{{item.relation_type_label}}</text>
           <text class="tag {{item.permission_level === 'editable' ? 'success' : 'teal'}}">{{item.permission_level_label}}</text>
         </view>
-        <view class="actions">
+        <view class="actions split-actions">
           <button class="btn small" data-id="{{item.relation_id}}" bindtap="openEdit">编辑</button>
           <button class="btn danger small" data-id="{{item.relation_id}}" bindtap="remove">解除</button>
         </view>

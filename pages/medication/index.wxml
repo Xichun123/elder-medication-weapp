@@ -1,4 +1,4 @@
-<view class="page with-safe-bottom">
+<view class="page with-tabbar">
   <view wx:if="{{canEdit}}" class="scan-card">
     <view class="scan-top">
       <image class="scan-icon" src="/assets/icons/quick-camera.png" mode="aspectFit"/>
@@ -52,9 +52,9 @@
         <view wx:if="{{item.contraindication_note}}" class="contra">⚠ {{item.contraindication_note}}</view>
       </view>
     </view>
-    <view wx:if="{{recognitionResult && !selectedDrug}}" class="create-drug-hint">
-      <view class="create-drug-copy">没有合适结果？请把上方输入框改成正确的通用名，再建立家庭药品档案。</view>
-      <button class="btn teal small" loading="{{creatingRecognizedDrug}}" disabled="{{creatingRecognizedDrug || !keyword}}" bindtap="createRecognizedDrug">建档并选中</button>
+    <view wx:if="{{keyword && matchAttempted && !matching && !selectedDrug}}" class="create-drug-hint">
+      <view class="create-drug-copy">没有合适结果？新增到家庭药物主数据，保存后会自动回填到当前用药。</view>
+      <button class="btn teal small" bindtap="openCreateDrug">新增药品</button>
     </view>
     <view wx:if="{{selectedDrug}}" class="selected">
       <view class="row between"><view><text class="list-title">{{selectedDrug.generic_name}}</text><view class="list-subtitle">{{selectedDrug.drug_id}} · {{selectedDrug.category_label}}</view></view><button class="btn small" bindtap="clearDrug">重选</button></view>

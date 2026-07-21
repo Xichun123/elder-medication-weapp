@@ -9,7 +9,7 @@ const pageSource = fs.readFileSync(pagePath, 'utf8')
 
 function loadPage({ recognize, match } = {}) {
   let definition
-  const calls = { chooseMedia: [], modals: [], packageImages: [], records: [], toasts: [] }
+  const calls = { chooseMedia: [], modals: [], navigations: [], packageImages: [], records: [], toasts: [] }
   const api = {
     recognition: {
       recognize: recognize || (async () => ({
@@ -57,6 +57,7 @@ function loadPage({ recognize, match } = {}) {
   const wx = {
     showModal: (options) => calls.modals.push(options),
     chooseMedia: (options) => calls.chooseMedia.push(options),
+    navigateTo: (options) => calls.navigations.push(options),
     getStorageSync: () => '',
     removeStorageSync: () => {},
   }
@@ -113,6 +114,43 @@ test('药库匹配失败时保留成功的识别草稿', async () => {
   assert.equal(page.data.recognitionConfirmed, false)
   assert.equal(page.data.matchedDrugs.length, 0)
   assert.match(calls.toasts.at(-1), /识别成功.*药库匹配失败/)
+})
+
+test('无匹配药品可跳转新增，保存后自动回填', async () => {
+  const { calls, page } = loadPage()
+  Object.assign(page.data, {
+    keyword: '新药通用名',
+    dose: '10mg',
+    recognitionResult: { tradeName: '新药商品名', dosageText: '20mg' },
+    recognitionReviewRequired: true,
+    recognitionConfirmed: true,
+  })
+
+  page.openCreateDrug()
+  assert.equal(calls.navigations.length, 1)
+  const navigation = calls.navigations[0]
+  assert.equal(navigation.url, '/pages/admin-drugs/index?mode=create&source=medication')
+
+  let draft
+  navigation.success({
+    eventChannel: {
+      emit: (name, value) => {
+        assert.equal(name, 'drugCreateDraft')
+        draft = value
+      },
+    },
+  })
+  assert.equal(draft.generic_name, '新药通用名')
+  assert.equal(draft.trade_name, '新药商品名')
+  assert.equal(draft.dosage_text, '20mg')
+  assert.equal(draft.category, 'other')
+
+  navigation.events.drugCreated({ drug_id: 'D9', generic_name: '新药通用名', dosage_text: '20mg' })
+  assert.equal(page.data.selectedDrug.drug_id, 'D9')
+  assert.equal(page.data.keyword, '新药通用名')
+  assert.equal(page.data.dose, '10mg')
+  assert.equal(page.data.recognitionConfirmed, false)
+  assert.match(calls.toasts.at(-1), /已回填/)
 })
 
 test('AI 草稿未确认时禁止保存且修改关键字段后确认失效', async () => {

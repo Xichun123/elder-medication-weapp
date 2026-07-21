@@ -4,7 +4,7 @@
 .elder-picker-value { min-height:64rpx; display:flex; align-items:center; color:var(--primary); font-weight:650; font-size:28rpx; }
 .elder-picker-value text { margin-left:12rpx; color:var(--light); font-size: 26rpx; }
 .phrases { display:flex; gap:14rpx; padding:0 28rpx 18rpx; }
-.phrases button { flex:1; margin:0; min-height:80rpx; border-radius:999rpx; font-size:26rpx; color:var(--primary); background:#fff; border:1rpx solid #C9E8CF; }
+.phrases button { flex:1; margin:0; min-height:80rpx; padding:0 20rpx; border-radius:999rpx; font-size:28rpx; font-weight:650; color:var(--primary); background:#fff; border:1rpx solid #C9E8CF; }
 .chat { flex:1; box-sizing:border-box; padding:8rpx 28rpx; }
 .bubble-wrap { display:flex; }
 .bubble-wrap.user { justify-content:flex-end; }
@@ -19,7 +19,7 @@
 .confirm-title { display:block; margin-top:16rpx; font-size:32rpx; font-weight:700; }
 .confirm-meta { display:block; margin-top:8rpx; color:var(--muted); font-size:26rpx; }
 .safety-warning { display:block; margin-top:16rpx; color:var(--coral); font-size:26rpx; line-height:1.55; }
-.confirm-btn { margin-top:18rpx; min-height:88rpx; background:var(--primary); color:#fff; font-size:28rpx; }
+.confirm-btn { margin-top:18rpx; min-height:88rpx; padding:0 24rpx; background:var(--primary); color:#fff; font-size:30rpx; font-weight:650; }
 .confirmed-label { margin-top:18rpx; color:var(--success); font-size:28rpx; font-weight:700; }
 .candidate-heading { display:block; margin-bottom:14rpx; font-size:28rpx; font-weight:700; }
 .candidate-card { display:flex; align-items:center; gap:14rpx; padding:16rpx 0; border-top:1rpx solid var(--border); }
@@ -27,10 +27,11 @@
 .candidate-placeholder { display:flex; align-items:center; justify-content:center; color:var(--muted); font-size: 26rpx; }
 .candidate-info { flex:1; min-width:0; color:var(--muted); font-size:26rpx; }
 .candidate-name { display:block; color:var(--text); font-size:28rpx; font-weight:700; }
-.candidate-btn { margin:0; padding:0 24rpx; min-height:80rpx; background:var(--ai); color:#fff; font-size:26rpx; }
+.candidate-btn { margin:0; padding:0 24rpx; min-height:80rpx; background:var(--ai); color:#fff; font-size:28rpx; font-weight:650; }
 .composer { position:fixed; bottom:0; left:0; right:0; display:flex; align-items:center; gap:14rpx; padding:16rpx 20rpx calc(16rpx + env(safe-area-inset-bottom)); background:#fff; border-top:1rpx solid var(--border); }
 .composer input { flex:1; height:88rpx; padding:0 24rpx; box-sizing:border-box; background:#F2F7F4; border-radius:44rpx; font-size:28rpx; }
 .composer button { margin:0; min-height:88rpx; background:var(--primary); color:#fff; border-radius:44rpx; font-size:28rpx; }
+.composer .composer-send { width:152rpx; min-width:152rpx; height:88rpx; min-height:88rpx; padding:0; display:flex; align-items:center; justify-content:center; font-size:30rpx; font-weight:650; line-height:1; }
 .composer .voice-input { width:96rpx; min-width:96rpx; height:96rpx; min-height:96rpx; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--ai); box-shadow:0 8rpx 20rpx rgba(62,174,91,.28); line-height:1; }
 .voice-input-icon { font-size:44rpx; line-height:1; }
 .voice-input-img { width:48rpx; height:48rpx; }
@@ -41,4 +42,4 @@
 @keyframes voice-pulse { 0%,100% { opacity:1; } 50% { opacity:.58; } }
 .history-bar { display:flex; align-items:center; justify-content:space-between; gap:16rpx; margin:0 28rpx 14rpx; padding:14rpx 18rpx; border-radius:16rpx; background:#F2F7F4; border:1rpx solid var(--border); }
 .history-tip { flex:1; color:var(--muted); font-size:24rpx; line-height:1.45; }
-.history-clear { margin:0; min-height:64rpx; padding:0 22rpx; border-radius:999rpx; background:#fff; color:var(--primary); border:1rpx solid #C9E8CF; font-size:24rpx; }
+.history-clear { width:176rpx; min-width:176rpx; height:80rpx; min-height:80rpx; margin:0; padding:0 16rpx; border-radius:999rpx; background:#fff; color:var(--primary); border:1rpx solid #C9E8CF; font-size:28rpx; font-weight:650; line-height:1.2; }

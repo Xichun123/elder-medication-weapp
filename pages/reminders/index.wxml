@@ -1,4 +1,4 @@
-<view class="page with-safe-bottom">
+<view class="page with-tabbar">
   <view class="reminder-head">
     <text class="page-title">用药提醒</text>
     <text class="page-subtitle">今日时间线，远程标记已服 / 跳过</text>
@@ -30,7 +30,7 @@
       <button class="btn small primary" data-id="{{item.rule_id}}" bindtap="play">温情播报</button>
       <button wx:if="{{canTake && item.status === 'pending'}}" class="btn success small" data-id="{{item.rule_id}}" bindtap="take">✓ 已服</button>
       <button wx:if="{{canTake && item.status === 'pending'}}" class="btn small" data-id="{{item.rule_id}}" bindtap="skip">跳过</button>
-      <button wx:if="{{canEdit}}" class="btn small" data-id="{{item.rule_id}}" bindtap="regenerate">重生成文案</button>
+      <button wx:if="{{canEdit}}" class="btn small" data-id="{{item.rule_id}}" bindtap="regenerate">重新生成文案</button>
     </view>
   </view>
 

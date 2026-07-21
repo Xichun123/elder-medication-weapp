@@ -51,7 +51,7 @@ page {
 }
 
 view, text, input, textarea, picker, button { box-sizing: border-box; }
-button { margin: 0; }
+button { margin: 0; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2; }
 button::after { border: 0; }
 
 /* ===== 页面骨架 ===== */
@@ -172,7 +172,7 @@ button::after { border: 0; }
 
 /* ===== 按钮：常规热区 ≥ 88rpx ===== */
 .actions { display: flex; gap: 14rpx; margin-top: 22rpx; flex-wrap: wrap; }
-.btn { min-height: 88rpx; padding: 0 32rpx; display: inline-flex; align-items: center; justify-content: center; border-radius: 999rpx; background: #F0F4EE; color: var(--text); font-size: 28rpx; font-weight: 600; line-height: 1.2; transition: opacity .18s ease, transform .18s ease; }
+.btn { min-height: 88rpx; padding: 0 32rpx; display: inline-flex; align-items: center; justify-content: center; border-radius: 999rpx; background: #F0F4EE; color: var(--text); font-size: 30rpx; font-weight: 650; line-height: 1.2; transition: opacity .18s ease, transform .18s ease; }
 .btn.primary { color: #fff; background: var(--primary-grad); box-shadow: 0 8rpx 20rpx rgba(62,174,91,.28); }
 .btn.coral { color: #fff; background: var(--danger); }
 .btn.teal { color: #fff; background: var(--primary-grad); }
@@ -182,9 +182,11 @@ button::after { border: 0; }
 .btn.warning { color: #fff; background: var(--warning); }
 .btn.outline { color: var(--primary-deep); background: #fff; border: 2rpx solid var(--primary); }
 .btn.ghost { color: var(--muted); background: transparent; }
-.btn.small { min-height: 88rpx; padding: 0 26rpx; font-size: 26rpx; }
+.btn.small { min-height: 88rpx; padding: 0 26rpx; font-size: 29rpx; }
 .btn.block { width: 100%; }
 .btn[disabled] { opacity: .5; }
+.actions.split-actions, .invite-actions.split-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14rpx; flex-wrap: nowrap; }
+.split-actions > .btn { width: 100%; min-width: 0; margin: 0; padding-left: 12rpx; padding-right: 12rpx; }
 
 /* 自定义可点击元素的按压反馈 */
 .pressable { transition: opacity .18s ease, transform .18s ease; }

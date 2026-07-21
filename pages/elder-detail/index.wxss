@@ -2,7 +2,7 @@
 .hero-avatar-img { width: 100%; height: 100%; display: block; }
 .hero-allergy { margin-top: 22rpx; padding: 16rpx 24rpx; border-radius: 20rpx; background: rgba(255,255,255,.22); font-size: 26rpx; }
 .hero-actions { display: flex; margin-top: 26rpx; }
-.hero-btn { flex: 1; min-height: 88rpx; border-radius: 999rpx; font-size: 28rpx; font-weight: 600; }
+.hero-btn { flex: 1; min-height: 88rpx; padding: 0 24rpx; border-radius: 999rpx; font-size: 30rpx; font-weight: 650; }
 .hero-btn.solid { background: #fff; color: var(--primary-deep); }
 .risk { border-left: 8rpx solid var(--border); }
 .risk.severe { border-left-color: var(--danger); }

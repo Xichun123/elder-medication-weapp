@@ -35,8 +35,8 @@
   border-radius: 18rpx;
   background: #fff;
   color: var(--text);
-  font-size: 28rpx;
-  font-weight: 600;
+  font-size: 30rpx;
+  font-weight: 650;
 }
 
 .elderly-main {
@@ -229,7 +229,7 @@
   border-radius: 22rpx;
   background: rgba(255, 255, 255, 0.14);
   color: #fff;
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: 650;
 }
 
@@ -362,9 +362,9 @@
   min-height: 100rpx;
   padding: 0 20rpx;
   border-radius: 18rpx;
-  font-size: 30rpx;
+  font-size: 34rpx;
   font-weight: 700;
-  line-height: 100rpx;
+  line-height: 1.2;
 }
 
 .action-btn.ghost {
