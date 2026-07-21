@@ -1,4 +1,8 @@
-.family-picker { min-height: 64rpx; padding: 12rpx 20rpx; display: flex; align-items: center; border-radius: 16rpx; background: rgba(255,255,255,.18); font-size: 26rpx; }
+.hero-tools { display: flex; flex: none; flex-direction: column; align-items: stretch; gap: 10rpx; }
+.family-manage, .family-picker { min-height: 64rpx; padding: 12rpx 20rpx; display: flex; align-items: center; justify-content: center; border-radius: 16rpx; font-size: 26rpx; white-space: nowrap; }
+.family-manage { color: var(--primary-deep); background: #fff; font-weight: 650; }
+.family-picker { background: rgba(255,255,255,.18); }
+.family-tool-pressed { opacity: .82; transform: scale(.985); }
 .quick-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16rpx; }
 .quick { min-height: 176rpx; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 6rpx; padding: 24rpx 26rpx; background: #fff; border: 1rpx solid var(--border); border-radius: 22rpx; }
 .quick-icon { width: 64rpx; height: 64rpx; margin-bottom: 6rpx; }

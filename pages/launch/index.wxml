@@ -33,7 +33,7 @@
         <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" disabled="{{uploadingAvatar || savingProfile}}" aria-role="button" aria-label="选择微信头像">
           <image wx:if="{{displayAvatarUrl}}" class="profile-avatar" src="{{displayAvatarUrl}}" mode="aspectFill"/>
           <view wx:else class="profile-avatar monogram">{{monogram}}</view>
-          <text class="avatar-tip">换</text>
+          <text class="avatar-tip">换头像</text>
         </button>
         <view class="flex-1">
           <view class="profile-name">{{user.nickname || '微信用户'}}</view>

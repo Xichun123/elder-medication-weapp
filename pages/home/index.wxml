@@ -5,9 +5,12 @@
         <text class="hero-subtitle">{{greeting}}{{roleLabel ? ' · ' + roleLabel : ''}}</text>
         <text class="hero-title">{{currentFamily.name || '家庭'}}，欢迎回来</text>
       </view>
-      <picker range="{{families}}" range-key="name" value="{{familyIndex}}" bindchange="onFamilyChange">
-        <view class="family-picker" aria-role="button" aria-label="切换家庭">{{isRemote ? '切换家庭' : '切换家属'}} ▾</view>
-      </picker>
+      <view class="hero-tools">
+        <view wx:if="{{isRemote}}" class="family-manage pressable" hover-class="family-tool-pressed" bindtap="openCloudHome" aria-role="button" aria-label="账户与家庭管理">家庭管理 ›</view>
+        <picker range="{{families}}" range-key="name" value="{{familyIndex}}" bindchange="onFamilyChange">
+          <view class="family-picker" aria-role="button" aria-label="切换家庭">{{isRemote ? '切换家庭' : '切换家属'}} ▾</view>
+        </picker>
+      </view>
     </view>
     <view class="hero-metrics">
       <view class="hero-metric"><text class="hero-metric-number">{{elders.length}}</text><text class="hero-metric-label">照护长辈</text></view>
