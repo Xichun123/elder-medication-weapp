@@ -16,7 +16,6 @@
       <button wx:if="{{canTake && item.status === 'pending'}}" class="btn success small" data-id="{{item.rule_id}}" bindtap="take">✓ 已服</button>
       <button wx:if="{{canTake && item.status === 'pending'}}" class="btn small" data-id="{{item.rule_id}}" bindtap="skip">跳过</button>
       <button wx:if="{{canEdit}}" class="btn small" data-id="{{item.rule_id}}" bindtap="regenerate">重生成文案</button>
-      <button class="btn small outline" data-elder="{{item.elder}}" bindtap="openElderly">老人端</button>
     </view>
   </view>
   <view wx:if="{{!loading && !list.length}}" class="card empty">

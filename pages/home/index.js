@@ -25,6 +25,9 @@ Page({
 
   onLoad() { this.setGreeting() },
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ active: 0 })
+    }
     const currentHome = session.getHome()
     if (!config.useLocalApi && !currentHome) {
       wx.reLaunch({ url: '/pages/launch/index' })
@@ -39,9 +42,12 @@ Page({
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()) },
 
   setGreeting() {
-    const hour = new Date().getHours()
+    const now = new Date()
+    const hour = now.getHours()
     const greeting = hour < 6 ? '凌晨好' : hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好'
-    this.setData({ greeting })
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+    const dateText = `${now.getMonth() + 1}月${now.getDate()}日 星期${weekdays[now.getDay()]}`
+    this.setData({ greeting, dateText })
   },
 
   async load() {
@@ -86,6 +92,9 @@ Page({
       const elders = overview.elders || []
       const records = unwrap(recordsData).slice(0, 5)
       const reminders = unwrap(remindersData)
+      const sortedPending = reminders
+        .filter((item) => item.status === 'pending')
+        .sort((a, b) => String(a.remind_time).localeCompare(String(b.remind_time)))
       this.setData({
         families,
         familyIndex,
@@ -93,6 +102,7 @@ Page({
         elders,
         records,
         reminders: reminders.slice(0, 5),
+        nextReminder: sortedPending[0] || null,
         totalMeds: elders.reduce((sum, item) => sum + (item.medication_count || 0), 0),
         totalPending: elders.reduce((sum, item) => sum + (item.reminder_pending_count || 0), 0),
         totalRisks: elders.reduce((sum, item) => sum + (item.contraindication_count || 0), 0),
@@ -141,10 +151,6 @@ Page({
     wx.navigateTo({ url: `/pages/elder-detail/index?id=${event.currentTarget.dataset.id}` })
   },
 
-  openCloudHome() {
-    wx.navigateTo({ url: '/pages/cloud-home/index' })
-  },
-
   openAi() {
     wx.navigateTo({ url: '/pages/ai-chat/index' })
   },
@@ -154,16 +160,14 @@ Page({
   },
 
   syncAlertBadge(count) {
-    if (count > 0 && wx.setTabBarBadge) {
-      wx.setTabBarBadge({ index: 0, text: String(Math.min(count, 99)), fail: () => {} })
-    } else if (wx.removeTabBarBadge) {
-      wx.removeTabBarBadge({ index: 0, fail: () => {} })
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ badge: Number(count) || 0 })
     }
   },
 
   navigate(event) {
     const path = event.currentTarget.dataset.path
-    const tabPaths = ['/pages/elders/index', '/pages/medication/index', '/pages/reminders/index', '/pages/risks/index']
+    const tabPaths = ['/pages/elders/index', '/pages/medication/index', '/pages/reminders/index', '/pages/more/index']
     if (tabPaths.includes(path)) wx.switchTab({ url: path })
     else wx.navigateTo({ url: path })
   },

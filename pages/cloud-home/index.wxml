@@ -1,22 +1,20 @@
 <view class="page with-safe-bottom">
-  <view wx:if="{{home}}" class="hero">
-    <view class="row between gap">
+  <!-- 家庭信息卡 -->
+  <view wx:if="{{home}}" class="card family-card">
+    <view class="row gap">
+      <view class="family-icon"><image src="/assets/icons/line-home.png" mode="aspectFit"/></view>
       <view class="flex-1">
-        <text class="hero-title">{{home.name}}</text>
-        <text class="hero-subtitle">云端家庭空间 · {{roleLabel}}</text>
+        <text class="list-title family-name">{{home.name}}</text>
+        <text class="list-subtitle">云端家庭空间 · {{roleLabel}}</text>
       </view>
-      <image class="cloud-mark" src="/assets/icons/line-home.png" mode="aspectFit"/>
     </view>
-    <view class="hero-metrics">
-      <view class="hero-metric"><text class="hero-metric-number">{{elders.length}}</text><text class="hero-metric-label">长辈</text></view>
-      <view class="hero-metric"><text class="hero-metric-number">{{members.length}}</text><text class="hero-metric-label">成员</text></view>
-      <view class="hero-metric"><text class="hero-metric-number">—</text><text class="hero-metric-label">用药</text></view>
-      <view class="hero-metric"><text class="hero-metric-number">—</text><text class="hero-metric-label">待服</text></view>
+    <view class="row gap" style="margin-top: 20rpx;">
+      <text class="tag primary">长辈 {{elders.length}}</text>
+      <text class="tag">成员 {{members.length}}</text>
     </view>
   </view>
 
-  <view class="notice cloud-notice">用药、提醒与禁忌已接入云端。可在此邀请成员，或进入工作台管理日常用药。</view>
-  <view class="section"><button class="btn primary block" bindtap="openWorkbench">进入家属工作台</button></view>
+  <view class="notice safe" style="margin-top: 20rpx;">用药、提醒与禁忌数据已接入云端，多名家属共享同一份数据。可在此管理长辈档案并邀请家庭成员。</view>
 
   <view class="section">
     <view class="section-head">
@@ -35,7 +33,7 @@
     <view wx:for="{{elders}}" wx:key="id" class="list-card">
       <view class="row gap">
         <view class="avatar"><image src="{{item.gender === 'male' ? '/assets/brand/avatar-grandpa.png' : '/assets/brand/avatar-grandma.png'}}" mode="aspectFit" aria-role="img" aria-label="长辈头像"/></view>
-        <view class="flex-1"><text class="list-title">{{item.name}}</text><text class="list-subtitle">{{item.relationship || '长辈'}} · {{item.age}}岁</text><text class="list-meta">{{item.linkedUserId ? '已绑定老人账号' : '尚未绑定老人账号'}}</text></view>
+        <view class="flex-1"><text class="list-title">{{item.name}}</text><text class="list-subtitle">{{item.relationship || '长辈'}} · {{item.age}}岁</text></view>
         <text class="tag {{item.linkedUserId ? 'success' : 'warning'}}">{{item.linkedUserId ? '已绑定' : '待绑定'}}</text>
       </view>
       <view wx:if="{{isOwner && !item.linkedUserId}}" class="actions"><button class="btn teal small" data-id="{{item.id}}" bindtap="createElderInvite">生成老人邀请码</button></view>
@@ -45,22 +43,19 @@
 
   <view class="section">
     <view class="section-head"><text class="section-title">家庭成员</text></view>
-    <view wx:for="{{members}}" wx:key="id" class="member-row">
-      <view class="member-avatar">
-        <image wx:if="{{item.avatarUrl}}" class="member-avatar-img" src="{{item.avatarUrl}}" mode="aspectFill" aria-role="img" aria-label="{{item.nickname || '微信成员'}}的头像"/>
-        <view wx:else class="member-avatar-fallback" aria-role="img" aria-label="{{item.nickname || '微信成员'}}暂无头像">{{item.avatarText}}</view>
+    <view class="card">
+      <view wx:for="{{members}}" wx:key="id" class="member-row">
+        <view class="member-avatar">
+          <image wx:if="{{item.avatarUrl}}" class="member-avatar-img" src="{{item.avatarUrl}}" mode="aspectFill" aria-role="img" aria-label="{{item.nickname || '微信成员'}}的头像"/>
+          <view wx:else class="member-avatar-fallback" aria-role="img" aria-label="{{item.nickname || '微信成员'}}暂无头像">{{item.avatarText}}</view>
+        </view>
+        <view class="flex-1"><text class="list-title member-name">{{item.nickname || '微信成员'}}</text><text class="list-subtitle">{{item.role === 'owner' ? '家庭创建人' : item.role === 'caregiver_edit' ? '可录入家属' : item.role === 'caregiver_view' ? '只读家属' : '老人本人'}}</text></view>
       </view>
-      <view class="flex-1"><text class="list-title member-name">{{item.nickname || '微信成员'}}</text><text class="list-subtitle">{{item.role === 'owner' ? '家庭创建人' : item.role === 'caregiver_edit' ? '可录入家属' : item.role === 'caregiver_view' ? '只读家属' : '老人本人'}}</text></view>
+      <view wx:if="{{isOwner}}" class="invite-actions">
+        <button class="btn primary small" data-role="caregiver_edit" bindtap="createFamilyInvite">邀请可录入家属</button>
+        <button class="btn small" data-role="caregiver_view" bindtap="createFamilyInvite">邀请只读家属</button>
+      </view>
     </view>
-    <view wx:if="{{isOwner}}" class="invite-actions">
-      <button class="btn primary small" data-role="caregiver_edit" bindtap="createFamilyInvite">邀请可录入家属</button>
-      <button class="btn small" data-role="caregiver_view" bindtap="createFamilyInvite">邀请只读家属</button>
-    </view>
-  </view>
-
-  <view class="section account-actions">
-    <button class="btn block" bindtap="switchHome">切换家庭</button>
-    <button class="btn danger block" bindtap="logout">退出登录</button>
   </view>
 
   <view wx:if="{{invite}}" class="invite-mask">

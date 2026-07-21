@@ -1,13 +1,69 @@
-<view class="page">
+<view class="page flush">
   <block wx:if="{{elder && dashboard}}">
+    <!-- Hero：头像 + 基本信息 -->
     <view class="hero">
-      <view class="row gap"><view class="hero-avatar"><image class="hero-avatar-img" src="{{elder.gender === 'male' ? '/assets/brand/avatar-grandpa.png' : '/assets/brand/avatar-grandma.png'}}" mode="aspectFit" aria-role="img" aria-label="长辈头像"/></view><view class="flex-1"><text class="hero-title">{{elder.name}}</text><text class="hero-subtitle">{{elder.elder_id}} · {{elder.gender_label}} · {{elder.age}}岁 · {{elder.relationship}}</text><text class="hero-subtitle">播报音色：{{elder.voice_tone_label}}</text></view></view>
-      <view wx:if="{{elder.allergy_note && elder.allergy_note !== '无'}}" class="hero-allergy">过敏史：{{elder.allergy_note}}</view>
-      <view class="hero-actions"><button class="hero-btn" bindtap="openElderly">老人端预览</button><button class="hero-btn solid" bindtap="addMedication">＋ 录入新药</button></view>
+      <view class="hero-mask"/>
+      <view class="hero-inner">
+        <view class="row gap">
+          <view class="hero-avatar"><image class="hero-avatar-img" src="{{elder.gender === 'male' ? '/assets/brand/avatar-grandpa.png' : '/assets/brand/avatar-grandma.png'}}" mode="aspectFit" aria-role="img" aria-label="长辈头像"/></view>
+          <view class="flex-1">
+            <text class="hero-title">{{elder.name}}</text>
+            <text class="hero-subtitle">{{elder.gender_label}} · {{elder.age}}岁 · {{elder.relationship}}</text>
+            <text class="hero-subtitle">播报音色：{{elder.voice_tone_label}}</text>
+          </view>
+        </view>
+        <view wx:if="{{elder.allergy_note && elder.allergy_note !== '无'}}" class="hero-allergy">过敏史：{{elder.allergy_note}}</view>
+        <view class="hero-actions"><button class="hero-btn solid" bindtap="addMedication">＋ 录入新药</button></view>
+      </view>
     </view>
-    <view class="metrics section"><view class="metric"><text class="metric-number">{{dashboard.medications.length}}</text><text class="metric-label">当前用药</text></view><view class="metric"><text class="metric-number danger-text">{{dashboard.stats.total}}</text><text class="metric-label">禁忌风险</text></view><view class="metric"><text class="metric-number">{{healthScore}}</text><text class="metric-label">健康关注度 · {{healthLevel}}</text></view><view class="metric"><text class="metric-number">{{elder.medication_count}}</text><text class="metric-label">用药记录</text></view></view>
-    <view class="section"><view class="section-head"><text class="section-title">用药总览</text></view><view wx:for="{{dashboard.medications}}" wx:key="record_id" class="list-card"><view class="row between gap"><text class="list-title">{{item.drug_name}}</text><text class="tag primary">{{item.category_label}}</text></view><view class="list-subtitle">剂量 {{item.dose}} · {{item.frequency}}</view><view class="list-meta">记录ID：{{item.record_id}}</view></view><view wx:if="{{!dashboard.medications.length}}" class="card empty">暂无用药记录</view></view>
-    <view wx:if="{{dashboard.risks.length}}" class="section"><view class="section-head"><text class="section-title">禁忌风险预览</text><text class="section-link pressable" hover-class="pressable-hover" bindtap="openRisks" aria-role="button">完整看板 ›</text></view><view wx:for="{{dashboard.risks}}" wx:key="relation_id" class="list-card risk {{item.severity}}"><view class="row between gap"><text class="list-title">{{item.drug_a_name}} × {{item.drug_b_name}}</text><text class="tag {{item.severity === 'severe' ? 'danger' : item.severity === 'middle' ? 'warning' : 'success'}}">{{item.severity_label}}</text></view><view class="list-subtitle">{{item.contra_type_label}} · {{item.relevance}}</view><view class="risk-note">{{item.note}}</view></view></view>
+
+    <!-- 统计上叠卡 -->
+    <view class="sheet">
+      <view class="card">
+        <view class="stats">
+          <view class="stat">
+            <view class="stat-icon blue"><image src="/assets/icons/line-pill.png" mode="aspectFit"/></view>
+            <text class="stat-number">{{dashboard.medications.length}}</text>
+            <text class="stat-label">当前用药</text>
+          </view>
+          <view class="stat">
+            <view class="stat-icon pink"><image src="/assets/icons/line-shield.png" mode="aspectFit"/></view>
+            <text class="stat-number danger">{{dashboard.stats.total}}</text>
+            <text class="stat-label">禁忌风险</text>
+          </view>
+          <view class="stat">
+            <view class="stat-icon green"><image src="/assets/icons/line-check.png" mode="aspectFit"/></view>
+            <text class="stat-number">{{healthScore}}</text>
+            <text class="stat-label">{{healthLevel}}</text>
+          </view>
+          <view class="stat">
+            <view class="stat-icon orange"><image src="/assets/icons/line-list.png" mode="aspectFit"/></view>
+            <text class="stat-number">{{elder.medication_count}}</text>
+            <text class="stat-label">用药记录</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="page-body">
+      <view class="section">
+        <view class="section-head"><text class="section-title">用药总览</text></view>
+        <view wx:for="{{dashboard.medications}}" wx:key="record_id" class="list-card">
+          <view class="row between gap"><text class="list-title">{{item.drug_name}}</text><text class="tag primary">{{item.category_label}}</text></view>
+          <view class="list-subtitle">剂量 {{item.dose}} · {{item.frequency}}</view>
+        </view>
+        <view wx:if="{{!dashboard.medications.length}}" class="card empty">暂无用药记录</view>
+      </view>
+
+      <view wx:if="{{dashboard.risks.length}}" class="section">
+        <view class="section-head"><text class="section-title">禁忌风险预览</text><text class="section-link pressable" hover-class="pressable-hover" bindtap="openRisks" aria-role="button">完整看板 ›</text></view>
+        <view wx:for="{{dashboard.risks}}" wx:key="relation_id" class="list-card risk {{item.severity}}">
+          <view class="row between gap"><text class="list-title">{{item.drug_a_name}} × {{item.drug_b_name}}</text><text class="tag {{item.severity === 'severe' ? 'danger' : item.severity === 'middle' ? 'warning' : 'success'}}">{{item.severity_label}}</text></view>
+          <view class="list-subtitle">{{item.contra_type_label}} · {{item.relevance}}</view>
+          <view class="risk-note">{{item.note}}</view>
+        </view>
+      </view>
+    </view>
   </block>
   <view wx:if="{{loading}}" class="loading" aria-role="status">正在加载详情…</view>
 </view>

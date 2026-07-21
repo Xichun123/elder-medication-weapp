@@ -1,28 +1,20 @@
-.hero-tools { display: flex; flex: none; flex-direction: column; align-items: stretch; gap: 10rpx; }
-.family-manage, .family-picker { min-height: 64rpx; padding: 12rpx 20rpx; display: flex; align-items: center; justify-content: center; border-radius: 16rpx; font-size: 26rpx; white-space: nowrap; }
-.family-manage { color: var(--primary-deep); background: #fff; font-weight: 650; }
-.family-picker { background: rgba(255,255,255,.18); }
-.family-tool-pressed { opacity: .82; transform: scale(.985); }
-.quick-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16rpx; }
-.quick { min-height: 176rpx; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 6rpx; padding: 24rpx 26rpx; background: #fff; border: 1rpx solid var(--border); border-radius: 22rpx; }
-.quick-icon { width: 64rpx; height: 64rpx; margin-bottom: 6rpx; }
-.quick-label { font-size: 30rpx; font-weight: 650; color: var(--text); }
-.quick-desc { font-size: 26rpx; color: var(--muted); }
-.health-alert-entry { display: flex; align-items: center; gap: 18rpx; margin-top: 24rpx; padding: 26rpx; border: 1rpx solid var(--border); border-radius: 22rpx; background: #fff; box-shadow: 0 4rpx 16rpx rgba(24,48,43,.04); }
-.health-alert-entry.has-unread { border-color: #EFC7BE; background: linear-gradient(135deg,#fff,#FCEAE4); }
-.alert-entry-icon { width: 80rpx; height: 80rpx; display: flex; align-items: center; justify-content: center; flex: none; border-radius: 22rpx; background: var(--warning-soft); }
-.alert-entry-icon-img { width: 46rpx; height: 46rpx; }
-.alert-entry-title { font-size: 30rpx; font-weight: 650; }
-.alert-entry-subtitle { display: block; margin-top: 4rpx; color: var(--muted); font-size: 26rpx; }
-.alert-count { min-width: 40rpx; height: 40rpx; padding: 0 12rpx; display: inline-flex; align-items: center; justify-content: center; border-radius: 999rpx; color: #fff; background: var(--danger); font-size: 26rpx; line-height: 1; }
-.alert-entry-arrow { color: var(--light); font-size: 48rpx; }
-.elder-arrow { color: var(--light); font-size: 44rpx; flex: none; }
-.elder-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10rpx; margin-top: 22rpx; padding-top: 20rpx; border-top: 1rpx dashed var(--border); text-align: center; }
-.stat-number { display: block; font-size: 38rpx; line-height: 1.1; font-weight: 700; }
-.stat-number.warning { color: var(--warning); }
-.stat-number.danger { color: var(--danger); }
-.stat-label { display: block; color: var(--muted); font-size: 26rpx; margin-top: 6rpx; }
+/* Hero 铃铛 */
+.hero-bell { position: relative; width: 88rpx; height: 88rpx; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,.92); }
+.hero-bell-icon { width: 44rpx; height: 44rpx; }
+.hero-bell-dot { position: absolute; top: -8rpx; right: -10rpx; min-width: 36rpx; height: 36rpx; padding: 0 10rpx; display: flex; align-items: center; justify-content: center; border-radius: 999rpx; color: #fff; background: var(--danger); font-size: 22rpx; line-height: 1; }
+
+/* 长辈卡内 3 列统计 */
+.elder-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10rpx; margin-top: 24rpx; padding-top: 22rpx; border-top: 1rpx dashed var(--border); text-align: center; }
+.elder-stats .stat-number { font-size: 38rpx; }
+
+/* 最近用药 */
 .compact-card { padding-top: 6rpx; padding-bottom: 6rpx; }
 .record-row { display: flex; align-items: center; gap: 14rpx; padding: 24rpx 0; border-bottom: 1rpx solid var(--border); }
 .record-row:last-child { border-bottom: 0; }
-.list-title.small { font-size: 28rpx; }
+
+/* 底部关怀横幅 */
+.care-banner { position: relative; overflow: hidden; margin-top: 36rpx; height: 240rpx; border-radius: 32rpx; }
+.care-banner-img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.care-banner-text { position: absolute; top: 50%; right: 40rpx; transform: translateY(-50%); text-align: right; }
+.care-banner-title { display: block; color: #A65B33; font-size: 36rpx; font-weight: 700; text-shadow: 0 2rpx 8rpx rgba(255,255,255,.8); }
+.care-banner-desc { display: block; margin-top: 6rpx; color: #8A6A4C; font-size: 26rpx; text-shadow: 0 2rpx 8rpx rgba(255,255,255,.8); }
