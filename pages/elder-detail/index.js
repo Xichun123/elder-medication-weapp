@@ -26,6 +26,5 @@ Page({
     finally { this.setData({ loading: false }) }
   },
   addMedication() { wx.setStorageSync('elder_medication.medication_elder_id', this.data.id); wx.switchTab({ url: '/pages/medication/index' }) },
-  openElderly() { wx.navigateTo({ url: `/pages/elderly/index?elder=${this.data.id}` }) },
-  openRisks() { wx.setStorageSync('elder_medication.risk_elder_id', this.data.id); wx.switchTab({ url: '/pages/risks/index' }) },
+  openRisks() { wx.setStorageSync('elder_medication.risk_elder_id', this.data.id); wx.navigateTo({ url: '/pages/risks/index' }) },
 })

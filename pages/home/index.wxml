@@ -1,88 +1,145 @@
-<view class="page with-safe-bottom">
+<view class="page flush with-tabbar">
+  <!-- 插画 Hero -->
   <view class="hero">
-    <view class="row between">
+    <image class="hero-bg" src="/assets/illustrations/hero-home.png" mode="aspectFill" aria-hidden="true"/>
+    <view class="hero-mask"/>
+    <view class="hero-inner">
+      <view class="row between">
+        <view class="flex-1">
+          <text class="hero-eyebrow">{{greeting}}{{roleLabel ? '，' + roleLabel : ''}}</text>
+          <text class="hero-title">记得关注长辈用药哦～</text>
+        </view>
+        <view class="hero-bell pressable" hover-class="pressable-hover" bindtap="openAlerts" aria-role="button" aria-label="家属健康提醒{{unreadAlertCount ? '，有 ' + unreadAlertCount + ' 条未读' : ''}}">
+          <image class="hero-bell-icon" src="/assets/icons/line-bell.png" mode="aspectFit"/>
+          <view wx:if="{{unreadAlertCount}}" class="hero-bell-dot">{{unreadAlertCount > 99 ? '99+' : unreadAlertCount}}</view>
+        </view>
+      </view>
+      <picker range="{{families}}" range-key="name" value="{{familyIndex}}" bindchange="onFamilyChange">
+        <view class="hero-chip" aria-role="button" aria-label="切换家庭">{{currentFamily.name || '家庭'}} ▾</view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 今日概览：上叠白卡 -->
+  <view class="sheet">
+    <view class="card">
+      <view class="row between">
+        <text class="section-title">今日概览</text>
+        <text class="light">{{dateText}}</text>
+      </view>
+      <view class="stats" style="margin-top: 24rpx;">
+        <view class="stat">
+          <view class="stat-icon green"><image src="/assets/icons/line-people.png" mode="aspectFit"/></view>
+          <text class="stat-number">{{elders.length}}</text>
+          <text class="stat-label">照护长辈</text>
+        </view>
+        <view class="stat">
+          <view class="stat-icon blue"><image src="/assets/icons/line-pill.png" mode="aspectFit"/></view>
+          <text class="stat-number">{{totalMeds}}</text>
+          <text class="stat-label">用药记录</text>
+        </view>
+        <view class="stat">
+          <view class="stat-icon orange"><image src="/assets/icons/line-bell.png" mode="aspectFit"/></view>
+          <text class="stat-number warning">{{totalPending}}</text>
+          <text class="stat-label">待服提醒</text>
+        </view>
+        <view class="stat">
+          <view class="stat-icon pink"><image src="/assets/icons/line-shield.png" mode="aspectFit"/></view>
+          <text class="stat-number danger">{{totalRisks}}</text>
+          <text class="stat-label">禁忌风险</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="page-body">
+    <!-- 下一次服药提醒横幅 -->
+    <view wx:if="{{nextReminder}}" class="banner pressable" hover-class="pressable-hover" data-path="/pages/reminders/index" bindtap="navigate" aria-role="button" aria-label="下一次服药提醒 {{nextReminder.remind_time}} {{nextReminder.drug_name}}" style="margin-top: 28rpx;">
+      <view class="banner-icon"><image src="/assets/icons/line-bell.png" mode="aspectFit"/></view>
       <view class="flex-1">
-        <text class="hero-subtitle">{{greeting}}{{roleLabel ? ' · ' + roleLabel : ''}}</text>
-        <text class="hero-title">{{currentFamily.name || '家庭'}}，欢迎回来</text>
+        <text class="banner-title">下一次服药提醒</text>
+        <text class="banner-strong">{{nextReminder.remind_time}}</text>
+        <text class="banner-desc">{{nextReminder.elder_name}} · {{nextReminder.drug_name}}</text>
       </view>
-      <view class="hero-tools">
-        <view wx:if="{{isRemote}}" class="family-manage pressable" hover-class="family-tool-pressed" bindtap="openCloudHome" aria-role="button" aria-label="账户与家庭管理">家庭管理 ›</view>
-        <picker range="{{families}}" range-key="name" value="{{familyIndex}}" bindchange="onFamilyChange">
-          <view class="family-picker" aria-role="button" aria-label="切换家庭">{{isRemote ? '切换家庭' : '切换家属'}} ▾</view>
-        </picker>
-      </view>
+      <text class="banner-arrow">›</text>
     </view>
-    <view class="hero-metrics">
-      <view class="hero-metric"><text class="hero-metric-number">{{elders.length}}</text><text class="hero-metric-label">照护长辈</text></view>
-      <view class="hero-metric"><text class="hero-metric-number">{{totalMeds}}</text><text class="hero-metric-label">用药记录</text></view>
-      <view class="hero-metric"><text class="hero-metric-number">{{totalPending}}</text><text class="hero-metric-label">待服提醒</text></view>
-      <view class="hero-metric"><text class="hero-metric-number">{{totalRisks}}</text><text class="hero-metric-label">禁忌风险</text></view>
-    </view>
-  </view>
 
-  <view class="health-alert-entry pressable {{unreadAlertCount ? 'has-unread' : ''}}" hover-class="pressable-hover" bindtap="openAlerts" aria-role="button" aria-label="家属健康提醒{{unreadAlertCount ? '，有 ' + unreadAlertCount + ' 条未读' : ''}}">
-    <view class="alert-entry-icon"><image class="alert-entry-icon-img" src="/assets/icons/line-bell.png" mode="aspectFit"/></view>
-    <view class="flex-1">
-      <view class="row gap"><text class="alert-entry-title">家属健康提醒</text><text wx:if="{{unreadAlertCount}}" class="alert-count">{{unreadAlertCount > 99 ? '99+' : unreadAlertCount}}</text></view>
-      <text class="alert-entry-subtitle">{{unreadAlertCount ? '有新的老人症状反馈，请及时查看' : '查看老人症状记录和处理状态'}}</text>
+    <!-- 快捷功能 -->
+    <view class="section">
+      <view class="section-head"><text class="section-title">快捷功能</text></view>
+      <view class="quick-grid">
+        <view class="quick mint pressable" hover-class="pressable-hover" bindtap="openAi" aria-role="button" aria-label="AI 用药管家">
+          <text class="quick-label">AI 用药管家</text>
+          <text class="quick-desc">智能问药解答</text>
+          <image class="quick-icon" src="/assets/icons/quick-ai.png" mode="aspectFit"/>
+        </view>
+        <view wx:if="{{canEdit}}" class="quick sky pressable" hover-class="pressable-hover" data-path="/pages/medication/index" bindtap="navigate" aria-role="button" aria-label="拍照盒录药">
+          <text class="quick-label">拍照盒录药</text>
+          <text class="quick-desc">拍照识别药品</text>
+          <image class="quick-icon" src="/assets/icons/quick-camera.png" mode="aspectFit"/>
+        </view>
+        <view class="quick cream pressable" hover-class="pressable-hover" data-path="/pages/reminders/index" bindtap="navigate" aria-role="button" aria-label="服药提醒">
+          <text class="quick-label">服药提醒</text>
+          <text class="quick-desc">{{totalPending ? totalPending + ' 条待服' : '设置提醒时间'}}</text>
+          <image class="quick-icon" src="/assets/icons/quick-bell.png" mode="aspectFit"/>
+        </view>
+        <view class="quick blush pressable" hover-class="pressable-hover" data-path="/pages/risks/index" bindtap="navigate" aria-role="button" aria-label="禁忌风险检查">
+          <text class="quick-label">禁忌风险</text>
+          <text class="quick-desc">用药安全检查</text>
+          <image class="quick-icon" src="/assets/icons/quick-shield.png" mode="aspectFit"/>
+        </view>
+      </view>
     </view>
-    <text class="alert-entry-arrow">›</text>
-  </view>
 
-  <view class="section">
-    <view class="section-head"><text class="section-title">快捷操作</text></view>
-    <view class="quick-grid">
-      <view class="quick pressable" hover-class="pressable-hover" bindtap="openAi" aria-role="button" aria-label="AI 用药管家">
-        <image class="quick-icon" src="/assets/icons/quick-ai.png" mode="aspectFit"/>
-        <text class="quick-label">AI 用药管家</text>
-        <text class="quick-desc">对话问用药</text>
+    <!-- 长辈健康概览 -->
+    <view class="section">
+      <view class="section-head">
+        <text class="section-title">长辈健康概览</text>
+        <text class="section-link pressable" hover-class="pressable-hover" data-path="/pages/elders/index" bindtap="navigate" aria-role="button">全部长辈 ›</text>
       </view>
-      <view wx:if="{{canEdit}}" class="quick pressable" hover-class="pressable-hover" data-path="/pages/medication/index" bindtap="navigate" aria-role="button" aria-label="拍药盒录药">
-        <image class="quick-icon" src="/assets/icons/quick-camera.png" mode="aspectFit"/>
-        <text class="quick-label">拍药盒录药</text>
-        <text class="quick-desc">AI 识别包装</text>
+      <view wx:for="{{elders}}" wx:key="elder_id" class="list-card pressable" hover-class="pressable-hover" data-id="{{item.elder_id}}" bindtap="openElder" aria-role="button" aria-label="查看长辈 {{item.name}} 的详情">
+        <view class="row gap">
+          <view class="avatar"><image src="{{item.gender === 'male' ? '/assets/brand/avatar-grandpa.png' : '/assets/brand/avatar-grandma.png'}}" mode="aspectFit" aria-role="img" aria-label="长辈头像"/></view>
+          <view class="flex-1">
+            <text class="list-title">{{item.name}}</text>
+            <view class="list-subtitle">{{item.relationship}} · {{item.gender_label}} · {{item.age}}岁</view>
+          </view>
+          <text class="arrow">›</text>
+        </view>
+        <view class="elder-stats">
+          <view><text class="stat-number">{{item.medication_count}}</text><text class="stat-label">用药</text></view>
+          <view><text class="stat-number warning">{{item.reminder_pending_count}}</text><text class="stat-label">待服</text></view>
+          <view><text class="stat-number danger">{{item.contraindication_count}}</text><text class="stat-label">风险</text></view>
+        </view>
       </view>
-      <view class="quick pressable" hover-class="pressable-hover" data-path="/pages/reminders/index" bindtap="navigate" aria-role="button" aria-label="服药提醒">
-        <image class="quick-icon" src="/assets/icons/quick-bell.png" mode="aspectFit"/>
-        <text class="quick-label">服药提醒</text>
-        <text class="quick-desc">{{totalPending ? totalPending + ' 条待服' : '今日时间线'}}</text>
-      </view>
-      <view class="quick pressable" hover-class="pressable-hover" data-path="/pages/risks/index" bindtap="navigate" aria-role="button" aria-label="禁忌风险检查">
-        <image class="quick-icon" src="/assets/icons/quick-shield.png" mode="aspectFit"/>
-        <text class="quick-label">禁忌风险</text>
-        <text class="quick-desc">{{totalRisks ? totalRisks + ' 条命中' : '组合检查'}}</text>
+      <view wx:if="{{!loading && !elders.length}}" class="card empty">
+        <image class="empty-icon" src="/assets/icons/line-empty-box.png" mode="aspectFit" aria-role="img" aria-label="空状态插图"/>
+        <text>当前家庭暂无长辈档案</text>
       </view>
     </view>
-  </view>
 
-  <view class="section">
-    <view class="section-head"><text class="section-title">长辈健康概览</text><text class="section-link pressable" hover-class="pressable-hover" data-path="/pages/elders/index" bindtap="navigate" aria-role="button">管理全部 ›</text></view>
-    <view wx:for="{{elders}}" wx:key="elder_id" class="list-card elder-card pressable" hover-class="pressable-hover" data-id="{{item.elder_id}}" bindtap="openElder" aria-role="button" aria-label="查看长辈 {{item.name}} 的详情">
-      <view class="row gap">
-        <view class="avatar"><image src="{{item.gender === 'male' ? '/assets/brand/avatar-grandpa.png' : '/assets/brand/avatar-grandma.png'}}" mode="aspectFit" aria-role="img" aria-label="长辈头像"/></view>
-        <view class="flex-1"><text class="list-title">{{item.name}}</text><view class="list-subtitle">{{item.relationship}} · {{item.gender_label}} · {{item.age}}岁</view></view>
-        <text class="elder-arrow">›</text>
+    <!-- 最近用药 -->
+    <view class="section">
+      <view class="section-head">
+        <text class="section-title">最近用药</text>
+        <text class="section-link pressable" hover-class="pressable-hover" data-path="/pages/records/index" bindtap="navigate" aria-role="button">查看全部 ›</text>
       </view>
-      <view class="elder-stats">
-        <view><text class="stat-number">{{item.medication_count}}</text><text class="stat-label">用药</text></view>
-        <view><text class="stat-number warning">{{item.reminder_pending_count}}</text><text class="stat-label">待服</text></view>
-        <view><text class="stat-number danger">{{item.contraindication_count}}</text><text class="stat-label">风险</text></view>
+      <view class="card compact-card">
+        <view wx:for="{{records}}" wx:key="record_id" class="record-row">
+          <view class="flex-1"><text class="list-title small">{{item.drug_name}}</text><view class="list-subtitle">{{item.elder_name}} · {{item.dose}} · {{item.frequency}}</view></view>
+          <text class="tag">{{item.drug_category_label}}</text>
+        </view>
+        <view wx:if="{{!records.length}}" class="empty">暂无用药记录</view>
       </view>
     </view>
-    <view wx:if="{{!loading && !elders.length}}" class="card empty">
-      <image class="empty-icon" src="/assets/icons/line-empty-box.png" mode="aspectFit" aria-role="img" aria-label="空状态插图"/>
-      <text>当前家庭暂无长辈档案</text>
-    </view>
-  </view>
 
-  <view class="section">
-    <view class="section-head"><text class="section-title">最近用药</text><text class="section-link pressable" hover-class="pressable-hover" data-path="/pages/records/index" bindtap="navigate" aria-role="button">查看全部 ›</text></view>
-    <view class="card compact-card">
-      <view wx:for="{{records}}" wx:key="record_id" class="record-row">
-        <view class="flex-1"><text class="list-title small">{{item.drug_name}}</text><view class="list-subtitle">{{item.elder_name}} · {{item.dose}} · {{item.frequency}}</view></view>
-        <text class="tag">{{item.drug_category_label}}</text>
+    <!-- 关怀横幅 -->
+    <view class="care-banner">
+      <image class="care-banner-img" src="/assets/illustrations/care-banner.png" mode="aspectFill" aria-hidden="true"/>
+      <view class="care-banner-text">
+        <text class="care-banner-title">关爱长辈健康</text>
+        <text class="care-banner-desc">让用药更安心，家人更放心</text>
       </view>
-      <view wx:if="{{!records.length}}" class="empty">暂无用药记录</view>
     </view>
   </view>
 

@@ -50,9 +50,9 @@
   margin-bottom: 28rpx;
   padding: 26rpx 24rpx;
   border-radius: 26rpx;
-  background: linear-gradient(135deg, #6F5BD8, #5D4BC3);
+  background: linear-gradient(135deg, #4CBF6C, #3EAE5B);
   color: #fff;
-  box-shadow: 0 12rpx 24rpx rgba(93, 75, 195, 0.18);
+  box-shadow: 0 12rpx 24rpx rgba(62, 174, 91, 0.22);
 }
 
 .ai-entry--pressed {
@@ -124,7 +124,7 @@
 
 .elder-title {
   display: block;
-  font-size: 44rpx;
+  font-size: 48rpx;
   font-weight: 750;
   line-height: 1.25;
 }
@@ -141,13 +141,13 @@
   color: #fff;
   text-align: center;
   border-radius: 30rpx;
-  background: linear-gradient(145deg, #C05339, #B94A32 55%, #9F3D28);
-  box-shadow: 0 16rpx 34rpx rgba(185, 74, 50, 0.2);
+  background: linear-gradient(145deg, #F0A73B, #E9950C 55%, #D07F04);
+  box-shadow: 0 16rpx 34rpx rgba(233, 149, 12, 0.24);
 }
 
 .current-card.resting {
-  background: linear-gradient(145deg, #1F8F79, #176B5B 55%, #0F5446);
-  box-shadow: 0 16rpx 34rpx rgba(23, 107, 91, 0.18);
+  background: linear-gradient(145deg, #4CBF6C, #3EAE5B 55%, #2E8B4A);
+  box-shadow: 0 16rpx 34rpx rgba(62, 174, 91, 0.2);
 }
 
 .current-top {
@@ -236,7 +236,7 @@
 .play-btn.primary {
   border-color: #fff;
   background: #fff;
-  color: #B94A32;
+  color: #C97B06;
   font-weight: 750;
 }
 
@@ -344,7 +344,7 @@
 .reminder-drug {
   display: block;
   margin-bottom: 20rpx;
-  font-size: 34rpx;
+  font-size: 38rpx;
   font-weight: 700;
   line-height: 1.35;
   color: var(--text);
@@ -359,18 +359,18 @@
 
 .action-btn {
   margin: 0;
-  min-height: 88rpx;
+  min-height: 100rpx;
   padding: 0 20rpx;
   border-radius: 18rpx;
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 700;
-  line-height: 88rpx;
+  line-height: 100rpx;
 }
 
 .action-btn.ghost {
-  background: #F2F7F4;
+  background: #F0F9EE;
   color: var(--primary);
-  border: 1rpx solid #C9E2DA;
+  border: 1rpx solid #C9E8CF;
 }
 
 .action-btn.solid {
@@ -379,7 +379,7 @@
 }
 
 .action-done {
-  min-height: 88rpx;
+  min-height: 100rpx;
   display: flex;
   align-items: center;
   justify-content: center;

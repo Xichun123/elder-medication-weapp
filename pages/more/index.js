@@ -12,8 +12,15 @@ Page({
     isRemote: false,
     homeName: '',
     roleLabel: '',
+    roleText: '',
+    nickname: '',
+    nicknameInitial: '我',
+    avatarUrl: '',
   },
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ active: 4 })
+    }
     const home = session.getHome()
     if (!config.useLocalApi && !home) {
       wx.reLaunch({ url: '/pages/launch/index' })
@@ -23,10 +30,19 @@ Page({
       wx.reLaunch({ url: '/pages/cloud-elder/index' })
       return
     }
+    const user = session.getUser() || {}
+    const role = store.currentRole()
+    const roleTexts = { owner: '家庭创建人', caregiver_edit: '可录入家属', caregiver_view: '只读家属', elder: '老人本人' }
     this.setData({
       isRemote: !config.useLocalApi,
       homeName: (home && home.name) || '',
-      roleLabel: store.currentRole(),
+      roleLabel: role,
+      roleText: roleTexts[role] || '',
+      nickname: user.nickname || '',
+      nicknameInitial: String(user.nickname || '我').slice(0, 1),
+      avatarUrl: user.avatarUrl
+        ? (/^https?:\/\//i.test(user.avatarUrl) ? user.avatarUrl : `${String(config.apiBaseUrl || '').replace(/\/$/, '')}${user.avatarUrl}`)
+        : '',
     })
     this.loadStats()
   },

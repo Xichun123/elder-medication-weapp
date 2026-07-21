@@ -1,0 +1,25 @@
+<view class="tabbar">
+  <view
+    wx:for="{{list}}"
+    wx:key="pagePath"
+    class="tabbar-item {{item.center ? 'center' : ''}} {{active === index ? 'active' : ''}}"
+    data-index="{{index}}"
+    data-path="{{item.pagePath}}"
+    bindtap="switchTab"
+    aria-role="tab"
+    aria-label="{{item.text}}"
+    aria-selected="{{active === index}}"
+  >
+    <block wx:if="{{item.center}}">
+      <view class="tabbar-plus"><text class="tabbar-plus-icon">+</text></view>
+      <text class="tabbar-label">{{item.text}}</text>
+    </block>
+    <block wx:else>
+      <view class="tabbar-icon-wrap">
+        <image class="tabbar-icon" src="{{active === index ? item.iconOn : item.icon}}" mode="aspectFit"/>
+        <view wx:if="{{index === 0 && badge > 0}}" class="tabbar-badge">{{badge > 99 ? '99+' : badge}}</view>
+      </view>
+      <text class="tabbar-label">{{item.text}}</text>
+    </block>
+  </view>
+</view>

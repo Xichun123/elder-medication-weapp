@@ -13,6 +13,9 @@ Page({
     canEdit: true, canTake: true,
   },
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ active: 3 })
+    }
     if (!config.useLocalApi && !session.getHome()) {
       wx.reLaunch({ url: '/pages/launch/index' })
       return
@@ -73,5 +76,4 @@ Page({
     const elder = (this.data.elders || []).find((item) => item.elder_id === row.elder)
     voice.speak(row.voice_text, { tone: elder && elder.voice_tone }).catch(showError)
   },
-  openElderly(event) { wx.navigateTo({ url: `/pages/elderly/index?elder=${event.currentTarget.dataset.elder}` }) },
 })

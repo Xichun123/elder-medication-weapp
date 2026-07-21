@@ -1,81 +1,76 @@
-<view class="page">
-  <text class="page-title">更多管理</text>
-  <text class="page-subtitle">{{isRemote ? (homeName || '云端家庭') + ' · 数据保存在服务器' : '独立离线版 · 数据仅保存在当前设备'}}</text>
-  <view class="menu card" aria-label="管理菜单">
-    <view class="menu-item pressable" hover-class="pressable-hover" data-path="/pages/records/index" bindtap="navigate" aria-role="button" aria-label="用药记录">
-      <image class="menu-icon" src="/assets/icons/line-list.png" mode="aspectFit"/>
-      <view class="flex-1">
-        <text class="list-title">用药记录</text>
-        <text class="list-subtitle">查看、编辑和删除记录</text>
-      </view>
-      <text class="menu-arrow">›</text>
+<view class="page with-tabbar">
+  <!-- 个人信息卡 -->
+  <view class="profile-card">
+    <view class="profile-avatar">
+      <image wx:if="{{avatarUrl}}" class="profile-avatar-img" src="{{avatarUrl}}" mode="aspectFill" aria-role="img" aria-label="我的头像"/>
+      <view wx:else class="profile-avatar-fallback" aria-role="img" aria-label="我的头像">{{nicknameInitial}}</view>
     </view>
-    <view class="menu-item pressable" hover-class="pressable-hover" data-path="/pages/relations/index" bindtap="navigate" aria-role="button" aria-label="{{isRemote ? '成员管理' : '家属关联'}}">
-      <image class="menu-icon" src="/assets/icons/line-people.png" mode="aspectFit"/>
-      <view class="flex-1">
-        <text class="list-title">{{isRemote ? '成员管理' : '家属关联'}}</text>
-        <text class="list-subtitle">{{isRemote ? '查看家庭成员与角色' : '维护 N-N 照护关系'}}</text>
-      </view>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view wx:if="{{isRemote}}" class="menu-item pressable" hover-class="pressable-hover" bindtap="openCloudHome" aria-role="button" aria-label="邀请与建档">
-      <image class="menu-icon" src="/assets/icons/line-link.png" mode="aspectFit"/>
-      <view class="flex-1">
-        <text class="list-title">邀请与建档</text>
-        <text class="list-subtitle">生成邀请码、添加长辈</text>
-      </view>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item pressable" hover-class="pressable-hover" data-path="/pages/elderly/index" bindtap="navigate" aria-role="button" aria-label="老人提醒端预览">
-      <image class="menu-icon" src="/assets/icons/line-speaker.png" mode="aspectFit"/>
-      <view class="flex-1">
-        <text class="list-title">老人提醒端预览</text>
-        <text class="list-subtitle">适老化大字与振动提醒</text>
-      </view>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item pressable" hover-class="pressable-hover" data-path="/pages/admin-drugs/index" bindtap="navigate" aria-role="button" aria-label="药物主数据">
-      <image class="menu-icon" src="/assets/icons/line-pill.png" mode="aspectFit"/>
-      <view class="flex-1">
-        <text class="list-title">药物主数据</text>
-        <text class="list-subtitle">新增、编辑、删除药物</text>
-      </view>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item pressable" hover-class="pressable-hover" data-path="/pages/admin-contraindications/index" bindtap="navigate" aria-role="button" aria-label="禁忌管理">
-      <image class="menu-icon" src="/assets/icons/line-warning.png" mode="aspectFit"/>
-      <view class="flex-1">
-        <text class="list-title">禁忌管理</text>
-        <text class="list-subtitle">维护家庭药物与饮食禁忌</text>
-      </view>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item pressable" hover-class="pressable-hover" data-path="/pages/dictionary/index" bindtap="navigate" aria-role="button" aria-label="数据字典">
-      <image class="menu-icon" src="/assets/icons/line-book.png" mode="aspectFit"/>
-      <view class="flex-1">
-        <text class="list-title">数据字典</text>
-        <text class="list-subtitle">查看内置业务字典</text>
-      </view>
-      <text class="menu-arrow">›</text>
+    <view class="flex-1">
+      <text class="profile-name">{{nickname || '微信用户'}}</text>
+      <text class="profile-sub">{{isRemote ? (homeName || '云端家庭') + (roleText ? ' · ' + roleText : '') : '独立离线版 · 数据保存在本机'}}</text>
     </view>
   </view>
 
+  <!-- 家庭与协作 -->
+  <view class="section">
+    <view class="section-head"><text class="section-title">家庭与协作</text></view>
+    <view class="menu-card" aria-label="家庭与协作菜单">
+      <view wx:if="{{isRemote}}" class="menu-row pressable" hover-class="pressable-hover" bindtap="openCloudHome" aria-role="button" aria-label="家庭管理">
+        <view class="menu-icon"><image src="/assets/icons/line-home.png" mode="aspectFit"/></view>
+        <text class="menu-label">家庭管理</text>
+        <text class="menu-value">邀请码 · 长辈建档</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-row pressable" hover-class="pressable-hover" data-path="/pages/relations/index" bindtap="navigate" aria-role="button" aria-label="{{isRemote ? '成员管理' : '家属关联'}}">
+        <view class="menu-icon blue"><image src="/assets/icons/line-people.png" mode="aspectFit"/></view>
+        <text class="menu-label">{{isRemote ? '成员管理' : '家属关联'}}</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-row pressable" hover-class="pressable-hover" data-path="/pages/records/index" bindtap="navigate" aria-role="button" aria-label="用药记录">
+        <view class="menu-icon orange"><image src="/assets/icons/line-list.png" mode="aspectFit"/></view>
+        <text class="menu-label">用药记录</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 数据与工具 -->
+  <view class="section">
+    <view class="section-head"><text class="section-title">数据与工具</text></view>
+    <view class="menu-card" aria-label="数据与工具菜单">
+      <view class="menu-row pressable" hover-class="pressable-hover" data-path="/pages/admin-drugs/index" bindtap="navigate" aria-role="button" aria-label="药物主数据">
+        <view class="menu-icon"><image src="/assets/icons/line-pill.png" mode="aspectFit"/></view>
+        <text class="menu-label">药物主数据</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-row pressable" hover-class="pressable-hover" data-path="/pages/admin-contraindications/index" bindtap="navigate" aria-role="button" aria-label="禁忌管理">
+        <view class="menu-icon pink"><image src="/assets/icons/line-warning.png" mode="aspectFit"/></view>
+        <text class="menu-label">禁忌管理</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-row pressable" hover-class="pressable-hover" data-path="/pages/dictionary/index" bindtap="navigate" aria-role="button" aria-label="数据字典">
+        <view class="menu-icon blue"><image src="/assets/icons/line-book.png" mode="aspectFit"/></view>
+        <text class="menu-label">数据字典</text>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 数据概况 -->
   <view class="section">
     <view class="section-head">
-      <text class="section-title">{{isRemote ? '云端数据' : '本地数据'}}</text>
-      <text class="tag {{isRemote ? 'teal' : 'success'}}">{{isRemote ? '家庭同步' : '无需网络'}}</text>
+      <text class="section-title">数据概况</text>
+      <text class="tag {{isRemote ? 'primary' : 'success'}}">{{isRemote ? '云端同步' : '本机保存'}}</text>
     </view>
     <view class="card">
       <view class="data-grid">
-        <view><text class="data-number">{{stats.elders}}</text><text class="data-label">老人</text></view>
-        <view><text class="data-number">{{stats.families}}</text><text class="data-label">{{isRemote ? '家庭' : '家属'}}</text></view>
+        <view><text class="data-number">{{stats.elders}}</text><text class="data-label">长辈</text></view>
         <view><text class="data-number">{{stats.records}}</text><text class="data-label">用药</text></view>
         <view><text class="data-number">{{stats.reminders}}</text><text class="data-label">提醒</text></view>
         <view><text class="data-number">{{stats.drugs}}</text><text class="data-label">药物</text></view>
         <view><text class="data-number">{{stats.contraindications}}</text><text class="data-label">禁忌</text></view>
+        <view><text class="data-number">{{stats.families}}</text><text class="data-label">{{isRemote ? '家庭' : '家属'}}</text></view>
       </view>
-      <view wx:if="{{!isRemote}}" class="notice local-notice">数据通过 wx.storage 保存在当前微信设备。卸载小程序、清理缓存或恢复初始数据会导致本地修改丢失。</view>
-      <view wx:else class="notice local-notice">业务数据保存在家庭云端空间，多名家属与老人账号共享同一真相来源。</view>
       <view wx:if="{{!isRemote}}" class="form-actions">
         <button class="btn" bindtap="exportData">复制 JSON 备份</button>
         <button class="btn danger" loading="{{resetting}}" bindtap="resetData">恢复初始数据</button>
@@ -86,5 +81,6 @@
       </view>
     </view>
   </view>
-  <view class="notice disclaimer">药品与禁忌数据仅供学习参考，不能替代医生诊断。</view>
+
+  <view class="notice disclaimer">药品与禁忌数据仅供学习参考，不能替代医生诊断。实际用药请遵医嘱。</view>
 </view>

@@ -1,30 +1,57 @@
-<view class="page with-safe-bottom">
-  <view wx:if="{{!editing}}">
-    <view class="row between gap elder-header">
-      <view class="elder-header-copy"><text class="page-title">老人管理</text><text class="page-subtitle">维护长辈基本信息、过敏史与方言温情播报音色</text></view>
-      <button wx:if="{{canEdit}}" class="btn primary small elder-add-btn" bindtap="openCreate">
-        <text class="elder-add-icon">＋</text>
-        <text>新增</text>
-      </button>
-    </view>
-    <view class="filter-bar"><input class="search flex-1" value="{{keyword}}" placeholder="搜索姓名 / 关系" bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearch"/><button class="btn small" bindtap="onSearch">搜索</button></view>
-    <view wx:for="{{filteredList}}" wx:key="elder_id" class="list-card">
-      <view class="row gap pressable" hover-class="pressable-hover" data-id="{{item.elder_id}}" bindtap="openDetail" aria-role="button" aria-label="查看长辈 {{item.name}}">
-        <view class="avatar"><image src="{{item.gender === 'male' ? '/assets/brand/avatar-grandpa.png' : '/assets/brand/avatar-grandma.png'}}" mode="aspectFit" aria-role="img" aria-label="长辈头像"/></view>
-        <view class="flex-1"><text class="list-title">{{item.name}}</text><view class="list-subtitle">{{item.gender_label}} · {{item.age}}岁 · {{item.relationship}}</view><view class="list-meta">{{item.voice_tone_label}} · 用药 {{item.medication_count}}</view></view>
-        <text>›</text>
+<view class="page flush with-tabbar">
+  <block wx:if="{{!editing}}">
+    <!-- 绿植 Hero -->
+    <view class="hero">
+      <image class="hero-bg" src="/assets/illustrations/hero-elder.png" mode="aspectFill" aria-hidden="true"/>
+      <view class="hero-mask"/>
+      <view class="hero-inner">
+        <text class="hero-title">长辈健康概览</text>
+        <text class="hero-subtitle">关注长辈健康，从每一天开始</text>
+        <view wx:if="{{canEdit}}" class="hero-chip pressable" hover-class="pressable-hover" bindtap="openCreate" aria-role="button" aria-label="新增长辈">+ 新增长辈</view>
       </view>
-      <view wx:if="{{item.allergy_note && item.allergy_note !== '无'}}" class="allergy">过敏史：{{item.allergy_note}}</view>
-      <view wx:if="{{canEdit}}" class="actions"><button class="btn small" data-id="{{item.elder_id}}" catchtap="openEdit">编辑</button><button class="btn danger small" data-id="{{item.elder_id}}" catchtap="remove">删除</button></view>
     </view>
-    <view wx:if="{{!loading && !filteredList.length}}" class="card empty"><image class="empty-icon" src="/assets/icons/line-empty-box.png" mode="aspectFit" aria-role="img" aria-label="空状态"/>暂无老人数据</view>
-    <view wx:if="{{loading}}" class="loading" aria-role="status">正在加载…</view>
-  </view>
 
-  <view wx:else>
-    <text class="page-title">{{isEdit ? '编辑老人' : '新增老人'}}</text>
+    <!-- 搜索：上叠 -->
+    <view class="sheet">
+      <view class="search-row">
+        <input class="search flex-1" value="{{keyword}}" placeholder="搜索姓名 / 关系" bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearch"/>
+        <button class="btn primary search-btn" bindtap="onSearch">搜索</button>
+      </view>
+    </view>
+
+    <view class="page-body" style="margin-top: 28rpx;">
+      <view wx:for="{{filteredList}}" wx:key="elder_id" class="list-card">
+        <view class="row gap pressable" hover-class="pressable-hover" data-id="{{item.elder_id}}" bindtap="openDetail" aria-role="button" aria-label="查看长辈 {{item.name}}">
+          <view class="avatar"><image src="{{item.gender === 'male' ? '/assets/brand/avatar-grandpa.png' : '/assets/brand/avatar-grandma.png'}}" mode="aspectFit" aria-role="img" aria-label="长辈头像"/></view>
+          <view class="flex-1">
+            <text class="list-title">{{item.name}}</text>
+            <view class="list-subtitle">{{item.gender_label}} · {{item.age}}岁 · {{item.relationship}}</view>
+            <view class="row gap" style="margin-top: 10rpx;">
+              <text class="tag primary">用药 {{item.medication_count}}</text>
+              <text class="tag">{{item.voice_tone_label}}</text>
+            </view>
+          </view>
+          <text class="arrow">›</text>
+        </view>
+        <view wx:if="{{item.allergy_note && item.allergy_note !== '无'}}" class="allergy">过敏史：{{item.allergy_note}}</view>
+        <view wx:if="{{canEdit}}" class="actions">
+          <button class="btn small" data-id="{{item.elder_id}}" catchtap="openEdit">编辑</button>
+          <button class="btn danger small" data-id="{{item.elder_id}}" catchtap="remove">删除</button>
+        </view>
+      </view>
+      <view wx:if="{{!loading && !filteredList.length}}" class="card empty">
+        <image class="empty-icon" src="/assets/icons/line-empty-box.png" mode="aspectFit" aria-role="img" aria-label="空状态"/>
+        <text>暂无长辈档案，点击上方"新增长辈"开始建档</text>
+      </view>
+      <view wx:if="{{loading}}" class="loading" aria-role="status">正在加载…</view>
+    </view>
+  </block>
+
+  <view wx:else class="page-body" style="padding-top: 32rpx;">
+    <text class="page-title">{{isEdit ? '编辑长辈' : '新增长辈'}}</text>
+    <text class="page-subtitle">完善基本信息、过敏史与温情播报音色</text>
     <view class="card form-card">
-      <view class="field"><text class="field-label required">姓名</text><input class="input" value="{{form.name}}" placeholder="老人姓名" data-field="name" bindinput="onInput"/></view>
+      <view class="field"><text class="field-label required">姓名</text><input class="input" value="{{form.name}}" placeholder="长辈姓名" data-field="name" bindinput="onInput"/></view>
       <view class="field"><text class="field-label required">年龄</text><input class="input" type="number" value="{{form.age}}" data-field="age" bindinput="onInput"/></view>
       <view class="field"><text class="field-label required">与家属关系</text><input class="input" value="{{form.relationship}}" placeholder="如 母亲 / 父亲 / 祖母" data-field="relationship" bindinput="onInput"/></view>
       <view class="field"><text class="field-label">性别</text><view class="radio-row"><view class="choice {{form.gender === 'female' ? 'active' : ''}}" data-field="gender" data-value="female" bindtap="choose" hover-class="pressable-hover">女</view><view class="choice {{form.gender === 'male' ? 'active' : ''}}" data-field="gender" data-value="male" bindtap="choose" hover-class="pressable-hover">男</view></view></view>

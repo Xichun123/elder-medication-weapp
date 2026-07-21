@@ -40,7 +40,7 @@
         <text class="auto-title">自动语音播报</text>
         <text class="auto-desc">关闭语音后，到点弹窗和包装图仍会正常显示</text>
       </view>
-      <switch checked="{{autoPlay}}" color="#176B5B" bindchange="onAutoChange" aria-label="自动语音播报开关"/>
+      <switch checked="{{autoPlay}}" color="#3EAE5B" bindchange="onAutoChange" aria-label="自动语音播报开关"/>
     </view>
 
         <view class="section-block">

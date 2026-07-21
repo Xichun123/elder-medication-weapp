@@ -1,6 +1,7 @@
 .dict-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12rpx; margin-top:26rpx; }
-.dict-stats .metric { padding:20rpx 6rpx; text-align:center; }
-.dict-stats .metric-number { font-size:38rpx; color:var(--primary); }
+.dict-stats .metric { padding:20rpx 6rpx; text-align:center; background:#fff; border-radius:20rpx; box-shadow:0 4rpx 14rpx rgba(46,92,66,.05); }
+.dict-stats .metric-number { display:block; font-size:38rpx; font-weight:750; color:var(--primary-deep); }
+.dict-stats .metric-label { display:block; margin-top:4rpx; color:var(--muted); font-size:24rpx; }
 .dict-card { margin-bottom:18rpx; }
 .dict-row { display:grid; grid-template-columns:1fr 1fr; gap:16rpx; padding:16rpx 0; border-bottom:1rpx solid var(--border); font-size:26rpx; }
 .dict-code { color:var(--primary); font-family:monospace; font-size: 26rpx; }

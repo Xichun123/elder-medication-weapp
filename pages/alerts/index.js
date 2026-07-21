@@ -88,10 +88,8 @@ Page({
   },
 
   syncBadge(count) {
-    if (count > 0 && wx.setTabBarBadge) {
-      wx.setTabBarBadge({ index: 0, text: String(Math.min(count, 99)), fail: () => {} })
-    } else if (wx.removeTabBarBadge) {
-      wx.removeTabBarBadge({ index: 0, fail: () => {} })
-    }
+    // 自定义 tabBar：徽标由首页 onShow 时的 syncAlertBadge 统一同步
+    const app = getApp()
+    if (app && app.globalData) app.globalData.unreadAlertCount = Number(count) || 0
   },
 })

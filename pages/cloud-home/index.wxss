@@ -1,13 +1,14 @@
-.cloud-mark { width: 72rpx; height: 72rpx; padding: 14rpx; border-radius: 20rpx; background: rgba(255,255,255,.16); }
-.cloud-notice { margin-top: 24rpx; }
+.family-card { display: flex; flex-direction: column; }
+.family-icon { width: 96rpx; height: 96rpx; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 28rpx; background: var(--mint); }
+.family-icon image { width: 52rpx; height: 52rpx; }
+.family-name { font-size: 36rpx; }
 .member-row { display: flex; align-items: center; gap: 16rpx; padding: 22rpx 0; border-bottom: 1rpx solid var(--border); }
 .member-row:last-child { border-bottom: 0; }
-.member-avatar { width: 72rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; background: var(--soft); flex: none; }
+.member-avatar { width: 76rpx; height: 76rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; background: var(--mint); flex: none; }
 .member-avatar-img { width: 100%; height: 100%; display: block; }
-.member-avatar-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--primary); background: var(--primary-soft); font-size: 30rpx; font-weight: 700; }
+.member-avatar-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--primary-deep); background: var(--primary-soft); font-size: 30rpx; font-weight: 700; }
 .member-name { display: block; font-size: 28rpx; }
-.invite-actions { display: flex; gap: 14rpx; flex-wrap: wrap; margin-top: 24rpx; }
-.account-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; }
-.invite-mask { position: fixed; z-index: 20; inset: 0; display: flex; align-items: center; justify-content: center; padding: 36rpx; background: rgba(24,48,43,.56); }
-.invite-card { width: 100%; max-width: 640rpx; padding: 34rpx; border-radius: 26rpx; background: #fff; }
+.invite-actions { display: flex; gap: 14rpx; flex-wrap: wrap; margin-top: 24rpx; padding-top: 24rpx; border-top: 1rpx solid var(--border); }
+.invite-mask { position: fixed; z-index: 20; inset: 0; display: flex; align-items: center; justify-content: center; padding: 36rpx; background: rgba(37,56,48,.56); }
+.invite-card { width: 100%; max-width: 640rpx; padding: 40rpx; border-radius: 36rpx; background: #fff; }
 .invite-code { display: block; margin: 38rpx 0; text-align: center; color: var(--primary); font-size: 62rpx; font-weight: 750; letter-spacing: 10rpx; }

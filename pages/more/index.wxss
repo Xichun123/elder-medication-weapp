@@ -1,11 +1,13 @@
-.menu { margin-top: 26rpx; padding-top: 8rpx; padding-bottom: 8rpx; }
-.menu-item { display:flex; align-items:center; gap:22rpx; min-height:112rpx; padding:24rpx 4rpx; border-bottom:1rpx solid var(--border); }
-.menu-item:last-child { border-bottom:0; }
-.menu-icon { width:56rpx; height:56rpx; flex:none; }
-.menu-arrow { color: var(--light); font-size: 36rpx; flex: none; }
-.data-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14rpx; text-align:center; }
-.data-grid > view { padding:20rpx 6rpx; border-radius:16rpx; background:var(--soft); }
-.data-number { display:block; font-size:40rpx; font-weight:700; color:var(--primary); }
-.data-label { display:block; margin-top:4rpx; color:var(--muted); font-size:26rpx; }
-.local-notice { margin-top:24rpx; }
-.disclaimer { margin-top:32rpx; }
+.profile-card { display: flex; align-items: center; gap: 24rpx; margin-top: 14rpx; padding: 34rpx 30rpx; border-radius: 32rpx; background: var(--primary-grad); color: #fff; box-shadow: 0 10rpx 28rpx rgba(62,174,91,.25); }
+.profile-avatar { width: 108rpx; height: 108rpx; flex: none; border-radius: 50%; overflow: hidden; background: rgba(255,255,255,.9); border: 4rpx solid rgba(255,255,255,.55); }
+.profile-avatar-img { width: 100%; height: 100%; display: block; }
+.profile-avatar-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--primary-deep); font-size: 44rpx; font-weight: 700; }
+.profile-name { display: block; font-size: 38rpx; font-weight: 700; }
+.profile-sub { display: block; margin-top: 8rpx; font-size: 25rpx; opacity: .92; }
+
+.data-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14rpx; text-align: center; }
+.data-grid > view { padding: 22rpx 6rpx; border-radius: 20rpx; background: var(--soft); }
+.data-number { display: block; font-size: 40rpx; font-weight: 750; color: var(--primary-deep); }
+.data-label { display: block; margin-top: 4rpx; color: var(--muted); font-size: 25rpx; }
+.data-grid + .form-actions { margin-top: 28rpx; }
+.disclaimer { margin-top: 32rpx; }

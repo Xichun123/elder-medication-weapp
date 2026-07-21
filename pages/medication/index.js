@@ -14,6 +14,9 @@ Page({
   },
   onLoad(options) { this.initialElderId = options.elder || ''; this.loadElders() },
   onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({ active: 2 })
+    }
     if (!config.useLocalApi && !session.getHome()) {
       wx.reLaunch({ url: '/pages/launch/index' })
       return

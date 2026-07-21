@@ -1,4 +1,4 @@
-.elder-header-copy { flex: 1; min-width: 0; }
-.elder-add-btn { flex: 0 0 168rpx; width: 168rpx; min-height: 80rpx; padding: 0 14rpx; gap: 8rpx; border: 1rpx solid rgba(255,255,255,.22); border-radius: 16rpx; font-size: 30rpx; font-weight: 700; letter-spacing: 1rpx; box-shadow: 0 8rpx 18rpx rgba(23,107,91,.18); }
-.elder-add-icon { font-size: 34rpx; font-weight: 500; line-height: 1; }
-.allergy { margin-top: 18rpx; padding: 16rpx 20rpx; border-radius: 14rpx; color: var(--danger); background: var(--danger-soft); font-size: 26rpx; line-height: 1.5; }
+.search-row { display: flex; gap: 14rpx; align-items: center; background: #fff; border-radius: 32rpx; padding: 20rpx; box-shadow: 0 12rpx 36rpx rgba(46, 92, 66, .10); }
+.search-row .search { box-shadow: none; background: #F7FAF5; }
+.search-btn { flex: none; min-height: 88rpx; }
+.allergy { margin-top: 18rpx; padding: 16rpx 22rpx; border-radius: 18rpx; color: var(--danger); background: var(--danger-soft); font-size: 26rpx; line-height: 1.5; }

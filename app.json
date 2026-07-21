@@ -24,20 +24,21 @@
   },
   "window": {
     "navigationBarTitleText": "药灵通",
-    "navigationBarBackgroundColor": "#176B5B",
+    "navigationBarBackgroundColor": "#3EAE5B",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#F7FAF8",
+    "backgroundColor": "#F5F8F3",
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
-    "color": "#8A9B94",
-    "selectedColor": "#176B5B",
+    "custom": true,
+    "color": "#97A69C",
+    "selectedColor": "#3EAE5B",
     "backgroundColor": "#ffffff",
     "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/home/index",
-        "text": "概览",
+        "text": "首页",
         "iconPath": "assets/icons/tab/home.png",
         "selectedIconPath": "assets/icons/tab/home-on.png"
       },
@@ -60,10 +61,10 @@
         "selectedIconPath": "assets/icons/tab/bell-on.png"
       },
       {
-        "pagePath": "pages/risks/index",
-        "text": "禁忌",
-        "iconPath": "assets/icons/tab/shield.png",
-        "selectedIconPath": "assets/icons/tab/shield-on.png"
+        "pagePath": "pages/more/index",
+        "text": "我的",
+        "iconPath": "assets/icons/tab/user.png",
+        "selectedIconPath": "assets/icons/tab/user-on.png"
       }
     ]
   },
