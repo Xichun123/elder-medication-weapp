@@ -2,8 +2,9 @@
 .cloud-notice { margin-top: 24rpx; }
 .member-row { display: flex; align-items: center; gap: 16rpx; padding: 22rpx 0; border-bottom: 1rpx solid var(--border); }
 .member-row:last-child { border-bottom: 0; }
-.member-avatar { width: 72rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--soft); }
-.member-avatar-img { width: 40rpx; height: 40rpx; }
+.member-avatar { width: 72rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; background: var(--soft); flex: none; }
+.member-avatar-img { width: 100%; height: 100%; display: block; }
+.member-avatar-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--primary); background: var(--primary-soft); font-size: 30rpx; font-weight: 700; }
 .member-name { display: block; font-size: 28rpx; }
 .invite-actions { display: flex; gap: 14rpx; flex-wrap: wrap; margin-top: 24rpx; }
 .account-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; }

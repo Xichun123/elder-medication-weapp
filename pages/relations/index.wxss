@@ -3,4 +3,5 @@
 .relation-line .right { text-align: right; }
 .arrow { color: var(--light); font-size: 40rpx; }
 .relation-tags { margin-top: 18rpx; }
-.member-avatar-img { width: 44rpx; height: 44rpx; }
+.member-avatar-img { width: 100%; height: 100%; display: block; border-radius: 50%; }
+.member-avatar-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--primary); background: var(--primary-soft); font-size: 32rpx; font-weight: 700; }

@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS users (
   unionid TEXT,
   nickname TEXT NOT NULL DEFAULT '',
   avatar_url TEXT NOT NULL DEFAULT '',
+  avatar_data BLOB,
+  avatar_content_type TEXT NOT NULL DEFAULT '',
+  avatar_byte_size INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
@@ -290,6 +293,17 @@ function migrateSchema(database) {
   const drugColumns = database.prepare('PRAGMA table_info(drugs)').all()
   if (!drugColumns.some((column) => column.name === 'primary_package_image_url')) {
     database.exec("ALTER TABLE drugs ADD COLUMN primary_package_image_url TEXT NOT NULL DEFAULT ''")
+  }
+
+  const userColumns = database.prepare('PRAGMA table_info(users)').all()
+  if (!userColumns.some((column) => column.name === 'avatar_data')) {
+    database.exec('ALTER TABLE users ADD COLUMN avatar_data BLOB')
+  }
+  if (!userColumns.some((column) => column.name === 'avatar_content_type')) {
+    database.exec("ALTER TABLE users ADD COLUMN avatar_content_type TEXT NOT NULL DEFAULT ''")
+  }
+  if (!userColumns.some((column) => column.name === 'avatar_byte_size')) {
+    database.exec('ALTER TABLE users ADD COLUMN avatar_byte_size INTEGER NOT NULL DEFAULT 0')
   }
 
   const alertColumns = database.prepare('PRAGMA table_info(care_alerts)').all()

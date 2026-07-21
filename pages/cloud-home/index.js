@@ -1,6 +1,13 @@
+const config = require('../../utils/config')
 const remote = require('../../utils/remote')
 const session = require('../../utils/session')
 const { toast, showError, confirm } = require('../../utils/helpers')
+
+function resolveAvatarUrl(value) {
+  if (!value) return ''
+  if (/^https?:\/\//i.test(value)) return value
+  return `${String(config.apiBaseUrl || '').replace(/\/$/, '')}${value}`
+}
 
 const roleLabels = {
   owner: '家庭创建人',
@@ -54,10 +61,15 @@ Page({
       }
       session.setHome(home)
       wx.setNavigationBarTitle({ title: home.name || '家庭空间' })
+      const members = (membersResult.members || []).map((item) => ({
+        ...item,
+        avatarUrl: resolveAvatarUrl(item.avatarUrl),
+        avatarText: String(item.nickname || '微').slice(0, 1),
+      }))
       this.setData({
         home,
         elders: eldersResult.elders || [],
-        members: membersResult.members || [],
+        members,
         roleLabel: roleLabels[home.role] || home.role,
         canEdit: home.role === 'owner' || home.role === 'caregiver_edit',
         isOwner: home.role === 'owner',

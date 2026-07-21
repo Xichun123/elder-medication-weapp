@@ -1,15 +1,17 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { config, validateConfig } from './config.js'
-import { getDb } from './db.js'
+import { getDb, nowIso } from './db.js'
 import { HttpError } from './errors.js'
 import { requireAuth } from './middleware.js'
-import authRoutes from './routes/auth.js'
+import authRoutes, { publicUser } from './routes/auth.js'
 import homesRoutes from './routes/homes.js'
 import packageImageRoutes from './routes/package-images.js'
 import resourcesRoutes from './routes/resources.js'
 import aiRoutes from './routes/ai.js'
 import { getAiMedia } from './ai-media.js'
+import { MAX_AVATAR_BYTES, sanitizeAvatarImage } from './user-avatars.js'
 
 const app = new Hono()
 
@@ -46,18 +48,83 @@ app.get('/ai-media/:token', async (c) => {
 
 app.route('/auth', authRoutes)
 app.route('/package-images', packageImageRoutes)
-app.use('/me', requireAuth)
-app.get('/me', async (c) => {
-  const user = c.get('user')
-  return c.json({
-    user: {
-      id: user.id,
-      nickname: user.nickname,
-      avatarUrl: user.avatar_url,
-      createdAt: user.created_at,
+
+// 用户头像：公开读取（路径含用户 ID，前端再拼 apiBaseUrl）
+app.get('/avatars/:userId', (c) => {
+  const userId = c.req.param('userId')
+  const row = getDb().prepare(`
+    SELECT avatar_data, avatar_content_type, updated_at
+    FROM users
+    WHERE id = ?
+  `).get(userId)
+  if (!row || !row.avatar_data) return c.json({ error: '头像不存在' }, 404)
+  return new Response(row.avatar_data, {
+    headers: {
+      'Cache-Control': 'public, max-age=3600',
+      'Content-Type': row.avatar_content_type || 'image/jpeg',
+      'X-Content-Type-Options': 'nosniff',
     },
   })
 })
+
+app.use('/me', requireAuth)
+app.use('/me/*', requireAuth)
+app.get('/me', async (c) => {
+  const user = c.get('user')
+  const full = getDb().prepare('SELECT * FROM users WHERE id = ?').get(user.id)
+  return c.json({ user: publicUser(full || user) })
+})
+
+app.patch('/me', async (c) => {
+  const user = c.get('user')
+  const body = await c.req.json().catch(() => ({}))
+  const nickname = body.nickname !== undefined ? String(body.nickname || '').trim() : undefined
+  if (nickname !== undefined && !nickname) throw new HttpError(400, '昵称不能为空')
+  if (nickname !== undefined && Array.from(nickname).length > 20) {
+    throw new HttpError(400, '昵称不能超过 20 个字符')
+  }
+
+  const ts = nowIso()
+  if (nickname !== undefined) {
+    getDb().prepare(`
+      UPDATE users
+      SET nickname = ?, updated_at = ?
+      WHERE id = ?
+    `).run(nickname, ts, user.id)
+  }
+
+  const full = getDb().prepare('SELECT * FROM users WHERE id = ?').get(user.id)
+  return c.json({ user: publicUser(full) })
+})
+
+app.post(
+  '/me/avatar',
+  bodyLimit({
+    // 为 multipart 边界预留少量开销，实际文件大小仍由 sanitizeAvatarImage 严格限制。
+    maxSize: MAX_AVATAR_BYTES + 256 * 1024,
+    onError: (c) => c.json({ error: '头像文件不能超过 2MB' }, 413),
+  }),
+  async (c) => {
+    const user = c.get('user')
+    const body = await c.req.parseBody().catch(() => ({}))
+    const processed = await sanitizeAvatarImage(body.file || body.image || body.avatar)
+    const ts = nowIso()
+    const avatarUrl = `/avatars/${user.id}`
+    getDb().prepare(`
+      UPDATE users
+      SET avatar_data = ?,
+          avatar_content_type = ?,
+          avatar_byte_size = ?,
+          avatar_url = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(processed.data, processed.contentType, processed.byteSize, avatarUrl, ts, user.id)
+
+    const full = getDb().prepare('SELECT * FROM users WHERE id = ?').get(user.id)
+    return c.json({ user: publicUser(full) })
+  },
+)
+
 app.route('/homes', homesRoutes)
 app.route('/homes', resourcesRoutes)
 app.route('/homes', aiRoutes)

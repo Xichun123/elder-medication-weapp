@@ -31,6 +31,7 @@ import { confirmMedicationStatus } from '../medication-events.js'
 import { createPackageImagePath, sanitizePackageImage } from '../package-images.js'
 import { createFixedWindowRateLimiter } from '../rate-limit.js'
 import { recognizeMedicationImage } from '../recognition.js'
+import { resolveAvatarUrl } from './auth.js'
 
 const resources = new Hono()
 const companionRefreshRateLimiter = createFixedWindowRateLimiter({ windowMs: 60 * 60_000 })
@@ -807,7 +808,7 @@ resources.patch('/:homeId/members/:memberId', requireHomeMember('owner'), async 
     .run(role, memberId, membership.home_id)
 
   const row = getDb().prepare(`
-    SELECT m.*, u.nickname, u.avatar_url
+    SELECT m.*, u.nickname, u.avatar_url, u.avatar_data, u.updated_at AS user_updated_at, u.created_at AS user_created_at
     FROM memberships m
     JOIN users u ON u.id = m.user_id
     WHERE m.id = ?
@@ -820,7 +821,13 @@ resources.patch('/:homeId/members/:memberId', requireHomeMember('owner'), async 
       role: row.role,
       elderProfileId: row.elder_profile_id,
       nickname: row.nickname,
-      avatarUrl: row.avatar_url,
+      avatarUrl: resolveAvatarUrl({
+        id: row.user_id,
+        avatar_url: row.avatar_url,
+        avatar_data: row.avatar_data,
+        updated_at: row.user_updated_at,
+        created_at: row.user_created_at,
+      }),
       joinedAt: row.created_at,
     },
   })

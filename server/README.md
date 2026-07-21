@@ -86,7 +86,9 @@ api.0721online.net {
 
 - `GET /health`
 - `POST /auth/wx-login`（微信 code / 开发 devOpenid）
-- `GET /me`
+- `GET/PATCH /me`（读取资料、更新昵称）
+- `POST /me/avatar`（头像上传，最大 2MB，重编码为 320×320 JPEG）
+- `GET /avatars/:userId`（带版本参数的头像地址）
 - `GET/POST /homes`、`POST /homes/join`、`GET /homes/:homeId`
 - `GET /homes/:homeId/members`；owner：`PATCH/DELETE .../members/:memberId`
 - `POST /homes/:homeId/invites`；owner：`GET/DELETE .../invites`

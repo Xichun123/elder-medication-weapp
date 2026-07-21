@@ -4,6 +4,7 @@ import { getDb, nowIso } from '../db.js'
 import { HttpError, assert } from '../errors.js'
 import { newId, newInviteCode } from '../ids.js'
 import { requireAuth, requireHomeMember } from '../middleware.js'
+import { resolveAvatarUrl } from './auth.js'
 
 const homes = new Hono()
 
@@ -141,46 +142,42 @@ homes.get('/:homeId', requireHomeMember('caregiver_view'), (c) => {
 
 homes.get('/:homeId/members', requireHomeMember('caregiver_view'), (c) => {
   const membership = c.get('membership')
+  const mapMember = (row) => ({
+    id: row.id,
+    userId: row.user_id,
+    role: row.role,
+    elderProfileId: row.elder_profile_id,
+    nickname: row.nickname,
+    avatarUrl: resolveAvatarUrl({
+      id: row.user_id,
+      avatar_url: row.avatar_url,
+      avatar_data: row.avatar_data,
+      updated_at: row.user_updated_at,
+      created_at: row.user_created_at,
+    }),
+    joinedAt: row.created_at,
+  })
+
   // 老人端只看自己
   if (membership.role === 'elder') {
     const self = getDb().prepare(`
-      SELECT m.*, u.nickname, u.avatar_url
+      SELECT m.*, u.nickname, u.avatar_url, u.avatar_data, u.updated_at AS user_updated_at, u.created_at AS user_created_at
       FROM memberships m
       JOIN users u ON u.id = m.user_id
       WHERE m.home_id = ? AND m.user_id = ?
     `).get(membership.home_id, membership.user_id)
-    return c.json({
-      members: [{
-        id: self.id,
-        userId: self.user_id,
-        role: self.role,
-        elderProfileId: self.elder_profile_id,
-        nickname: self.nickname,
-        avatarUrl: self.avatar_url,
-        joinedAt: self.created_at,
-      }],
-    })
+    return c.json({ members: self ? [mapMember(self)] : [] })
   }
 
   const rows = getDb().prepare(`
-    SELECT m.*, u.nickname, u.avatar_url
+    SELECT m.*, u.nickname, u.avatar_url, u.avatar_data, u.updated_at AS user_updated_at, u.created_at AS user_created_at
     FROM memberships m
     JOIN users u ON u.id = m.user_id
     WHERE m.home_id = ?
     ORDER BY m.created_at ASC
   `).all(membership.home_id)
 
-  return c.json({
-    members: rows.map((row) => ({
-      id: row.id,
-      userId: row.user_id,
-      role: row.role,
-      elderProfileId: row.elder_profile_id,
-      nickname: row.nickname,
-      avatarUrl: row.avatar_url,
-      joinedAt: row.created_at,
-    })),
-  })
+  return c.json({ members: rows.map(mapMember) })
 })
 
 homes.post('/:homeId/invites', requireHomeMember('owner'), async (c) => {

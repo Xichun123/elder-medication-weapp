@@ -5,26 +5,48 @@
     <text class="brand-subtitle">每一次按时服药，都有人安心守护</text>
   </view>
 
-  <view wx:if="{{signedOut}}" class="card signed-out-card">
-    <text class="list-title">已退出登录</text>
-    <text class="list-subtitle">点击下方按钮，使用当前微信身份重新登录。</text>
-    <button class="btn primary block retry-btn" bindtap="loginAgain">微信登录</button>
-  </view>
+  <block wx:if="{{needLogin}}">
+    <view class="login-only">
+      <button class="wx-login-btn" loading="{{loggingIn}}" disabled="{{loggingIn}}" bindtap="login" hover-class="wx-login-btn--pressed" aria-role="button" aria-label="微信登录">
+        <view class="wx-login-inner">
+          <image class="wx-login-icon" src="/assets/icons/wechat-white.png" mode="aspectFit" aria-hidden="true"/>
+          <text class="wx-login-text">微信登录</text>
+        </view>
+      </button>
+      <text wx:if="{{error}}" class="danger-text form-error login-error">{{error}}</text>
+    </view>
+  </block>
 
   <view wx:elif="{{loading}}" class="card loading-card" aria-role="status" aria-live="polite">
     <view class="loading-pulse"><view class="pulse-dot"></view><view class="pulse-dot delay-1"></view><view class="pulse-dot delay-2"></view></view>
-    <text class="loading-text">正在通过微信安全登录…</text>
+    <text class="loading-text">{{loadingText}}</text>
   </view>
 
   <view wx:elif="{{error && !user}}" class="card">
     <text class="danger-text">{{error}}</text>
-    <button class="btn primary block retry-btn" bindtap="retry">重新登录</button>
+    <button class="btn primary block retry-btn" bindtap="login">重新登录</button>
   </view>
 
   <block wx:else>
     <view class="card welcome-card">
-      <text class="list-title">登录成功</text>
-      <text class="list-subtitle">{{user.nickname || '微信用户'}} · 请选择要进入的家庭空间</text>
+      <view class="profile-row">
+        <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" disabled="{{uploadingAvatar || savingProfile}}" aria-role="button" aria-label="选择微信头像">
+          <image wx:if="{{displayAvatarUrl}}" class="profile-avatar" src="{{displayAvatarUrl}}" mode="aspectFill"/>
+          <view wx:else class="profile-avatar monogram">{{monogram}}</view>
+          <text class="avatar-tip">换</text>
+        </button>
+        <view class="flex-1">
+          <view class="profile-name">{{user.nickname || '微信用户'}}</view>
+          <text class="list-subtitle">登录成功 · 请选择要进入的家庭空间</text>
+          <view class="profile-edit-link pressable" hover-class="pressable-hover" bindtap="openProfileSheet" aria-role="button">修改头像昵称 ›</view>
+        </view>
+      </view>
+      <text wx:if="{{profileError}}" class="danger-text form-error">{{profileError}}</text>
+    </view>
+
+    <view wx:if="{{homeError}}" class="card home-error-card" aria-role="status" aria-live="polite">
+      <text class="danger-text">{{homeError}}</text>
+      <button class="btn outline small" bindtap="loadHomes">重新加载</button>
     </view>
 
     <view wx:if="{{homes.length}}" class="section">
@@ -77,4 +99,36 @@
       </view>
     </view>
   </block>
+
+  <!-- 登录后资料弹层：使用微信头像和昵称（对齐 Map of Us / 官方头像昵称填写） -->
+  <view wx:if="{{showProfileSheet}}" class="profile-mask" catchtouchmove="noop">
+    <view class="profile-sheet" aria-role="dialog" aria-modal="true" aria-label="使用微信头像和昵称">
+      <text class="sheet-title">使用微信头像和昵称</text>
+      <text class="sheet-desc">点头像可选微信头像，点输入框可一键填入微信昵称</text>
+
+      <button class="sheet-avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" disabled="{{uploadingAvatar || savingProfile}}" aria-role="button" aria-label="选择微信头像">
+        <image wx:if="{{sheetAvatarUrl || displayAvatarUrl}}" class="sheet-avatar" src="{{sheetAvatarUrl || displayAvatarUrl}}" mode="aspectFill"/>
+        <view wx:else class="sheet-avatar monogram">{{monogram}}</view>
+        <text class="sheet-avatar-tip" aria-live="polite">{{uploadingAvatar ? '上传中…' : '选择头像'}}</text>
+      </button>
+
+      <form bindsubmit="confirmProfile">
+        <input
+          class="input sheet-nickname"
+          name="nickname"
+          type="nickname"
+          maxlength="20"
+          value="{{nickInput}}"
+          placeholder="点击填写微信昵称"
+          bindinput="onNickInput"
+          bindnicknamereview="onNicknameReview"
+        />
+
+        <text wx:if="{{profileError}}" class="danger-text form-error" aria-live="polite">{{profileError}}</text>
+
+        <button class="btn primary block sheet-done" form-type="submit" loading="{{savingProfile}}" disabled="{{savingProfile || uploadingAvatar}}">完成</button>
+      </form>
+      <button class="sheet-skip" disabled="{{savingProfile || uploadingAvatar}}" bindtap="closeProfileSheet">暂时跳过</button>
+    </view>
+  </view>
 </view>

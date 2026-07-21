@@ -11,7 +11,10 @@
 
     <view wx:for="{{members}}" wx:key="id" class="list-card">
       <view class="row gap">
-        <view class="avatar"><image class="member-avatar-img" src="/assets/icons/line-check.png" mode="aspectFit"/></view>
+        <view class="avatar">
+          <image wx:if="{{item.avatarUrl}}" class="member-avatar-img" src="{{item.avatarUrl}}" mode="aspectFill" aria-role="img" aria-label="{{item.nickname || '微信成员'}}的头像"/>
+          <view wx:else class="member-avatar-fallback" aria-role="img" aria-label="{{item.nickname || '微信成员'}}暂无头像">{{item.avatarText}}</view>
+        </view>
         <view class="flex-1">
           <text class="list-title">{{item.nickname || '微信成员'}}</text>
           <text class="list-subtitle">{{item.roleLabel}}</text>

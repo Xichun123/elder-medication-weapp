@@ -579,7 +579,10 @@ const api = {
   members: {
     async list() {
       const result = await remote.request({ path: homePath('/members') })
-      return result.members || []
+      return (result.members || []).map((item) => ({
+        ...item,
+        avatarUrl: apiUrl(item.avatarUrl),
+      }))
     },
     async updateRole(memberId, role) {
       const result = await remote.request({
@@ -587,7 +590,8 @@ const api = {
         method: 'PATCH',
         data: { role },
       })
-      return result.member
+      const member = result.member || null
+      return member ? { ...member, avatarUrl: apiUrl(member.avatarUrl) } : null
     },
     async remove(memberId) {
       await remote.request({ path: homePath(`/members/${memberId}`), method: 'DELETE' })

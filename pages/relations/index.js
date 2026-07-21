@@ -62,7 +62,11 @@ Page({
           try { invites = await api.invites.list() } catch (error) { invites = [] }
         }
         this.setData({
-          members: members.map((item) => ({ ...item, roleLabel: roleLabels[item.role] || item.role })),
+          members: members.map((item) => ({
+            ...item,
+            roleLabel: roleLabels[item.role] || item.role,
+            avatarText: String(item.nickname || '微').slice(0, 1),
+          })),
           invites: invites.filter((item) => item.status === 'active'),
           list: [],
         })

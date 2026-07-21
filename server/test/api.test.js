@@ -509,3 +509,55 @@ test('用药记录、提醒重建、禁忌与权限', async () => {
   assert.equal(ownerPatch.status, 200)
   assert.equal(ownerPatch.data.member.role, 'caregiver_view')
 })
+
+test('用户可更新昵称与头像', async () => {
+  const user = await login('profile-user', '')
+  assert.equal(user.user.nickname, '')
+
+  const patched = await api('/me', {
+    token: user.token,
+    method: 'PATCH',
+    body: { nickname: '药灵用户' },
+  })
+  assert.equal(patched.status, 200)
+  assert.equal(patched.data.user.nickname, '药灵用户')
+
+  const tooLong = await api('/me', {
+    token: user.token,
+    method: 'PATCH',
+    body: { nickname: '二十一字昵称测试一二三四五六七八九十一二三' },
+  })
+  assert.equal(tooLong.status, 400)
+  assert.equal(tooLong.data.error, '昵称不能超过 20 个字符')
+
+  // 1x1 PNG
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  )
+  const boundary = '----profileboundary'
+  const body = Buffer.concat([
+    // 模拟部分真机 wx.uploadFile 不携带可靠 MIME 的情况；服务端应按文件内容识别。
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="a.png"\r\n\r\n`),
+    png,
+    Buffer.from(`\r\n--${boundary}--\r\n`),
+  ])
+  const uploadResponse = await fetch(`${baseUrl}/me/avatar`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${user.token}`,
+      'content-type': `multipart/form-data; boundary=${boundary}`,
+    },
+    body,
+  })
+  const uploadData = await uploadResponse.json()
+  assert.equal(uploadResponse.status, 200)
+  assert.match(uploadData.user.avatarUrl, /^\/avatars\//)
+  assert.equal(uploadData.user.nickname, '药灵用户')
+
+  const avatarResponse = await fetch(`${baseUrl}${uploadData.user.avatarUrl}`)
+  assert.equal(avatarResponse.status, 200)
+  assert.match(avatarResponse.headers.get('content-type') || '', /image\//)
+  const bytes = Buffer.from(await avatarResponse.arrayBuffer())
+  assert.ok(bytes.length > 0)
+})

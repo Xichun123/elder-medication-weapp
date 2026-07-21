@@ -7,13 +7,24 @@ import { newId } from '../ids.js'
 
 const auth = new Hono()
 
-function publicUser(row) {
+export function publicUser(row) {
   return {
     id: row.id,
-    nickname: row.nickname,
-    avatarUrl: row.avatar_url,
+    nickname: row.nickname || '',
+    avatarUrl: resolveAvatarUrl(row),
     createdAt: row.created_at,
   }
+}
+
+export function resolveAvatarUrl(row) {
+  if (!row) return ''
+  const external = String(row.avatar_url || '')
+  if (/^https?:\/\//i.test(external)) return external
+  if (row.avatar_data || external.startsWith('/avatars/')) {
+    const version = encodeURIComponent(row.updated_at || row.created_at || '')
+    return `/avatars/${row.id}${version ? `?v=${version}` : ''}`
+  }
+  return external || ''
 }
 
 function upsertUserByOpenid(openid, extra = {}) {
