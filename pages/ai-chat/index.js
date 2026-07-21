@@ -228,7 +228,8 @@ Page({
   },
 
   playMessage(event) {
-    this.speakText(event.currentTarget.dataset.text, event.currentTarget.dataset.audio)
+    // 手动重播时重新调用 TTS，避免使用已过期的临时音频代理地址。
+    this.speakText(event.currentTarget.dataset.text)
   },
 
   async send() {

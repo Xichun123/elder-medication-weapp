@@ -21,11 +21,12 @@ test('elder page supports mark taken', () => {
   assert.match(pageTemplate, /reminder-card/)
 })
 
-test('AI chat page persists local history', () => {
+test('AI chat page persists local history and regenerates replay audio', () => {
   assert.match(aiChatSource, /ai-chat-history/)
   assert.match(aiChatSource, /persistMessages/)
   assert.match(aiChatSource, /restoreMessages/)
   assert.match(aiChatSource, /clearHistory/)
+  assert.match(aiChatSource, /playMessage\(event\)[\s\S]*this\.speakText\(event\.currentTarget\.dataset\.text\)/)
   assert.match(aiChatTemplate, /bindtap="clearHistory"/)
   assert.match(historyUtil, /setStorageSync/)
   assert.match(historyUtil, /getStorageSync/)
@@ -48,12 +49,16 @@ test('AI history util isolates by home/role/elder', () => {
   const chatHistory = module.exports
   const optsA = { mode: 'elder', elderId: 'E1', homeId: 'H1' }
   const optsB = { mode: 'caregiver', elderId: 'E1', homeId: 'H1' }
-  chatHistory.save(optsA, [{ role: 'user', content: '我刚吃了药' }, { role: 'assistant', content: '请核对' }])
+  chatHistory.save(optsA, [
+    { role: 'user', content: '我刚吃了药' },
+    { role: 'assistant', content: '请核对', audioUrl: 'https://example.com/temporary.mp3' },
+  ])
   chatHistory.save(optsB, [{ role: 'user', content: '查漏服' }])
   const elderHistory = chatHistory.load(optsA)
   const caregiverHistory = chatHistory.load(optsB)
   assert.equal(elderHistory.length, 2)
   assert.equal(elderHistory[0].content, '我刚吃了药')
+  assert.equal(elderHistory[1].audioUrl, '')
   assert.equal(caregiverHistory.length, 1)
   assert.equal(caregiverHistory[0].content, '查漏服')
 })

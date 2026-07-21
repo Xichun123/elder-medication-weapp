@@ -41,7 +41,8 @@ function sanitizeMessage(item) {
   return {
     role,
     content: String(item.content || '').slice(0, 2000),
-    audioUrl: String(item.audioUrl || ''),
+    // 服务端音频代理地址有效期很短，历史消息播放时应重新调用 TTS。
+    audioUrl: '',
     pendingAction,
     candidates,
   }
