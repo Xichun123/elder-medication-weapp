@@ -1,9 +1,20 @@
 <view class="page with-safe-bottom">
-  <view wx:if="{{dashboard}}" class="hero rose">
-    <text class="hero-subtitle">禁忌看板 · 核心功能</text><text class="hero-title">{{dashboard.elder.name}} 的用药风险</text><text class="hero-subtitle">遍历 {{dashboard.medications.length}} 种用药 × 禁忌关系，命中 {{dashboard.stats.total}} 条</text>
-    <view class="hero-metrics three"><view class="hero-metric"><text class="hero-metric-number">{{dashboard.stats.severe}}</text><text class="hero-metric-label">严重</text></view><view class="hero-metric"><text class="hero-metric-number">{{dashboard.stats.middle}}</text><text class="hero-metric-label">中</text></view><view class="hero-metric"><text class="hero-metric-number">{{dashboard.stats.light}}</text><text class="hero-metric-label">轻</text></view></view>
+  <view class="risk-header">
+    <text class="page-title">禁忌风险检查</text>
+    <text class="page-subtitle">遍历用药组合与禁忌关系，帮家人把好安全关</text>
   </view>
   <view class="card selector"><text class="field-label">选择长辈</text><picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="picker">{{elderIndex >= 0 ? elders[elderIndex].name + '（' + elders[elderIndex].relationship + '）' : '请选择'}} ▾</view></picker></view>
+  <view wx:if="{{dashboard}}" class="card risk-summary">
+    <view class="risk-summary-head">
+      <text class="list-title">{{dashboard.elder.name}} 的用药风险</text>
+      <text class="tag {{dashboard.stats.total ? 'danger' : 'success'}}">{{dashboard.stats.total ? '命中 ' + dashboard.stats.total + ' 条' : '未见风险'}}</text>
+    </view>
+    <view class="risk-stats">
+      <view class="risk-stat severe"><text class="risk-stat-num">{{dashboard.stats.severe}}</text><text class="risk-stat-label">严重</text></view>
+      <view class="risk-stat middle"><text class="risk-stat-num">{{dashboard.stats.middle}}</text><text class="risk-stat-label">中等</text></view>
+      <view class="risk-stat light"><text class="risk-stat-num">{{dashboard.stats.light}}</text><text class="risk-stat-label">轻度</text></view>
+    </view>
+  </view>
 
   <block wx:if="{{dashboard}}">
     <view wx:if="{{dashboard.elder.allergy_note && dashboard.elder.allergy_note !== '无'}}" class="allergy"><image class="allergy-icon" src="/assets/icons/line-bell.png" mode="aspectFit"/><view class="flex-1"><text class="allergy-title">过敏史警示</text><text>{{dashboard.elder.name}}：{{dashboard.elder.allergy_note}}</text></view></view>

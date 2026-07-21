@@ -1,15 +1,28 @@
-.status-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12rpx; margin-top: 26rpx; }
-.status-card { min-width: 0; min-height: 128rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18rpx 4rpx; text-align: center; border: 2rpx solid var(--border); border-radius: 20rpx; background: #fff; color: var(--muted); }
+.reminder-head { margin-top: 10rpx; }
+
+.status-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14rpx; margin-top: 26rpx; }
+.status-card { min-width: 0; min-height: 136rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 18rpx 4rpx; text-align: center; border: 2rpx solid transparent; border-radius: 24rpx; background: #fff; color: var(--muted); box-shadow: 0 6rpx 18rpx rgba(30,58,40,.05); }
 .status-card.active { border-color: var(--primary); background: var(--primary-soft); }
 .status-card.pending.active { border-color: var(--warning); background: var(--warning-soft); }
 .status-card.taken.active { border-color: var(--success); background: var(--success-soft); }
 .status-card.abnormal.active { border-color: var(--danger); background: var(--danger-soft); }
-.status-num { display: block; color: var(--text); font-size: 40rpx; font-weight: 700; line-height: 1.1; }
-.status-label { display: block; margin-top: 6rpx; font-size: 26rpx; }
-.reminder { border-left: 8rpx solid var(--border); }
-.reminder.pending { border-left-color: var(--warning); }
-.reminder.taken { border-left-color: var(--success); }
-.reminder.skipped { border-left-color: var(--light); }
-.reminder.abnormal { border-left-color: var(--danger); }
-.remind-time { display: block; color: var(--primary); font-size: 32rpx; font-weight: 700; }
-.voice { margin-top: 18rpx; padding: 20rpx; border-radius: 16rpx; background: var(--soft); font-size: 26rpx; line-height: 1.55; }
+.status-num { display: block; color: var(--text); font-size: 44rpx; font-weight: 750; line-height: 1.1; }
+.status-label { display: block; margin-top: 8rpx; font-size: 26rpx; }
+
+.filter-bar { display: flex; gap: 14rpx; margin-top: 22rpx; flex-wrap: wrap; }
+.filter { padding: 12rpx 24rpx; border-radius: 999rpx; background: #fff; color: var(--text); font-size: 26rpx; box-shadow: 0 4rpx 12rpx rgba(30,58,40,.05); }
+.filter.active { background: var(--primary-soft); color: var(--primary-deep); }
+
+.reminder-card { padding: 26rpx; }
+.reminder-main { display: flex; align-items: center; gap: 22rpx; }
+.time-chip { flex: none; min-width: 128rpx; padding: 18rpx 20rpx; text-align: center; border-radius: 20rpx; background: var(--soft); color: var(--text); font-size: 34rpx; font-weight: 750; }
+.time-chip.pending { background: var(--warning-soft); color: #B4690E; }
+.time-chip.taken { background: var(--success-soft); color: var(--primary-deep); }
+.time-chip.abnormal { background: var(--danger-soft); color: var(--danger); }
+
+.status-pill { flex: none; padding: 10rpx 20rpx; border-radius: 999rpx; font-size: 25rpx; font-weight: 650; background: var(--soft); color: var(--muted); }
+.status-pill.pending { background: var(--warning-soft); color: #B4690E; }
+.status-pill.taken { background: var(--success-soft); color: var(--primary-deep); }
+.status-pill.abnormal { background: var(--danger-soft); color: var(--danger); }
+
+.voice { margin-top: 20rpx; padding: 20rpx 22rpx; border-radius: 18rpx; background: var(--soft); color: var(--muted); font-size: 26rpx; line-height: 1.55; }

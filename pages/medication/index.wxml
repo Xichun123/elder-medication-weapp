@@ -67,7 +67,7 @@
       <view class="review-confirmation-title">AI 信息需要人工确认</view>
       <checkbox-group bindchange="onRecognitionConfirmChange">
         <label class="review-confirmation-check">
-          <checkbox value="confirmed" checked="{{recognitionConfirmed}}" color="#176B5B"/>
+          <checkbox value="confirmed" checked="{{recognitionConfirmed}}" color="#3EAE5B"/>
           <text>我已对照药盒和医生处方，核对药品、剂量与频次</text>
         </label>
       </checkbox-group>

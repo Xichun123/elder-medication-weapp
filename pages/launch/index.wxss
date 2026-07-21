@@ -1,6 +1,6 @@
 .launch-page { padding-top: 64rpx; }
 .brand { text-align: center; margin: 24rpx 0 48rpx; }
-.brand-logo { width: 168rpx; height: 168rpx; margin-bottom: 18rpx; border-radius: 42rpx; background: #F3FBFA; box-shadow: 0 14rpx 30rpx rgba(23,107,91,.14); }
+.brand-logo { width: 168rpx; height: 168rpx; margin-bottom: 18rpx; border-radius: 42rpx; background: #F0F9EE; box-shadow: 0 14rpx 30rpx rgba(62,174,91,.16); }
 .brand-title { display: block; font-size: 52rpx; font-weight: 750; letter-spacing: 2rpx; color: var(--text); }
 .brand-subtitle { display: block; margin-top: 10rpx; color: var(--muted); font-size: 28rpx; }
 

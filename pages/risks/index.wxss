@@ -1,5 +1,17 @@
-.hero-metrics.three { grid-template-columns: repeat(3,1fr); }
+.risk-header { margin-top: 10rpx; margin-bottom: 22rpx; }
 .selector { margin-top: 20rpx; }
+.risk-summary { margin-top: 20rpx; }
+.risk-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
+.risk-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 14rpx; margin-top: 22rpx; }
+.risk-stat { display: flex; flex-direction: column; align-items: center; gap: 6rpx; padding: 20rpx 8rpx; border-radius: 20rpx; background: var(--soft); }
+.risk-stat.severe { background: var(--danger-soft); }
+.risk-stat.middle { background: var(--warning-soft); }
+.risk-stat.light { background: var(--success-soft); }
+.risk-stat-num { font-size: 44rpx; font-weight: 750; line-height: 1.1; }
+.risk-stat.severe .risk-stat-num { color: var(--danger); }
+.risk-stat.middle .risk-stat-num { color: var(--warning-deep); }
+.risk-stat.light .risk-stat-num { color: var(--primary-deep); }
+.risk-stat-label { color: var(--muted); font-size: 24rpx; }
 .allergy { display: flex; align-items: flex-start; gap: 16rpx; margin-top: 22rpx; padding: 24rpx; border: 2rpx solid var(--danger); border-radius: 18rpx; background: var(--danger-soft); color: var(--danger); font-size: 27rpx; line-height: 1.55; }
 .allergy-icon { width: 40rpx; height: 40rpx; flex: none; margin-top: 4rpx; }
 .allergy-title { display: block; font-size: 29rpx; font-weight: 700; }

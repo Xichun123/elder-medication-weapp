@@ -87,7 +87,7 @@
           <text class="auto-title">自动提醒播报</text>
           <text class="auto-desc">每分钟检查并播报待服提醒</text>
         </view>
-        <switch checked="{{autoPlay}}" color="#176B5B" bindchange="onAutoChange" aria-label="自动提醒播报开关"/>
+        <switch checked="{{autoPlay}}" color="#3EAE5B" bindchange="onAutoChange" aria-label="自动提醒播报开关"/>
       </view>
       <view wx:if="{{autoPlay}}" class="auto-tip">已开启，下一条提醒：{{nextReminder ? nextReminder.remind_time + ' ' + nextReminder.drug_name : '无'}}</view>
     </view>
