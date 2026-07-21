@@ -25,7 +25,7 @@
       <text class="current-voice">{{current.voice_text}}</text>
       <view class="current-actions">
         <button class="elder-btn big" bindtap="playCurrent">听温情提醒</button>
-        <button class="elder-btn big primary" loading="{{acting}}" bindtap="takeCurrent">已核对药盒，我已服药</button>
+        <button class="elder-btn big primary" loading="{{acting}}" catchtap="takeCurrent">已核对药盒，我已服药</button>
       </view>
       <text class="safety-tip">请对照包装、药名和医生处方，不要仅凭散装药片外观判断</text>
     </view>
@@ -43,23 +43,30 @@
       <switch checked="{{autoPlay}}" color="#176B5B" bindchange="onAutoChange" aria-label="自动语音播报开关"/>
     </view>
 
-    <view class="section-block">
-      <text class="section-title">今日提醒</text>
-      <view wx:for="{{reminders}}" wx:key="rule_id" class="reminder-row {{item.status}}">
-        <view class="flex-1">
-          <text class="reminder-time">{{item.remind_time}}</text>
-          <text class="reminder-drug">{{item.drug_name}}</text>
-          <text class="reminder-status">{{item.status_label}}</text>
+        <view class="section-block">
+      <view class="section-head-row">
+        <text class="section-title">今日提醒</text>
+        <text class="section-count">共 {{reminders.length}} 条</text>
+      </view>
+      <view wx:for="{{reminders}}" wx:key="rule_id" class="reminder-card {{item.status}}">
+        <view class="reminder-head">
+          <view class="reminder-main">
+            <text class="reminder-time">{{item.remind_time}}</text>
+            <text wx:if="{{item.dose}}" class="reminder-dose">{{item.dose}}</text>
+          </view>
+          <text class="status-badge {{item.status}}">{{item.status_label}}</text>
         </view>
-        <view class="row-actions">
-          <button class="elder-btn mini" data-id="{{item.rule_id}}" bindtap="playReminder">播报</button>
-          <button wx:if="{{item.status === 'pending'}}" class="elder-btn mini primary" data-id="{{item.rule_id}}" bindtap="takeReminder">已服</button>
+        <text class="reminder-drug">{{item.drug_name}}</text>
+        <view class="reminder-actions">
+          <button class="action-btn ghost" data-id="{{item.rule_id}}" bindtap="playReminder">播报</button>
+          <button wx:if="{{item.status === 'pending'}}" class="action-btn solid" loading="{{acting}}" data-id="{{item.rule_id}}" catchtap="takeReminder">确认已服</button>
+          <view wx:else class="action-done"><text class="action-done-text">{{item.status === 'taken' ? '今日已确认' : '今日已处理'}}</text></view>
         </view>
       </view>
       <view wx:if="{{!reminders.length}}" class="empty-tip">暂无提醒</view>
     </view>
 
-    <view class="elder-actions">
+<view class="elder-actions">
       <button class="elder-btn" bindtap="switchHome">切换家庭</button>
       <button class="elder-btn secondary" bindtap="logout">退出登录</button>
     </view>
@@ -79,7 +86,7 @@
       <text wx:if="{{promptReminder.dose}}" class="prompt-dose">本次剂量：{{promptReminder.dose}}</text>
       <view class="prompt-actions">
         <button class="elder-btn prompt-play" bindtap="playPrompt">听温情提醒</button>
-        <button class="elder-btn primary" loading="{{acting}}" bindtap="takePrompt">已核对药盒，我已服药</button>
+        <button class="elder-btn primary" loading="{{acting}}" catchtap="takePrompt">已核对药盒，我已服药</button>
       </view>
       <button class="prompt-close" bindtap="closeMedicationPrompt">10 分钟后提醒</button>
       <text class="prompt-warning">请核对药品包装和医生处方，不要仅凭散装药片外观判断</text>

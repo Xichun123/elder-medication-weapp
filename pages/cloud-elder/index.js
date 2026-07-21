@@ -271,10 +271,20 @@ Page({
   },
 
   async takeById(id) {
-    if (this.data.acting) return false
+    if (!id || this.data.acting) return false
     this.setData({ acting: true })
     try {
-      await api.reminders.take(id)
+      const updated = await api.reminders.take(id)
+      // 先本地回写状态，避免列表刷新前仍显示待服；随后再拉云端与家属端同步。
+      const reminders = (this.data.reminders || []).map((item) => {
+        if (item.rule_id !== id) return item
+        return {
+          ...item,
+          status: (updated && updated.status) || 'taken',
+          status_label: (updated && updated.status_label) || '已服',
+        }
+      })
+      this.applyReminders(reminders)
       toast('已确认服药', 'success')
       await this.loadReminders()
       return true

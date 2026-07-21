@@ -3,7 +3,8 @@ const aiPrivacy = require('../../utils/ai-privacy')
 const config = require('../../utils/config')
 const session = require('../../utils/session')
 const voice = require('../../utils/voice')
-const { showError } = require('../../utils/helpers')
+const { showError, confirm } = require('../../utils/helpers')
+const chatHistory = require('../../utils/ai-chat-history')
 
 function makeMessage(role, content, extra = {}) {
   return { role, content: String(content || ''), audioUrl: '', pendingAction: null, candidates: [], ...extra }
@@ -28,6 +29,7 @@ Page({
 
   onUnload() {
     this.unloading = true
+    this.persistMessages()
     if (this.data.recording && this.recorder) this.recorder.stop()
     voice.destroy()
   },
@@ -61,11 +63,33 @@ Page({
     return consented
   },
 
-  initializePage() {
+  welcomeMessage() {
     const content = this.data.mode === 'elder'
       ? '您好，我是用药小助手。您可以告诉我“我刚吃了药”或“我头晕”。涉及记录修改时，我会先请您核对并确认。'
       : '您好，我可以查询服药历史和药品注意事项。涉及服药状态或症状记录时，需要您在确认卡上再次确认。'
-    this.setData({ messages: [makeMessage('assistant', content)] })
+    return makeMessage('assistant', content)
+  },
+
+  historyOptions(extra = {}) {
+    const home = session.getHome() || {}
+    return {
+      mode: this.data.mode,
+      elderId: extra.elderId !== undefined ? extra.elderId : this.data.elderId,
+      homeId: home.id || '',
+    }
+  },
+
+  restoreMessages(extra = {}) {
+    const saved = chatHistory.load(this.historyOptions(extra))
+    return saved.length ? saved : [this.welcomeMessage()]
+  },
+
+  persistMessages(messages = this.data.messages, extra = {}) {
+    chatHistory.save(this.historyOptions(extra), messages)
+  },
+
+  initializePage() {
+    this.setData({ messages: this.restoreMessages() })
     this.loadElders()
   },
 
@@ -74,14 +98,39 @@ Page({
       const elders = await api.elders.list()
       const elderIndex = Math.max(0, elders.findIndex((item) => item.elder_id === this.data.elderId))
       const selected = elders[elderIndex] || null
-      this.setData({ elders, elderIndex: selected ? elderIndex : -1, elderId: selected ? selected.elder_id : '' })
-    } catch (error) { console.warn('加载长辈列表失败', error) }
+      const elderId = selected ? selected.elder_id : ''
+      const messages = this.restoreMessages({ elderId })
+      this.setData({
+        elders,
+        elderIndex: selected ? elderIndex : -1,
+        elderId,
+        messages,
+      })
+    } catch (error) {
+      console.warn('加载长辈列表失败', error)
+      this.setData({ messages: this.restoreMessages() })
+    }
   },
 
   onElderChange(event) {
     const elderIndex = Number(event.detail.value)
     const elder = this.data.elders[elderIndex]
-    if (elder) this.setData({ elderIndex, elderId: elder.elder_id })
+    if (!elder) return
+    this.persistMessages()
+    const elderId = elder.elder_id
+    this.setData({
+      elderIndex,
+      elderId,
+      messages: this.restoreMessages({ elderId }),
+    })
+  },
+
+  async clearHistory() {
+    if (!(await confirm('清除后本机保存的对话记录不可恢复，确定清除？', '清除对话历史'))) return
+    chatHistory.clear(this.historyOptions())
+    this.setData({ messages: [this.welcomeMessage()] })
+    this.persistMessages()
+    wx.showToast({ title: '已清除', icon: 'success' })
   },
 
   onInput(event) { this.setData({ input: event.detail.value }) },
@@ -179,7 +228,8 @@ Page({
   },
 
   playMessage(event) {
-    this.speakText(event.currentTarget.dataset.text, event.currentTarget.dataset.audio)
+    // 手动重播时重新调用 TTS，避免使用已过期的临时音频代理地址。
+    this.speakText(event.currentTarget.dataset.text)
   },
 
   async send() {
@@ -195,6 +245,7 @@ Page({
       .map((item) => ({ role: item.role, content: item.content }))
     const nextMessages = this.data.messages.concat(makeMessage('user', text))
     this.setData({ messages: nextMessages, input: '', sending: true })
+    this.persistMessages(nextMessages)
     try {
       const result = await api.ai.chat({
         message: text,
@@ -207,10 +258,13 @@ Page({
         pendingAction: result.pendingAction || null,
         candidates: result.candidates || [],
       })
-      this.setData({ messages: this.data.messages.concat(assistant) })
+      const messages = this.data.messages.concat(assistant)
+      this.setData({ messages })
+      this.persistMessages(messages)
       if (this.data.mode === 'elder') this.speakText(assistant.content, assistant.audioUrl)
     } catch (error) {
       showError(error)
+      this.persistMessages()
     } finally {
       this.setData({ sending: false })
     }
@@ -225,13 +279,13 @@ Page({
         elderId: this.data.elderId,
         reminderId,
       })
-      this.setData({ messages: this.data.messages.concat(makeMessage(
+      const messages = this.data.messages.concat(makeMessage(
         'assistant',
         '请核对以下药品信息，确认无误后再提交。',
-        {
-        pendingAction: result.pendingAction,
-        },
-      )) })
+        { pendingAction: result.pendingAction },
+      ))
+      this.setData({ messages })
+      this.persistMessages(messages)
     } catch (error) { showError(error) }
   },
 
@@ -245,7 +299,9 @@ Page({
         ? { ...item, pendingAction: { ...item.pendingAction, status: 'confirmed' } }
         : item)
       const reply = makeMessage('assistant', result.message || '操作已确认。')
-      this.setData({ messages: messages.concat(reply) })
+      const nextMessages = messages.concat(reply)
+      this.setData({ messages: nextMessages })
+      this.persistMessages(nextMessages)
       if (this.data.mode === 'elder') this.speakText(reply.content)
     } catch (error) { showError(error) } finally { wx.hideLoading() }
   },
