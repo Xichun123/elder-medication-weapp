@@ -104,7 +104,7 @@ function composeCompanionVoiceText({ elder, drug, remindTime, caregiverName, com
   const medicine = categoryLabel && categoryLabel !== '其他' ? `${categoryLabel}${drugName}` : drugName
   const flavor = DIALECT_FLAVOR[elder.voice_tone || elder.voiceTone || 'female_warm']
   const hello = flavor?.hello ? `${honorific}${greeting}${flavor.hello}` : `${honorific}${greeting}`
-  const care = caregiverName ? `是${caregiverName}让我提醒您的` : (flavor?.end || '我一直陪着您')
+  const care = flavor?.end || '我一直陪着您'
   return `${hello}，该吃${medicine}了。${companion}，${care}。`
 }
 

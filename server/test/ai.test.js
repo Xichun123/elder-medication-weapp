@@ -666,6 +666,7 @@ test('可重生成 AI 温情陪伴播报文案', async () => {
   assert.ok(result.data.reminder.voiceGeneratedOn)
   assert.equal(result.data.reminder.voiceGenerationSource, 'ai')
   assert.match(result.data.reminder.voiceText, /好心情|家人|慢慢来/)
+  assert.doesNotMatch(result.data.reminder.voiceText, /是.+让我提醒您的/)
 
   const refresh = await api(`/homes/${context.homeId}/reminders/refresh-companion`, {
     token: context.elder.token,
