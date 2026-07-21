@@ -56,3 +56,25 @@
 .prompt-play { background: #176B5B; }
 .prompt-close { min-height: 110rpx; margin-top: 18rpx; border: 2rpx solid #C9E2DA; border-radius: 20rpx; background: #fff; color: #234E45; font-size: 30rpx; }
 .prompt-warning { display: block; margin-top: 22rpx; color: #9C4223; font-size: 28rpx; line-height: 1.6; }
+
+.section-head-row { display:flex; align-items:baseline; justify-content:space-between; gap:16rpx; margin-bottom:18rpx; }
+.section-count { color:#5A726A; font-size:26rpx; }
+.reminder-card { margin-bottom:18rpx; padding:26rpx 24rpx 22rpx; border:1rpx solid #DCE7E2; border-radius:24rpx; background:#fff; box-shadow:0 6rpx 18rpx rgba(24,48,43,.04); }
+.reminder-card.taken, .reminder-card.skipped { background:#FBFDFC; }
+.reminder-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16rpx; margin-bottom:12rpx; }
+.reminder-main { flex:1; min-width:0; }
+.reminder-time { display:block; color:#176B5B; font-size:40rpx; font-weight:750; line-height:1.15; }
+.reminder-dose { display:block; margin-top:6rpx; color:#5A726A; font-size:26rpx; }
+.status-badge { flex:none; min-width:96rpx; padding:8rpx 18rpx; border-radius:999rpx; text-align:center; font-size:24rpx; font-weight:700; }
+.status-badge.pending { color:#9C4223; background:#FCEAE4; }
+.status-badge.taken { color:#1F6B3A; background:#E3F0E5; }
+.status-badge.skipped, .status-badge.abnormal { color:#7A5A12; background:#F8EDDA; }
+.reminder-drug { display:block; margin-bottom:20rpx; font-size:34rpx; font-weight:700; line-height:1.35; color:#18302B; }
+.reminder-actions { display:grid; grid-template-columns:1fr 1.35fr; gap:14rpx; }
+.action-btn { margin:0; min-height:88rpx; padding:0 20rpx; border-radius:18rpx; font-size:28rpx; font-weight:700; line-height:88rpx; }
+.action-btn.ghost { background:#F2F7F4; color:#176B5B; border:1rpx solid #C9E2DA; }
+.action-btn.solid { background:#B94A32; color:#fff; }
+.action-done { min-height:88rpx; display:flex; align-items:center; justify-content:center; border-radius:18rpx; background:#E3F0E5; border:1rpx solid #C7E2CB; }
+.action-done-text { color:#1F6B3A; font-size:28rpx; font-weight:700; }
+.reminder-card.skipped .action-done { background:#F8EDDA; border-color:#EBD9BC; }
+.reminder-card.skipped .action-done-text { color:#7A5A12; }

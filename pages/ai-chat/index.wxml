@@ -1,6 +1,11 @@
 <view class="page ai-page">
   <view class="notice">相关用药、过敏史、症状、对话和主动录制的语音会发送给第三方 AI/语音服务处理。AI 仅供参考，紧急不适请立即就医。</view>
 
+  <view class="history-bar">
+    <text class="history-tip">对话会保存在本机，关闭页面后可继续查看</text>
+    <button class="history-clear" bindtap="clearHistory">清除记录</button>
+  </view>
+
   <view class="elder-picker" wx:if="{{elders.length}}">
     <text>当前咨询对象</text>
     <picker range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange">

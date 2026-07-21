@@ -39,3 +39,6 @@
 .voice-hint { color:var(--primary-deep); background:var(--primary-soft); }
 .voice-status { color:#fff; background:rgba(24,48,43,.88); }
 @keyframes voice-pulse { 0%,100% { opacity:1; } 50% { opacity:.58; } }
+.history-bar { display:flex; align-items:center; justify-content:space-between; gap:16rpx; margin:0 28rpx 14rpx; padding:14rpx 18rpx; border-radius:16rpx; background:#F2F7F4; border:1rpx solid var(--border); }
+.history-tip { flex:1; color:var(--muted); font-size:24rpx; line-height:1.45; }
+.history-clear { margin:0; min-height:64rpx; padding:0 22rpx; border-radius:999rpx; background:#fff; color:var(--primary); border:1rpx solid #B9DED4; font-size:24rpx; }
