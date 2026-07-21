@@ -1,8 +1,11 @@
 <view class="page with-safe-bottom">
   <view wx:if="{{!editing}}">
-    <view class="row between gap">
-      <view><text class="page-title">老人管理</text><text class="page-subtitle">维护长辈基本信息、过敏史与方言温情播报音色</text></view>
-      <button wx:if="{{canEdit}}" class="btn primary small" bindtap="openCreate">＋ 新增</button>
+    <view class="row between gap elder-header">
+      <view class="elder-header-copy"><text class="page-title">老人管理</text><text class="page-subtitle">维护长辈基本信息、过敏史与方言温情播报音色</text></view>
+      <button wx:if="{{canEdit}}" class="btn primary small elder-add-btn" bindtap="openCreate">
+        <text class="elder-add-icon">＋</text>
+        <text>新增</text>
+      </button>
     </view>
     <view class="filter-bar"><input class="search flex-1" value="{{keyword}}" placeholder="搜索姓名 / 关系" bindinput="onSearchInput" confirm-type="search" bindconfirm="onSearch"/><button class="btn small" bindtap="onSearch">搜索</button></view>
     <view wx:for="{{filteredList}}" wx:key="elder_id" class="list-card">
