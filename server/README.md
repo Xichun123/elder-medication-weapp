@@ -29,10 +29,17 @@ curl -s http://127.0.0.1:8787/auth/wx-login \
 
 ## VPS 部署要点
 
-1. 安装 Node 22.5+，部署目录为 `/opt/yao-ling-tong/server`。
-2. 配置 `.env`：`JWT_SECRET`、`WX_APP_ID`、`WX_APP_SECRET`，**生产关闭** `ALLOW_DEV_LOGIN`。
-3. 保留服务器上的 `.env` 与 `data/`；升级时只替换 `src/`、`package*.json` 等程序文件，禁止直接删除整个部署目录。
-4. `npm ci --omit=dev && systemctl restart yao-ling-tong-api`。
+1. 安装 Node 22.5+，将仓库部署到 `/opt/yao-ling-tong`，后端工作目录为 `/opt/yao-ling-tong/server`。服务端会读取仓库根目录下的 `utils/common-drugs.js` 与 `utils/frequencies.js`，因此不能只上传 `server/`。
+2. 在 `server/.env` 配置 `JWT_SECRET`、`WX_APP_ID`、`WX_APP_SECRET`，**生产关闭** `ALLOW_DEV_LOGIN`。
+3. 保留服务器上的 `server/.env` 与 `server/data/`；升级时至少同步 `server/src/`、`server/package*.json`、`utils/common-drugs.js` 和 `utils/frequencies.js`，禁止直接删除整个部署目录。
+4. 重启前先验证共享文件存在，再安装依赖并重启：
+   ```bash
+   test -f /opt/yao-ling-tong/utils/common-drugs.js
+   test -f /opt/yao-ling-tong/utils/frequencies.js
+   cd /opt/yao-ling-tong/server
+   npm ci --omit=dev
+   systemctl restart yao-ling-tong-api
+   ```
 5. Caddy 反代到 `127.0.0.1:8787`，开启 HTTPS。
 6. 微信公众平台将 `https://api.0721online.net` 分别配置为 request、uploadFile 与 downloadFile 合法域名（不要显式写 `:443`）；包装图签名地址由 `<image>` 下载，遗漏 downloadFile 会导致正式版无法显示。域名需按官方要求完成 ICP 备案。
 
@@ -127,7 +134,10 @@ api.0721online.net {
 
 ## 验证
 
+在仓库根目录完整保留 `server/` 与 `utils/` 后执行：
+
 ```bash
+cd server
 npm test
 npm audit --omit=dev
 curl https://api.0721online.net/health

@@ -92,17 +92,22 @@ test('从用药录入新增药物时预填草稿，保存后回传并返回', as
   assert.equal(calls.navigateBack, 1)
 })
 
-test('药物分类包含新药库分类并兼容旧分类编辑', () => {
+test('新建药物仅显示新分类，筛选和编辑仍兼容旧分类', () => {
   const { page } = loadPage()
   assert.ok(page.data.formCategories.some((item) => item.value === 'cardiovascular' && item.label === '心脑血管药'))
   assert.ok(page.data.formCategories.some((item) => item.value === 'antibiotic' && item.label === '抗感染药'))
   assert.ok(page.data.categories.some((item) => item.value === 'antihypertensive'))
+  assert.ok(!page.data.formCategories.some((item) => item.value === 'antihypertensive'))
+  assert.ok(!page.data.formCategories.some((item) => item.value === 'antiplatelet'))
 
-  page.openEdit({ currentTarget: { dataset: { id: 'missing' } } })
   page.setData({
     list: [{ drug_id: 'Dlegacy', generic_name: '旧分类药', category: 'antihypertensive', is_system: false }],
   })
   page.openEdit({ currentTarget: { dataset: { id: 'Dlegacy' } } })
   assert.equal(page.data.form.category, 'antihypertensive')
   assert.equal(page.data.formCategories[page.data.formCategoryIndex].value, 'antihypertensive')
+
+  page.openCreate()
+  assert.equal(page.data.form.category, 'other')
+  assert.ok(!page.data.formCategories.some((item) => item.value === 'antihypertensive'))
 })

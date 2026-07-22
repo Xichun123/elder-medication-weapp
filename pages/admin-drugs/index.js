@@ -5,28 +5,29 @@ const store = require('../../utils/store')
 const { categoryLabels } = require('../../utils/common-drugs')
 const { unwrap, toast, showError, confirm, makeId } = require('../../utils/helpers')
 
-// 兼容历史本地/演示数据中的旧分类值，避免编辑时被悄悄改成 other
-const legacyCategoryLabels = {
-  antihypertensive: '降压药',
-  antiplatelet: '抗血小板',
-}
-const formCategories = [
-  ...Object.entries(categoryLabels).map(([value, label]) => ({ value, label })),
-  ...Object.entries(legacyCategoryLabels).map(([value, label]) => ({ value, label })),
+const currentCategories = Object.entries(categoryLabels).map(([value, label]) => ({ value, label }))
+// 旧分类仅用于筛选历史数据；新建药品时不可继续选择。
+const legacyCategories = [
+  { value: 'antihypertensive', label: '降压药（旧分类）' },
+  { value: 'antiplatelet', label: '抗血小板（旧分类）' },
 ]
-const categories = [{ value: '', label: '全部分类' }, ...formCategories]
+const categories = [{ value: '', label: '全部分类' }, ...currentCategories, ...legacyCategories]
 const emptyForm = () => ({
   drug_id: makeId('D'), generic_name: '', trade_name: '', aliases: '', category: 'other',
   ingredient: '', dosage_text: '', contraindication_note: '', interaction_note: '',
 })
-const formCategoryIndexOf = (value) => {
-  const index = formCategories.findIndex((item) => item.value === value)
-  return index >= 0 ? index : formCategories.findIndex((item) => item.value === 'other')
+const formCategoriesFor = (value) => {
+  const legacy = legacyCategories.find((item) => item.value === value)
+  return legacy ? [...currentCategories, legacy] : currentCategories
+}
+const formCategoryIndexOf = (value, options = currentCategories) => {
+  const index = options.findIndex((item) => item.value === value)
+  return index >= 0 ? index : options.findIndex((item) => item.value === 'other')
 }
 
 Page({
   data: {
-    list: [], loading: false, keyword: '', categories, formCategories, categoryIndex: 0,
+    list: [], loading: false, keyword: '', categories, formCategories: currentCategories, categoryIndex: 0,
     editing: false, isEdit: false, saving: false, form: emptyForm(), formCategoryIndex: formCategoryIndexOf('other'),
     canEdit: true, isRemote: false,
   },
@@ -60,10 +61,11 @@ Page({
   onSearch() { this.load() },
   onCategory(event) { this.setData({ categoryIndex: Number(event.detail.value) }, () => this.load()) },
   prepareCreateForm(draft = {}) {
-    const category = formCategories.some((item) => item.value === draft.category) ? draft.category : 'other'
+    const category = currentCategories.some((item) => item.value === draft.category) ? draft.category : 'other'
     this.setData({
       editing: true,
       isEdit: false,
+      formCategories: currentCategories,
       form: {
         ...emptyForm(),
         generic_name: String(draft.generic_name || ''),
@@ -83,7 +85,14 @@ Page({
     const row = this.data.list.find((item) => item.drug_id === event.currentTarget.dataset.id)
     if (!row) return
     if (row.is_system) { toast('系统药库只读，请新增家庭药物'); return }
-    this.setData({ editing: true, isEdit: true, form: { ...row }, formCategoryIndex: formCategoryIndexOf(row.category) })
+    const formCategories = formCategoriesFor(row.category)
+    this.setData({
+      editing: true,
+      isEdit: true,
+      formCategories,
+      form: { ...row },
+      formCategoryIndex: formCategoryIndexOf(row.category, formCategories),
+    })
   },
   cancel() {
     if (this.returnCreatedDrug) { wx.navigateBack(); return }
@@ -92,7 +101,7 @@ Page({
   onInput(event) { this.setData({ [`form.${event.currentTarget.dataset.field}`]: event.detail.value }) },
   onFormCategory(event) {
     const formCategoryIndex = Number(event.detail.value)
-    const category = formCategories[formCategoryIndex]
+    const category = this.data.formCategories[formCategoryIndex]
     if (!category) return
     this.setData({ formCategoryIndex, 'form.category': category.value })
   },

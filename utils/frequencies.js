@@ -21,6 +21,10 @@ function formatLabeledTime(totalMinutes) {
   return `晚${clock}`
 }
 
+function isValidFrequency(frequency) {
+  return frequencyOptions.includes(String(frequency || ''))
+}
+
 function getReminderTimes(frequency) {
   if (frequencyTimes[frequency]) return frequencyTimes[frequency]
   const match = String(frequency || '').match(/^每日(\d+)次$/)
@@ -32,4 +36,4 @@ function getReminderTimes(frequency) {
   return Array.from({ length: count }, (_, index) => formatLabeledTime(Math.round(start + interval * index)))
 }
 
-module.exports = { frequencyOptions, frequencyTimes, getReminderTimes }
+module.exports = { frequencyOptions, frequencyTimes, getReminderTimes, isValidFrequency }

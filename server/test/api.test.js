@@ -277,6 +277,20 @@ test('用药记录、提醒重建、禁忌与权限', async () => {
   const metformin = metforminList.data.drugs.find((item) => item.genericName === '二甲双胍')
   assert.ok(metformin)
 
+  const invalidFrequencyCreate = await api(`/homes/${homeId}/records`, {
+    token: owner.token,
+    method: 'POST',
+    body: {
+      elderProfileId: elderId,
+      drugId: aspirin.id,
+      dose: '100mg',
+      frequency: '每日99次',
+      startDate: '2026-01-01',
+    },
+  })
+  assert.equal(invalidFrequencyCreate.status, 400)
+  assert.match(invalidFrequencyCreate.data.error, /每日1次至每日12次/)
+
   const createdRecord = await api(`/homes/${homeId}/records`, {
     token: owner.token,
     method: 'POST',
@@ -315,6 +329,17 @@ test('用药记录、提醒重建、禁忌与权限', async () => {
   const afterDose = await api(`/homes/${homeId}/reminders`, { token: owner.token })
   assert.equal(afterDose.data.reminders.length, 2)
   assert.equal(afterDose.data.reminders[0].id, reminderId)
+
+  const invalidFrequencyUpdate = await api(`/homes/${homeId}/records/${recordId}`, {
+    token: owner.token,
+    method: 'PATCH',
+    body: { frequency: '每天2次' },
+  })
+  assert.equal(invalidFrequencyUpdate.status, 400)
+  assert.match(invalidFrequencyUpdate.data.error, /每日1次至每日12次/)
+  const afterInvalidFrequency = await api(`/homes/${homeId}/reminders`, { token: owner.token })
+  assert.equal(afterInvalidFrequency.data.reminders.length, 2)
+  assert.equal(afterInvalidFrequency.data.reminders[0].id, reminderId)
 
   // 标记已服
   const taken = await api(`/homes/${homeId}/reminders/${reminderId}/take`, {
