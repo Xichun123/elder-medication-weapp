@@ -1,4 +1,6 @@
 const { dictionaries, createSeedData } = require('./seed')
+const { commonDrugs } = require('./common-drugs')
+const { getReminderTimes } = require('./frequencies')
 
 const STORAGE_KEY = 'elder_medication.database.v1'
 let cache = null
@@ -12,12 +14,23 @@ function load() {
   try {
     const stored = wx.getStorageSync(STORAGE_KEY)
     cache = stored && stored.version === 1 ? stored : createSeedData()
+    ensureCommonDrugs(cache)
   } catch (error) {
     console.warn('读取本地台账失败，已恢复种子数据', error)
     cache = createSeedData()
   }
   persist()
   return cache
+}
+
+function ensureCommonDrugs(data) {
+  if (!data || !Array.isArray(data.drugs)) return
+  const names = new Set(data.drugs.map((drug) => String(drug.generic_name || '').trim()).filter(Boolean))
+  commonDrugs.forEach((drug) => {
+    if (names.has(drug.generic_name)) return
+    data.drugs.push(clone(drug))
+    names.add(drug.generic_name)
+  })
 }
 
 function persist() {
@@ -177,7 +190,7 @@ function careTip(salt = '') {
 function generateVoiceText(elder, drug, remindTime = '') {
   const category = drug.category || 'other'
   const categoryLabel = label('drug_category', category)
-  const medicine = categoryLabel && categoryLabel !== '其他'
+  const medicine = categoryLabel && !['其他', '其他常用药'].includes(categoryLabel)
     ? `${categoryLabel}${drug.generic_name}`
     : drug.generic_name
   const tip = careTip(`${remindTime}:${drug.generic_name}`)
@@ -192,11 +205,7 @@ function generateVoiceText(elder, drug, remindTime = '') {
 }
 
 function autoCreateReminders(record) {
-  const times = {
-    '每日1次': ['早8:00'],
-    '每日2次': ['早8:00', '晚20:00'],
-    '每日3次': ['早8:00', '午12:00', '晚20:00'],
-  }[record.frequency] || ['早8:00']
+  const times = getReminderTimes(record.frequency)
   const elder = requireItem('elders', 'elder_id', record.elder, '老人不存在')
   const drug = requireItem('drugs', 'drug_id', record.drug, '药物不存在')
   const rows = collection('reminders')

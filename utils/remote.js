@@ -2,6 +2,14 @@ const config = require('./config')
 
 const TOKEN_KEY = 'yao_ling_tong.auth_token'
 
+function networkErrorMessage(error, action = '请求') {
+  const detail = String((error && error.errMsg) || '')
+  if (/timeout/i.test(detail)) return `${action}超时，请检查网络后重试`
+  if (/domain list|合法域名/i.test(detail)) return '服务地址未配置为微信合法域名'
+  if (/ssl|certificate/i.test(detail)) return '无法安全连接服务器，请稍后重试'
+  return `无法连接服务器，请检查网络后重试`
+}
+
 function getToken() {
   return wx.getStorageSync(TOKEN_KEY) || ''
 }
@@ -37,8 +45,9 @@ function request({ path, method = 'GET', data, authenticated = true, timeout = c
         reject(error)
       },
       fail(error) {
-        const requestError = new Error((error && error.errMsg) || '网络请求失败')
+        const requestError = new Error(networkErrorMessage(error))
         requestError.isNetworkError = true
+        requestError.originalError = error
         reject(requestError)
       },
     })
@@ -70,7 +79,10 @@ function upload({ path, filePath, name = 'file', formData = {}, authenticated = 
         reject(requestError)
       },
       fail(error) {
-        reject(new Error((error && error.errMsg) || '图片上传失败'))
+        const requestError = new Error(networkErrorMessage(error, '图片上传'))
+        requestError.isNetworkError = true
+        requestError.originalError = error
+        reject(requestError)
       },
     })
   })

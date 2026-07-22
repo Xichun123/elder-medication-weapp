@@ -9,7 +9,7 @@ const pageSource = fs.readFileSync(pagePath, 'utf8')
 
 function loadPage({ recognize, match } = {}) {
   let definition
-  const calls = { chooseMedia: [], modals: [], navigations: [], packageImages: [], records: [], toasts: [] }
+  const calls = { chooseMedia: [], drugs: [], modals: [], navigations: [], packageImages: [], records: [], toasts: [] }
   const api = {
     recognition: {
       recognize: recognize || (async () => ({
@@ -26,7 +26,10 @@ function loadPage({ recognize, match } = {}) {
     },
     drugs: {
       match: match || (async () => []),
-      create: async () => ({ drug_id: 'D1', generic_name: '阿司匹林' }),
+      create: async (payload) => {
+        calls.drugs.push(payload)
+        return { drug_id: 'Dcustom', generic_name: payload.generic_name, category_label: '其他常用药' }
+      },
       savePackageImage: async (drugId, filePath) => {
         calls.packageImages.push({ drugId, filePath })
         return { url: 'https://api.example.test/package-images/I1' }
@@ -46,6 +49,9 @@ function loadPage({ recognize, match } = {}) {
     '../../utils/config': { useLocalApi: false },
     '../../utils/session': { getHome: () => ({ id: 'H1' }) },
     '../../utils/store': { canEdit: () => true, getFamilyId: () => 'H1' },
+    '../../utils/frequencies': {
+      frequencyOptions: Array.from({ length: 12 }, (_, index) => `每日${index + 1}次`),
+    },
     '../../utils/helpers': {
       unwrap: (value) => value,
       toast: (message) => calls.toasts.push(message),
@@ -197,4 +203,58 @@ test('只有人工确认后才按选定药品保存包装照片', async () => {
   assert.deepEqual(calls.packageImages[0], { drugId: 'D1', filePath: '/tmp/package.jpg' })
   assert.equal(page.data.packageImageSaved, true)
   assert.equal(page.data.selectedDrug.has_package_image, true)
+})
+
+test('未命中药库时可直接以输入药名建立家庭药品并保存用药', async () => {
+  const { calls, page } = loadPage({ match: async () => [] })
+  Object.assign(page.data, {
+    elders: [{ elder_id: 'E1' }],
+    elderIndex: 0,
+    keyword: '家属自定义草药A',
+    selectedDrug: null,
+    dose: '1袋',
+    frequency: '每日4次',
+  })
+
+  await page.save()
+
+  assert.equal(calls.drugs.length, 1)
+  assert.equal(calls.drugs[0].generic_name, '家属自定义草药A')
+  assert.equal(calls.drugs[0].category, 'other')
+  assert.equal(calls.records.length, 1)
+  assert.equal(calls.records[0].drug, 'Dcustom')
+  assert.equal(calls.records[0].frequency, '每日4次')
+})
+
+test('每日服用次数提供一至十二次选项', () => {
+  const { page } = loadPage()
+  assert.equal(page.data.frequencyOptions.length, 12)
+  assert.equal(page.data.frequencyOptions[0], '每日1次')
+  assert.equal(page.data.frequencyOptions.at(-1), '每日12次')
+})
+
+test('输入别名精确命中时复用已有药品而不新建', async () => {
+  const { calls, page } = loadPage({
+    match: async () => [{
+      drug_id: 'D1',
+      generic_name: '阿莫西林',
+      trade_name: '阿莫仙',
+      aliases: '羟氨苄青霉素',
+    }],
+  })
+  Object.assign(page.data, {
+    elders: [{ elder_id: 'E1' }],
+    elderIndex: 0,
+    keyword: '羟氨苄青霉素',
+    selectedDrug: null,
+    dose: '0.5g',
+    frequency: '每日3次',
+  })
+
+  await page.save()
+
+  assert.equal(calls.drugs.length, 0)
+  assert.equal(calls.records.length, 1)
+  assert.equal(calls.records[0].drug, 'D1')
+  assert.equal(calls.records[0].frequency, '每日3次')
 })

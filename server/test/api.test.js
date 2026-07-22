@@ -96,6 +96,27 @@ test.before(async () => {
   await waitForServer()
 })
 
+test('系统药库包含数百种常见药物并支持关键词搜索', async () => {
+  const owner = await login('catalog-owner', '药库测试')
+  const home = await api('/homes', {
+    token: owner.token,
+    method: 'POST',
+    body: { name: '药库测试家庭' },
+  })
+  assert.equal(home.status, 201)
+  const homeId = home.data.home.id
+
+  const all = await api(`/homes/${homeId}/drugs`, { token: owner.token })
+  assert.equal(all.status, 200)
+  assert.ok(all.data.drugs.length >= 300)
+
+  for (const keyword of ['氨氯地平', '奥美拉唑', '左甲状腺素钠']) {
+    const result = await api(`/homes/${homeId}/drugs?keyword=${encodeURIComponent(keyword)}`, { token: owner.token })
+    assert.equal(result.status, 200)
+    assert.ok(result.data.drugs.some((drug) => drug.genericName === keyword), `未搜索到 ${keyword}`)
+  }
+})
+
 test.after(async () => {
   if (child && !child.killed) {
     child.kill('SIGTERM')
@@ -256,6 +277,20 @@ test('用药记录、提醒重建、禁忌与权限', async () => {
   const metformin = metforminList.data.drugs.find((item) => item.genericName === '二甲双胍')
   assert.ok(metformin)
 
+  const invalidFrequencyCreate = await api(`/homes/${homeId}/records`, {
+    token: owner.token,
+    method: 'POST',
+    body: {
+      elderProfileId: elderId,
+      drugId: aspirin.id,
+      dose: '100mg',
+      frequency: '每日99次',
+      startDate: '2026-01-01',
+    },
+  })
+  assert.equal(invalidFrequencyCreate.status, 400)
+  assert.match(invalidFrequencyCreate.data.error, /每日1次至每日12次/)
+
   const createdRecord = await api(`/homes/${homeId}/records`, {
     token: owner.token,
     method: 'POST',
@@ -294,6 +329,17 @@ test('用药记录、提醒重建、禁忌与权限', async () => {
   const afterDose = await api(`/homes/${homeId}/reminders`, { token: owner.token })
   assert.equal(afterDose.data.reminders.length, 2)
   assert.equal(afterDose.data.reminders[0].id, reminderId)
+
+  const invalidFrequencyUpdate = await api(`/homes/${homeId}/records/${recordId}`, {
+    token: owner.token,
+    method: 'PATCH',
+    body: { frequency: '每天2次' },
+  })
+  assert.equal(invalidFrequencyUpdate.status, 400)
+  assert.match(invalidFrequencyUpdate.data.error, /每日1次至每日12次/)
+  const afterInvalidFrequency = await api(`/homes/${homeId}/reminders`, { token: owner.token })
+  assert.equal(afterInvalidFrequency.data.reminders.length, 2)
+  assert.equal(afterInvalidFrequency.data.reminders[0].id, reminderId)
 
   // 标记已服
   const taken = await api(`/homes/${homeId}/reminders/${reminderId}/take`, {

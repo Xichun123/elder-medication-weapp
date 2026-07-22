@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
+import frequencyConfig from '../../../utils/frequencies.js'
 import {
   assertElderScope,
   buildDashboard,
@@ -32,6 +33,8 @@ import { createPackageImagePath, sanitizePackageImage } from '../package-images.
 import { createFixedWindowRateLimiter } from '../rate-limit.js'
 import { recognizeMedicationImage } from '../recognition.js'
 import { resolveAvatarUrl } from './auth.js'
+
+const { isValidFrequency } = frequencyConfig
 
 const resources = new Hono()
 const companionRefreshRateLimiter = createFixedWindowRateLimiter({ windowMs: 60 * 60_000 })
@@ -424,6 +427,7 @@ resources.post('/:homeId/records', requireHomeMember('caregiver_edit'), async (c
   assert(drugId, 400, '药物不能为空')
   assert(dose, 400, '剂量不能为空')
   assert(frequency, 400, '频次不能为空')
+  assert(isValidFrequency(frequency), 400, '频次必须为每日1次至每日12次')
   assert(startDate, 400, '开始日期不能为空')
 
   const elder = getElderInHome(membership.home_id, elderId)
@@ -469,6 +473,7 @@ resources.patch('/:homeId/records/:recordId', requireHomeMember('caregiver_edit'
 
   assert(dose, 400, '剂量不能为空')
   assert(frequency, 400, '频次不能为空')
+  assert(isValidFrequency(frequency), 400, '频次必须为每日1次至每日12次')
   assert(startDate, 400, '开始日期不能为空')
 
   const frequencyChanged = frequency !== previous.frequency

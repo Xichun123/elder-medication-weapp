@@ -53,14 +53,14 @@
       </view>
     </view>
     <view wx:if="{{keyword && matchAttempted && !matching && !selectedDrug}}" class="create-drug-hint">
-      <view class="create-drug-copy">没有合适结果？新增到家庭药物主数据，保存后会自动回填到当前用药。</view>
-      <button class="btn teal small" bindtap="openCreateDrug">新增药品</button>
+      <view class="create-drug-copy">没有合适结果也可以继续填写。保存用药时会自动把“{{keyword}}”建为家庭自定义药品。</view>
+      <button class="btn teal small" bindtap="openCreateDrug">补充详情</button>
     </view>
     <view wx:if="{{selectedDrug}}" class="selected">
       <view class="row between"><view><text class="list-title">{{selectedDrug.generic_name}}</text><view class="list-subtitle">{{selectedDrug.drug_id}} · {{selectedDrug.category_label}}</view></view><button class="btn small" bindtap="clearDrug">重选</button></view>
     </view>
     <view class="field"><text class="field-label required">剂量</text><input class="input" value="{{dose}}" placeholder="如 10mg / 0.5g" bindinput="onDoseInput"/></view>
-    <view class="field"><text class="field-label">频次</text><view class="radio-row"><view wx:for="{{frequencyOptions}}" wx:key="*this" class="choice {{frequency === item ? 'active' : ''}}" data-value="{{item}}" bindtap="chooseFrequency" aria-role="button" aria-label="频次 {{item}}" hover-class="pressable-hover">{{item}}</view></view></view>
+    <view class="field"><text class="field-label required">每日服用次数</text><picker range="{{frequencyOptions}}" value="{{frequencyIndex}}" bindchange="onFrequencyChange"><view class="picker">{{frequency}} ▾</view></picker></view>
     <view class="field"><text class="field-label required">开始日期</text><picker mode="date" value="{{startDate}}" bindchange="onStartDate"><view class="picker">{{startDate}} ▾</view></picker></view>
     <view class="field"><text class="field-label">结束日期</text><view class="row gap"><picker class="flex-1" mode="date" value="{{endDate || startDate}}" bindchange="onEndDate"><view class="picker">{{endDate || '长期 / 点击选择'}} ▾</view></picker><button wx:if="{{endDate}}" class="btn small" bindtap="clearEndDate">清空</button></view></view>
     <view wx:if="{{recognitionReviewRequired}}" class="review-confirmation {{recognitionConfirmed ? 'confirmed' : ''}}">
@@ -80,7 +80,7 @@
       </view>
       <button class="btn teal small" loading="{{savingPackageImage}}" disabled="{{savingPackageImage || packageImageSaved}}" bindtap="saveRecognitionPackageImage">{{packageImageSaved ? '已保存' : (selectedDrug.has_package_image ? '替换主图' : '保存主图')}}</button>
     </view>
-    <view class="notice">保存后自动生成：每日1次 → 早8:00；每日2次 → 早8:00、晚20:00；每日3次 → 早8:00、午12:00、晚20:00。</view>
+    <view class="notice">保存后会按每日次数自动生成提醒时间。请根据医生处方填写药名、剂量和次数；系统药库仅用于搜索，不代表用药建议。</view>
     <view wx:if="{{!canEdit}}" class="notice">当前角色为只读，无法录入用药。</view>
     <view class="form-actions"><button class="btn" disabled="{{saving || recognizing || savingPackageImage}}" bindtap="reset">重置</button><button wx:if="{{canEdit}}" class="btn primary" loading="{{saving}}" disabled="{{saving || savingPackageImage || (recognitionReviewRequired && !recognitionConfirmed)}}" bindtap="save">保存并建提醒</button></view>
   </view>
