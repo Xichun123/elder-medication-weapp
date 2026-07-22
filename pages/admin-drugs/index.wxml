@@ -7,7 +7,7 @@
     <view class="filter-bar"><input class="search flex-1" value="{{keyword}}" placeholder="搜索药名或别名" bindinput="onKeyword" confirm-type="search" bindconfirm="onSearch"/><picker range="{{categories}}" range-key="label" value="{{categoryIndex}}" bindchange="onCategory"><view class="filter">{{categories[categoryIndex].label}} ▾</view></picker></view>
     <view wx:for="{{list}}" wx:key="drug_id" class="list-card">
       <view class="row between gap"><view class="flex-1"><text class="list-title">{{item.generic_name}}</text><view class="list-subtitle">商品名：{{item.trade_name || '—'}}</view></view><text class="tag primary">{{item.is_system ? '系统药库' : item.category_label}}</text></view>
-      <view class="list-meta">{{item.drug_id}} · 成分：{{item.ingredient || '—'}} · 别名：{{item.aliases || '—'}}</view>
+      <view class="list-meta">成分：{{item.ingredient || '—'}} · 别名：{{item.aliases || '—'}}</view>
       <view wx:if="{{item.contraindication_note}}" class="contra">⚠ {{item.contraindication_note}}</view>
       <view wx:if="{{canEdit && !item.is_system}}" class="actions split-actions"><button class="btn small" data-id="{{item.drug_id}}" bindtap="openEdit">编辑</button><button class="btn danger small" data-id="{{item.drug_id}}" bindtap="remove">删除</button></view>
     </view>
@@ -16,7 +16,6 @@
   <view wx:else>
     <text class="page-title">{{isEdit ? '编辑药物' : '新增药物'}}</text>
     <view class="card form-card">
-      <view wx:if="{{!isRemote}}" class="field"><text class="field-label required">药物ID</text><input class="input" value="{{form.drug_id}}" disabled="{{isEdit}}" data-field="drug_id" bindinput="onInput"/></view>
       <view class="field"><text class="field-label required">通用名</text><input class="input" value="{{form.generic_name}}" data-field="generic_name" bindinput="onInput"/></view>
       <view class="field"><text class="field-label">商品名</text><input class="input" value="{{form.trade_name}}" data-field="trade_name" bindinput="onInput"/></view>
       <view class="field"><text class="field-label">别名</text><input class="input" value="{{form.aliases}}" placeholder="逗号分隔" data-field="aliases" bindinput="onInput"/></view>
