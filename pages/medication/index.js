@@ -2,12 +2,13 @@ const api = require('../../utils/api')
 const config = require('../../utils/config')
 const session = require('../../utils/session')
 const store = require('../../utils/store')
+const { frequencyOptions } = require('../../utils/frequencies')
 const { unwrap, toast, showError, today, makeId } = require('../../utils/helpers')
 
 Page({
   data: {
     elders: [], elderIndex: -1, keyword: '', matchedDrugs: [], selectedDrug: null, matching: false, matchAttempted: false,
-    dose: '', frequency: '每日2次', frequencyOptions: ['每日1次', '每日2次', '每日3次'], startDate: today(), endDate: '', saving: false, createdReminders: [], showResult: false,
+    dose: '', frequency: '每日2次', frequencyIndex: 1, frequencyOptions, startDate: today(), endDate: '', saving: false, createdReminders: [], showResult: false,
     recognizing: false, savingPackageImage: false, packageImageSaved: false, recognitionImage: '', recognitionResult: null, recognitionDetails: [], recognitionVisibleText: '', recognitionUncertainText: '',
     recognitionReviewRequired: false, recognitionConfirmed: false,
     canEdit: true,
@@ -114,7 +115,10 @@ Page({
         recognitionConfirmed: false,
       }
       if (result.dosageText) nextData.dose = result.dosageText
-      if (this.data.frequencyOptions.includes(result.frequency)) nextData.frequency = result.frequency
+      if (this.data.frequencyOptions.includes(result.frequency)) {
+        nextData.frequency = result.frequency
+        nextData.frequencyIndex = this.data.frequencyOptions.indexOf(result.frequency)
+      }
       this.setData(nextData)
     } catch (error) {
       this.setData({
@@ -207,7 +211,15 @@ Page({
   },
   clearDrug() { this.setData({ selectedDrug: null, keyword: '', matchedDrugs: [], matchAttempted: false, packageImageSaved: false, ...this.invalidateRecognitionConfirmation() }) },
   onDoseInput(event) { this.setData({ dose: event.detail.value, ...this.invalidateRecognitionConfirmation() }) },
-  chooseFrequency(event) { this.setData({ frequency: event.currentTarget.dataset.value, ...this.invalidateRecognitionConfirmation() }) },
+  chooseFrequency(event) {
+    const frequency = event.currentTarget.dataset.value
+    this.setData({ frequency, frequencyIndex: this.data.frequencyOptions.indexOf(frequency), ...this.invalidateRecognitionConfirmation() })
+  },
+  onFrequencyChange(event) {
+    const frequencyIndex = Number(event.detail.value)
+    const frequency = this.data.frequencyOptions[frequencyIndex] || '每日1次'
+    this.setData({ frequency, frequencyIndex, ...this.invalidateRecognitionConfirmation() })
+  },
   invalidateRecognitionConfirmation() {
     return this.data.recognitionReviewRequired ? { recognitionConfirmed: false } : {}
   },
@@ -236,12 +248,37 @@ Page({
   onStartDate(event) { this.setData({ startDate: event.detail.value }) },
   onEndDate(event) { this.setData({ endDate: event.detail.value }) },
   clearEndDate() { this.setData({ endDate: '' }) },
+  async resolveDrugForSave() {
+    if (this.data.selectedDrug) return this.data.selectedDrug
+    const genericName = String(this.data.keyword || '').trim()
+    if (!genericName) throw new Error('请输入药名')
+    if (genericName.length > 80) throw new Error('药名不能超过80个字')
+
+    let matches = []
+    try { matches = await api.drugs.match(genericName) } catch (error) { /* 允许在药库不可用时自定义录入 */ }
+    const normalized = genericName.toLowerCase()
+    const exact = matches.find((drug) => [drug.generic_name, drug.trade_name]
+      .some((name) => String(name || '').trim().toLowerCase() === normalized))
+    if (exact) return exact
+
+    return api.drugs.create({
+      drug_id: config.useLocalApi ? makeId('D') : undefined,
+      generic_name: genericName,
+      trade_name: '',
+      aliases: '',
+      category: 'other',
+      ingredient: genericName,
+      dosage_text: '',
+      contraindication_note: '',
+      interaction_note: '',
+    })
+  },
   async save() {
     if (!store.canEdit()) { toast('当前角色仅可查看'); return }
     if (this.data.savingPackageImage) { toast('请等待包装照片保存完成'); return }
     const elder = this.data.elders[this.data.elderIndex]
     if (!elder) { toast('请选择老人'); return }
-    if (!this.data.selectedDrug) { toast('请从匹配结果中选择药物'); return }
+    if (!String(this.data.keyword || '').trim() && !this.data.selectedDrug) { toast('请输入药名'); return }
     if (!this.data.dose) { toast('请输入剂量'); return }
     if (this.data.recognitionReviewRequired && !this.data.recognitionConfirmed) {
       toast('请先确认已核对 AI 识别的药品、剂量与频次')
@@ -249,8 +286,9 @@ Page({
     }
     this.setData({ saving: true })
     try {
+      const drug = await this.resolveDrugForSave()
       const payload = {
-        elder: elder.elder_id, drug: this.data.selectedDrug.drug_id,
+        elder: elder.elder_id, drug: drug.drug_id,
         dose: this.data.dose, frequency: this.data.frequency, start_date: this.data.startDate, end_date: this.data.endDate || null,
       }
       if (config.useLocalApi) payload.record_id = makeId('R')
@@ -262,7 +300,7 @@ Page({
   },
   reset(closeResult = true) {
     this.setData({
-      keyword: '', selectedDrug: null, matchedDrugs: [], matchAttempted: false, dose: '', frequency: '每日2次', startDate: today(), endDate: '',
+      keyword: '', selectedDrug: null, matchedDrugs: [], matchAttempted: false, dose: '', frequency: '每日2次', frequencyIndex: 1, startDate: today(), endDate: '',
       recognitionImage: '', recognitionResult: null, recognitionDetails: [], recognitionVisibleText: '', recognitionUncertainText: '',
       recognitionReviewRequired: false, recognitionConfirmed: false, packageImageSaved: false,
       ...(closeResult ? { showResult: false } : {}),

@@ -1,10 +1,12 @@
+import commonDrugCatalog from '../../utils/common-drugs.js'
+
+const { categoryLabels } = commonDrugCatalog
+
 export const dictionaries = {
   drug_category: [
-    { value: 'antibiotic', label: '抗生素' },
+    ...Object.entries(categoryLabels).map(([value, label]) => ({ value, label })),
     { value: 'antihypertensive', label: '降压药' },
-    { value: 'hypoglycemic', label: '降糖药' },
     { value: 'antiplatelet', label: '抗血小板' },
-    { value: 'other', label: '其他' },
   ],
   reminder_status: [
     { value: 'pending', label: '待服' },

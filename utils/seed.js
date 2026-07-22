@@ -1,10 +1,10 @@
+const { commonDrugs, categoryLabels } = require('./common-drugs')
+
 const dictionaries = {
   drug_category: [
-    { value: 'antibiotic', label: '抗生素' },
+    ...Object.entries(categoryLabels).map(([value, label]) => ({ value, label })),
     { value: 'antihypertensive', label: '降压药' },
-    { value: 'hypoglycemic', label: '降糖药' },
     { value: 'antiplatelet', label: '抗血小板' },
-    { value: 'other', label: '其他' },
   ],
   reminder_status: [
     { value: 'pending', label: '待服' },
@@ -81,6 +81,7 @@ function createSeedData() {
       { drug_id: 'D03', generic_name: '二甲双胍', trade_name: '格华止', aliases: '', category: 'hypoglycemic', ingredient: '二甲双胍', dosage_text: '0.5g', contraindication_note: '严重肾功能不全禁用', interaction_note: '避免饮酒' },
       { drug_id: 'D04', generic_name: '阿司匹林', trade_name: '拜阿司匹灵', aliases: '乙酰水杨酸', category: 'antiplatelet', ingredient: '阿司匹林', dosage_text: '100mg', contraindication_note: '活动性消化道溃疡禁用', interaction_note: '避免与布洛芬同服' },
       { drug_id: 'D05', generic_name: '头孢克肟', trade_name: '世福素', aliases: '', category: 'antibiotic', ingredient: '头孢克肟', dosage_text: '0.1g', contraindication_note: '头孢类过敏者禁用', interaction_note: '用药及停药7天内禁酒' },
+      ...commonDrugs.filter((drug) => !['阿莫西林', '硝苯地平', '二甲双胍', '阿司匹林', '头孢克肟'].includes(drug.generic_name)),
     ],
     records: [
       { record_id: 'R01', elder: 'E01', drug: 'D02', dose: '10mg', frequency: '每日2次', start_date: '2026-01-01', end_date: '2026-12-31' },

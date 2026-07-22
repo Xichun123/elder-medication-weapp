@@ -8,15 +8,14 @@ import { HttpError, assert } from './errors.js'
 import { newId } from './ids.js'
 import { label } from './labels.js'
 import { createPackageImagePath } from './package-images.js'
+import frequencyConfig from '../../utils/frequencies.js'
+
+const { frequencyTimes, getReminderTimes } = frequencyConfig
 
 export const generateVoiceText = generateCompanionVoiceText
 export { generateCompanionVoice, generateCompanionVoiceText, resolveCaregiverName }
 
-export const FREQUENCY_TIMES = {
-  每日1次: ['早8:00'],
-  每日2次: ['早8:00', '晚20:00'],
-  每日3次: ['早8:00', '午12:00', '晚20:00'],
-}
+export const FREQUENCY_TIMES = frequencyTimes
 
 export function localDate(date = new Date()) {
   const parts = new Intl.DateTimeFormat('zh-CN', {
@@ -279,7 +278,7 @@ export function listContraindications(homeId, params = {}) {
 
 export function createRemindersForRecord(record, elder, drug) {
   const db = getDb()
-  const times = FREQUENCY_TIMES[record.frequency] || ['早8:00']
+  const times = getReminderTimes(record.frequency)
   const ts = nowIso()
   const created = []
 

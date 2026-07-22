@@ -96,6 +96,27 @@ test.before(async () => {
   await waitForServer()
 })
 
+test('系统药库包含数百种常见药物并支持关键词搜索', async () => {
+  const owner = await login('catalog-owner', '药库测试')
+  const home = await api('/homes', {
+    token: owner.token,
+    method: 'POST',
+    body: { name: '药库测试家庭' },
+  })
+  assert.equal(home.status, 201)
+  const homeId = home.data.home.id
+
+  const all = await api(`/homes/${homeId}/drugs`, { token: owner.token })
+  assert.equal(all.status, 200)
+  assert.ok(all.data.drugs.length >= 300)
+
+  for (const keyword of ['氨氯地平', '奥美拉唑', '左甲状腺素钠']) {
+    const result = await api(`/homes/${homeId}/drugs?keyword=${encodeURIComponent(keyword)}`, { token: owner.token })
+    assert.equal(result.status, 200)
+    assert.ok(result.data.drugs.some((drug) => drug.genericName === keyword), `未搜索到 ${keyword}`)
+  }
+})
+
 test.after(async () => {
   if (child && !child.killed) {
     child.kill('SIGTERM')
