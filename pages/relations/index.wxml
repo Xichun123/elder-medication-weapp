@@ -78,7 +78,6 @@
     <view wx:else>
       <text class="page-title">{{isEdit ? '编辑关联关系' : '新增关联关系'}}</text>
       <view class="card form-card">
-        <view class="field"><text class="field-label required">关系ID</text><input class="input" value="{{form.relation_id}}" disabled="{{isEdit}}" data-field="relation_id" bindinput="onInput"/></view>
         <view class="field"><text class="field-label required">家属</text><picker disabled="{{isEdit}}" range="{{families}}" range-key="name" value="{{familyIndex}}" bindchange="onFamilyChange"><view class="picker">{{families[familyIndex].name || '请选择'}} ▾</view></picker></view>
         <view class="field"><text class="field-label required">老人</text><picker disabled="{{isEdit}}" range="{{elders}}" range-key="name" value="{{elderIndex}}" bindchange="onElderChange"><view class="picker">{{elders[elderIndex].name || '请选择'}} ▾</view></picker></view>
         <view class="field"><text class="field-label">关系类型</text><view class="radio-row"><view wx:for="{{roleOptions}}" wx:key="value" class="choice {{form.relation_type === item.value ? 'active' : ''}}" data-field="relation_type" data-value="{{item.value}}" bindtap="choose" hover-class="pressable-hover">{{item.label}}</view></view></view>

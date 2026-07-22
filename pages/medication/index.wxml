@@ -57,7 +57,7 @@
       <button class="btn teal small" bindtap="openCreateDrug">补充详情</button>
     </view>
     <view wx:if="{{selectedDrug}}" class="selected">
-      <view class="row between"><view><text class="list-title">{{selectedDrug.generic_name}}</text><view class="list-subtitle">{{selectedDrug.drug_id}} · {{selectedDrug.category_label}}</view></view><button class="btn small" bindtap="clearDrug">重选</button></view>
+      <view class="row between"><view><text class="list-title">{{selectedDrug.generic_name}}</text><view class="list-subtitle">{{selectedDrug.category_label}}</view></view><button class="btn small" bindtap="clearDrug">重选</button></view>
     </view>
     <view class="field"><text class="field-label required">剂量</text><input class="input" value="{{dose}}" placeholder="如 10mg / 0.5g" bindinput="onDoseInput"/></view>
     <view class="field"><text class="field-label required">每日服用次数</text><picker range="{{frequencyOptions}}" value="{{frequencyIndex}}" bindchange="onFrequencyChange"><view class="picker">{{frequency}} ▾</view></picker></view>
