@@ -9,10 +9,16 @@ const frequencyTimes = {
   每日6次: ['早7:00', '上午10:00', '午13:00', '下午16:00', '晚19:00', '晚22:00'],
 }
 
-function formatTime(totalMinutes) {
+function formatLabeledTime(totalMinutes) {
   const hour = Math.floor(totalMinutes / 60)
   const minute = totalMinutes % 60
-  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+  const clock = `${hour}:${String(minute).padStart(2, '0')}`
+  if (hour < 6) return `凌晨${clock}`
+  if (hour < 9) return `早${clock}`
+  if (hour < 11) return `上午${clock}`
+  if (hour < 14) return `午${clock}`
+  if (hour < 18) return `下午${clock}`
+  return `晚${clock}`
 }
 
 function getReminderTimes(frequency) {
@@ -23,7 +29,7 @@ function getReminderTimes(frequency) {
   const start = 7 * 60
   const end = 22 * 60
   const interval = (end - start) / (count - 1)
-  return Array.from({ length: count }, (_, index) => formatTime(Math.round(start + interval * index)))
+  return Array.from({ length: count }, (_, index) => formatLabeledTime(Math.round(start + interval * index)))
 }
 
 module.exports = { frequencyOptions, frequencyTimes, getReminderTimes }

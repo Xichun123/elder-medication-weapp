@@ -257,8 +257,10 @@ Page({
     let matches = []
     try { matches = await api.drugs.match(genericName) } catch (error) { /* 允许在药库不可用时自定义录入 */ }
     const normalized = genericName.toLowerCase()
-    const exact = matches.find((drug) => [drug.generic_name, drug.trade_name]
-      .some((name) => String(name || '').trim().toLowerCase() === normalized))
+    const exact = matches.find((drug) => {
+      const names = [drug.generic_name, drug.trade_name, ...String(drug.aliases || '').split(/[,，、\s]+/)]
+      return names.some((name) => String(name || '').trim().toLowerCase() === normalized)
+    })
     if (exact) return exact
 
     return api.drugs.create({

@@ -101,7 +101,9 @@ function composeCompanionVoiceText({ elder, drug, remindTime, caregiverName, com
   const greeting = greetingByRemindTime(remindTime)
   const categoryLabel = label('drug_category', drug.category || 'other')
   const drugName = cleanText(drug.generic_name || drug.genericName || '药', 40)
-  const medicine = categoryLabel && categoryLabel !== '其他' ? `${categoryLabel}${drugName}` : drugName
+  const medicine = categoryLabel && !['其他', '其他常用药'].includes(categoryLabel)
+    ? `${categoryLabel}${drugName}`
+    : drugName
   const flavor = DIALECT_FLAVOR[elder.voice_tone || elder.voiceTone || 'female_warm']
   const hello = flavor?.hello ? `${honorific}${greeting}${flavor.hello}` : `${honorific}${greeting}`
   const care = flavor?.end || '我一直陪着您'

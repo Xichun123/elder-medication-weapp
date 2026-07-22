@@ -2,17 +2,19 @@ const api = require('../../utils/api')
 const config = require('../../utils/config')
 const session = require('../../utils/session')
 const store = require('../../utils/store')
+const { categoryLabels } = require('../../utils/common-drugs')
 const { unwrap, toast, showError, confirm, makeId } = require('../../utils/helpers')
 
-const categories = [
-  { value: '', label: '全部分类' },
-  { value: 'antibiotic', label: '抗生素' },
-  { value: 'antihypertensive', label: '降压药' },
-  { value: 'hypoglycemic', label: '降糖药' },
-  { value: 'antiplatelet', label: '抗血小板' },
-  { value: 'other', label: '其他' },
+// 兼容历史本地/演示数据中的旧分类值，避免编辑时被悄悄改成 other
+const legacyCategoryLabels = {
+  antihypertensive: '降压药',
+  antiplatelet: '抗血小板',
+}
+const formCategories = [
+  ...Object.entries(categoryLabels).map(([value, label]) => ({ value, label })),
+  ...Object.entries(legacyCategoryLabels).map(([value, label]) => ({ value, label })),
 ]
-const formCategories = categories.filter((item) => item.value)
+const categories = [{ value: '', label: '全部分类' }, ...formCategories]
 const emptyForm = () => ({
   drug_id: makeId('D'), generic_name: '', trade_name: '', aliases: '', category: 'other',
   ingredient: '', dosage_text: '', contraindication_note: '', interaction_note: '',

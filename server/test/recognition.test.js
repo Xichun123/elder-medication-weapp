@@ -53,6 +53,14 @@ test('归一化识别结果并过滤不支持的频次', () => {
   assert.deepEqual(result.visibleText, ['盐酸二甲双胍片'])
   assert.deepEqual(result.warnings, ['请核对剂量'])
   assert.equal(normalizeRecognition({ generic_name: '缺少类型确认' }).isMedicationPackage, false)
+  assert.equal(normalizeRecognition({
+    is_medication_package: true,
+    frequency: '每日4次',
+  }).frequency, '每日4次')
+  assert.equal(normalizeRecognition({
+    is_medication_package: true,
+    frequency: '每日12次',
+  }).frequency, '每日12次')
 })
 
 test('模型未返回 JSON 时抛出可控服务错误', () => {

@@ -77,9 +77,9 @@ function createSeedData() {
     ],
     drugs: [
       { drug_id: 'D01', generic_name: '阿莫西林', trade_name: '阿莫仙', aliases: '羟氨苄青霉素', category: 'antibiotic', ingredient: '阿莫西林', dosage_text: '0.5g', contraindication_note: '青霉素过敏者禁用', interaction_note: '避免与活菌制剂同服' },
-      { drug_id: 'D02', generic_name: '硝苯地平', trade_name: '心痛定', aliases: '硝苯吡啶', category: 'antihypertensive', ingredient: '硝苯地平', dosage_text: '10mg', contraindication_note: '严重主动脉瓣狭窄禁用', interaction_note: '避免与西柚同服' },
+      { drug_id: 'D02', generic_name: '硝苯地平', trade_name: '心痛定', aliases: '硝苯吡啶', category: 'cardiovascular', ingredient: '硝苯地平', dosage_text: '10mg', contraindication_note: '严重主动脉瓣狭窄禁用', interaction_note: '避免与西柚同服' },
       { drug_id: 'D03', generic_name: '二甲双胍', trade_name: '格华止', aliases: '', category: 'hypoglycemic', ingredient: '二甲双胍', dosage_text: '0.5g', contraindication_note: '严重肾功能不全禁用', interaction_note: '避免饮酒' },
-      { drug_id: 'D04', generic_name: '阿司匹林', trade_name: '拜阿司匹灵', aliases: '乙酰水杨酸', category: 'antiplatelet', ingredient: '阿司匹林', dosage_text: '100mg', contraindication_note: '活动性消化道溃疡禁用', interaction_note: '避免与布洛芬同服' },
+      { drug_id: 'D04', generic_name: '阿司匹林', trade_name: '拜阿司匹灵', aliases: '乙酰水杨酸', category: 'cardiovascular', ingredient: '阿司匹林', dosage_text: '100mg', contraindication_note: '活动性消化道溃疡禁用', interaction_note: '避免与布洛芬同服' },
       { drug_id: 'D05', generic_name: '头孢克肟', trade_name: '世福素', aliases: '', category: 'antibiotic', ingredient: '头孢克肟', dosage_text: '0.1g', contraindication_note: '头孢类过敏者禁用', interaction_note: '用药及停药7天内禁酒' },
       ...commonDrugs.filter((drug) => !['阿莫西林', '硝苯地平', '二甲双胍', '阿司匹林', '头孢克肟'].includes(drug.generic_name)),
     ],
@@ -91,11 +91,11 @@ function createSeedData() {
       { record_id: 'R05', elder: 'E04', drug: 'D02', dose: '10mg', frequency: '每日2次', start_date: '2026-02-01', end_date: '2026-12-31' },
     ],
     reminders: [
-      { rule_id: 'T01', elder: 'E01', medication_record: 'R01', remind_time: '早8:00', status: 'pending', voice_text: '秀兰奶奶早上好，该吃降压药硝苯地平了。今天也要保持好心情，是李明让我提醒您的。' },
+      { rule_id: 'T01', elder: 'E01', medication_record: 'R01', remind_time: '早8:00', status: 'pending', voice_text: '秀兰奶奶早上好，该吃心脑血管药硝苯地平了。今天也要保持好心情，是李明让我提醒您的。' },
       { rule_id: 'T02', elder: 'E01', medication_record: 'R02', remind_time: '午12:00', status: 'pending', voice_text: '秀兰奶奶中午好，该吃降糖药二甲双胍了。别着急，慢慢来，我一直陪着您。' },
-      { rule_id: 'T03', elder: 'E02', medication_record: 'R03', remind_time: '早8:00', status: 'pending', voice_text: '建国爷爷早上好，该吃抗血小板阿司匹林了。家人一直惦记着您，是王晓让我提醒您的。' },
-      { rule_id: 'T04', elder: 'E03', medication_record: 'R04', remind_time: '早8:00', status: 'pending', voice_text: '桂芳奶奶早上好，该吃抗生素阿莫西林了。每一天都要好好照顾自己，我一直陪着您。' },
-      { rule_id: 'T05', elder: 'E04', medication_record: 'R05', remind_time: '晚20:00', status: 'pending', voice_text: '志远爷爷晚上好，该吃降压药硝苯地平了。今天也要保持好心情，是陈静让我提醒您的。' },
+      { rule_id: 'T03', elder: 'E02', medication_record: 'R03', remind_time: '早8:00', status: 'pending', voice_text: '建国爷爷早上好，该吃心脑血管药阿司匹林了。家人一直惦记着您，是王晓让我提醒您的。' },
+      { rule_id: 'T04', elder: 'E03', medication_record: 'R04', remind_time: '早8:00', status: 'pending', voice_text: '桂芳奶奶早上好，该吃抗感染药阿莫西林了。每一天都要好好照顾自己，我一直陪着您。' },
+      { rule_id: 'T05', elder: 'E04', medication_record: 'R05', remind_time: '晚20:00', status: 'pending', voice_text: '志远爷爷晚上好，该吃心脑血管药硝苯地平了。今天也要保持好心情，是陈静让我提醒您的。' },
     ],
     contraindications: [
       { relation_id: 'C01', drug_a: 'D04', drug_b: '', drug_b_text: '布洛芬', contra_type: 'co_administration', severity: 'severe', note: '增加消化道出血风险' },

@@ -19,3 +19,10 @@ test('每日一至十二次都能生成对应数量的提醒', () => {
     assert.equal(getReminderTimes(`每日${count}次`).length, count)
   }
 })
+
+test('高频次提醒使用中文时段文案', () => {
+  for (const time of getReminderTimes('每日8次')) {
+    assert.match(time, /^(凌晨|早|上午|午|下午|晚)\d{1,2}:\d{2}$/)
+  }
+  assert.deepEqual(getReminderTimes('每日4次'), ['早8:00', '午12:00', '下午16:00', '晚20:00'])
+})

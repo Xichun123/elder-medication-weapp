@@ -190,7 +190,7 @@ function careTip(salt = '') {
 function generateVoiceText(elder, drug, remindTime = '') {
   const category = drug.category || 'other'
   const categoryLabel = label('drug_category', category)
-  const medicine = categoryLabel && categoryLabel !== '其他'
+  const medicine = categoryLabel && !['其他', '其他常用药'].includes(categoryLabel)
     ? `${categoryLabel}${drug.generic_name}`
     : drug.generic_name
   const tip = careTip(`${remindTime}:${drug.generic_name}`)

@@ -232,3 +232,29 @@ test('每日服用次数提供一至十二次选项', () => {
   assert.equal(page.data.frequencyOptions[0], '每日1次')
   assert.equal(page.data.frequencyOptions.at(-1), '每日12次')
 })
+
+test('输入别名精确命中时复用已有药品而不新建', async () => {
+  const { calls, page } = loadPage({
+    match: async () => [{
+      drug_id: 'D1',
+      generic_name: '阿莫西林',
+      trade_name: '阿莫仙',
+      aliases: '羟氨苄青霉素',
+    }],
+  })
+  Object.assign(page.data, {
+    elders: [{ elder_id: 'E1' }],
+    elderIndex: 0,
+    keyword: '羟氨苄青霉素',
+    selectedDrug: null,
+    dose: '0.5g',
+    frequency: '每日3次',
+  })
+
+  await page.save()
+
+  assert.equal(calls.drugs.length, 0)
+  assert.equal(calls.records.length, 1)
+  assert.equal(calls.records[0].drug, 'D1')
+  assert.equal(calls.records[0].frequency, '每日3次')
+})

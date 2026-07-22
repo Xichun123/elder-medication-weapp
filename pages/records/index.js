@@ -2,12 +2,18 @@ const api = require('../../utils/api')
 const config = require('../../utils/config')
 const session = require('../../utils/session')
 const store = require('../../utils/store')
+const { frequencyOptions } = require('../../utils/frequencies')
 const { unwrap, toast, showError, confirm } = require('../../utils/helpers')
+
+function frequencyIndexOf(frequency) {
+  const index = frequencyOptions.indexOf(frequency)
+  return index >= 0 ? index : 0
+}
 
 Page({
   data: {
     loading: false, list: [], filteredList: [], elderOptions: [{ elder_id: '', name: '全部长辈' }], elderIndex: 0,
-    keyword: '', editing: false, saving: false, form: {}, frequencyOptions: ['每日1次', '每日2次', '每日3次'],
+    keyword: '', editing: false, saving: false, form: {}, frequencyOptions, frequencyIndex: 0,
     canEdit: true,
   },
   onShow() {
@@ -49,11 +55,20 @@ Page({
   edit(event) {
     if (!store.canEdit()) { toast('当前角色仅可查看'); return }
     const row = this.data.list.find((item) => item.record_id === event.currentTarget.dataset.id)
-    if (row) this.setData({ editing: true, form: { ...row } })
+    if (!row) return
+    this.setData({
+      editing: true,
+      form: { ...row },
+      frequencyIndex: frequencyIndexOf(row.frequency),
+    })
   },
   cancel() { this.setData({ editing: false }) },
   onInput(event) { this.setData({ [`form.${event.currentTarget.dataset.field}`]: event.detail.value }) },
-  chooseFrequency(event) { this.setData({ 'form.frequency': event.currentTarget.dataset.value }) },
+  onFrequencyChange(event) {
+    const frequencyIndex = Number(event.detail.value)
+    const frequency = this.data.frequencyOptions[frequencyIndex] || '每日1次'
+    this.setData({ frequencyIndex, 'form.frequency': frequency })
+  },
   onStartDate(event) { this.setData({ 'form.start_date': event.detail.value }) },
   onEndDate(event) { this.setData({ 'form.end_date': event.detail.value }) },
   clearEndDate() { this.setData({ 'form.end_date': '' }) },
