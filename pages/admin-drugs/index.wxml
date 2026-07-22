@@ -1,8 +1,8 @@
 <view class="page">
   <view wx:if="{{!editing}}">
-    <view class="row between gap">
-      <view><text class="page-title">药物主数据</text><text class="page-subtitle">通用名 / 商品名 / 别名 / 分类 / 禁忌说明</text></view>
-      <button wx:if="{{canEdit}}" class="btn primary small" bindtap="openCreate">＋ 新增</button>
+    <view class="drug-page-head">
+      <view class="drug-page-copy"><text class="page-title">药物主数据</text><text class="page-subtitle">维护药名、分类与禁忌说明</text></view>
+      <button wx:if="{{canEdit}}" class="btn primary drug-add-btn" bindtap="openCreate">＋ 新增</button>
     </view>
     <view class="filter-bar"><input class="search flex-1" value="{{keyword}}" placeholder="搜索药名或别名" bindinput="onKeyword" confirm-type="search" bindconfirm="onSearch"/><picker range="{{categories}}" range-key="label" value="{{categoryIndex}}" bindchange="onCategory"><view class="filter">{{categories[categoryIndex].label}} ▾</view></picker></view>
     <view wx:for="{{list}}" wx:key="drug_id" class="list-card">
