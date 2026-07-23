@@ -10,5 +10,8 @@ server/node_modules/
 server/data/
 server/.env
 
+# 提交材料
+submission/
+
 # 日志与依赖
 npm-debug.log*

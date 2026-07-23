@@ -131,8 +131,8 @@ Home ── Invite
 
 ## 微信官方文档依据
 
-- 登录流程：`weapp-docs/references/docs/framework/open-ability/login.md`
-- `wx.login`：`weapp-docs/references/docs/api/open-api/login/wx.login.md`
-- 网络与合法域名：`weapp-docs/references/docs/framework/ability/network.md`
-- `wx.request`：`weapp-docs/references/docs/api/network/request/wx.request.md`
-- `app.json networkTimeout`：`weapp-docs/references/docs/reference/configuration/app.md`
+- [登录流程](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/login.html)
+- [wx.login](https://developers.weixin.qq.com/miniprogram/dev/api/open-api/login/wx.login.html)
+- [网络与合法域名](https://developers.weixin.qq.com/miniprogram/dev/framework/ability/network.html)
+- [wx.request](https://developers.weixin.qq.com/miniprogram/dev/api/network/request/wx.request.html)
+- [app.json networkTimeout](https://developers.weixin.qq.com/miniprogram/dev/reference/configuration/app.html#networkTimeout)
