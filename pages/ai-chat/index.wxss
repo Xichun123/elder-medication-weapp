@@ -32,9 +32,14 @@
 .composer input { flex:1; height:88rpx; padding:0 24rpx; box-sizing:border-box; background:#F2F7F4; border-radius:44rpx; font-size:28rpx; }
 .composer button { margin:0; min-height:88rpx; background:var(--primary); color:#fff; border-radius:44rpx; font-size:28rpx; }
 .composer .composer-send { width:152rpx; min-width:152rpx; height:88rpx; min-height:88rpx; padding:0; display:flex; align-items:center; justify-content:center; font-size:30rpx; font-weight:650; line-height:1; }
-.composer .voice-input { width:96rpx; min-width:96rpx; height:96rpx; min-height:96rpx; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--ai); box-shadow:0 8rpx 20rpx rgba(62,174,91,.28); line-height:1; }
-.voice-input-icon { font-size:44rpx; line-height:1; }
-.voice-input-img { width:48rpx; height:48rpx; }
+.composer .voice-input { width:88rpx; min-width:88rpx; height:88rpx; min-height:88rpx; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--ai); box-shadow:0 6rpx 16rpx rgba(46,139,74,.24); line-height:1; }
+.voice-input-icon { font-size:40rpx; line-height:1; }
+.voice-mic { position:relative; width:48rpx; height:54rpx; }
+.voice-mic-capsule { position:absolute; top:0; left:13rpx; width:22rpx; height:34rpx; border:4rpx solid #fff; border-radius:14rpx; }
+.voice-mic-cradle { position:absolute; top:17rpx; left:5rpx; width:38rpx; height:25rpx; border:4rpx solid #fff; border-top:0; border-radius:0 0 22rpx 22rpx; }
+.voice-mic-stem { position:absolute; top:41rpx; left:22rpx; width:4rpx; height:8rpx; border-radius:2rpx; background:#fff; }
+.voice-mic-base { position:absolute; bottom:1rpx; left:13rpx; width:22rpx; height:4rpx; border-radius:2rpx; background:#fff; }
+.composer .voice-input.disabled { background:#75B988; color:#fff; opacity:1; box-shadow:none; }
 .composer .voice-input.recording { background:var(--danger); animation:voice-pulse 1s infinite; }
 .voice-hint,.voice-status { position:fixed; left:50%; bottom:calc(140rpx + env(safe-area-inset-bottom)); z-index:2; transform:translateX(-50%); padding:14rpx 24rpx; border-radius:999rpx; white-space:nowrap; font-size:26rpx; }
 .voice-hint { color:var(--primary-deep); background:var(--primary-soft); }
