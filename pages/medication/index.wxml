@@ -73,12 +73,12 @@
       </checkbox-group>
       <view class="review-confirmation-note">修改药品、剂量或频次后需要重新确认。</view>
     </view>
-    <view wx:if="{{recognitionImage && recognitionResult && selectedDrug && recognitionConfirmed}}" class="package-image-save">
+    <view wx:if="{{recognitionImage && recognitionResult && recognitionConfirmed}}" class="package-image-save">
       <view class="package-image-save-copy">
         <view class="package-image-save-title">药品包装照片</view>
-        <view class="package-image-save-note">主动保存后，老人服药提醒会显示这张包装照片。重新保存将替换现有主图。</view>
+        <view class="package-image-save-note">{{!selectedDrug ? '保存用药时会创建药品并自动保存这张照片，老人提醒中将显示该照片。' : (selectedDrug.has_package_image ? '当前药品已有主图；如需使用这张新照片，请点击替换主图。' : '保存用药时会自动保存这张照片，老人提醒中将显示该照片。')}}</view>
       </view>
-      <button class="btn teal small" loading="{{savingPackageImage}}" disabled="{{savingPackageImage || packageImageSaved}}" bindtap="saveRecognitionPackageImage">{{packageImageSaved ? '已保存' : (selectedDrug.has_package_image ? '替换主图' : '保存主图')}}</button>
+      <button wx:if="{{selectedDrug}}" class="btn teal small" loading="{{savingPackageImage}}" disabled="{{savingPackageImage || packageImageSaved}}" bindtap="saveRecognitionPackageImage">{{packageImageSaved ? '已保存' : (selectedDrug.has_package_image ? '替换主图' : '立即保存')}}</button>
     </view>
     <view class="notice">保存后会按每日次数自动生成提醒时间。请根据医生处方填写药名、剂量和次数；系统药库仅用于搜索，不代表用药建议。</view>
     <view wx:if="{{!canEdit}}" class="notice">当前角色为只读，无法录入用药。</view>

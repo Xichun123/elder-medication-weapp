@@ -289,6 +289,17 @@ Page({
     this.setData({ saving: true })
     try {
       const drug = await this.resolveDrugForSave()
+      const shouldSavePackageImage = this.data.recognitionImage
+        && this.data.recognitionConfirmed
+        && !this.data.packageImageSaved
+        && !drug.has_package_image
+      if (shouldSavePackageImage) {
+        const image = await api.drugs.savePackageImage(drug.drug_id, this.data.recognitionImage)
+        this.setData({
+          packageImageSaved: true,
+          selectedDrug: { ...drug, has_package_image: true, package_image_url: image.url || '' },
+        })
+      }
       const payload = {
         elder: elder.elder_id, drug: drug.drug_id,
         dose: this.data.dose, frequency: this.data.frequency, start_date: this.data.startDate, end_date: this.data.endDate || null,
