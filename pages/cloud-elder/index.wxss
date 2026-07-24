@@ -38,7 +38,9 @@
 .reminder-status { display: block; margin-top: 6rpx; color: #4A645D; font-size: 28rpx; }
 .row-actions { display: flex; flex-direction: column; gap: 12rpx; }
 .empty-tip { padding: 28rpx; text-align: center; color: #4A645D; font-size: 30rpx; }
-.elder-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 18rpx; margin-top: 32rpx; }
+.elder-actions { display: flex; margin-top: 32rpx; }
+.elder-actions > .elder-btn { flex: 1 1 0; width: 0; min-width: 0; margin: 0; }
+.elder-actions > .elder-btn.secondary { margin-left: 18rpx; }
 .elder-btn { min-height: 110rpx; padding: 0 28rpx; border-radius: 22rpx; background: #3EAE5B; color: #fff; font-size: 36rpx; font-weight: 650; }
 .elder-btn.secondary { background: #E4F5E8; color: #234E45; }
 .elder-btn.primary { background: #E9950C; }
@@ -70,7 +72,11 @@
 .status-badge.taken { color:#1F6B3A; background:#E3F0E5; }
 .status-badge.skipped, .status-badge.abnormal { color:#7A5A12; background:#F8EDDA; }
 .reminder-drug { display:block; margin-bottom:20rpx; font-size:34rpx; font-weight:700; line-height:1.35; color:#18302B; }
-.reminder-actions { display:grid; grid-template-columns:1fr 1.35fr; gap:14rpx; }
+.reminder-actions { display:flex; }
+.reminder-actions > .action-btn { width:0; min-width:0; }
+.reminder-actions > .action-btn.ghost { flex:1 1 0; }
+.reminder-actions > .action-btn.solid,
+.reminder-actions > .action-done { flex:1.35 1 0; width:0; min-width:0; margin-left:14rpx; }
 .action-btn { margin:0; min-height:88rpx; padding:0 20rpx; border-radius:18rpx; font-size:30rpx; font-weight:700; line-height:1.2; }
 .action-btn.ghost { background:#F0F9EE; color:#3EAE5B; border:1rpx solid #C9E8CF; }
 .action-btn.solid { background:#E9950C; color:#fff; }

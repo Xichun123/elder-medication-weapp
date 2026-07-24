@@ -7,6 +7,12 @@ import vm from 'node:vm'
 const pagePath = path.resolve(import.meta.dirname, '../../pages/cloud-elder/index.js')
 const pageSource = fs.readFileSync(pagePath, 'utf8')
 const pageTemplate = fs.readFileSync(path.resolve(import.meta.dirname, '../../pages/cloud-elder/index.wxml'), 'utf8')
+const pageStyle = fs.readFileSync(path.resolve(import.meta.dirname, '../../pages/cloud-elder/index.wxss'), 'utf8')
+
+function styleRule(selector) {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return pageStyle.match(new RegExp(`${escapedSelector}\\s*\\{([^}]*)\\}`))?.[1] || ''
+}
 
 function reminder(id, time) {
   return {
@@ -178,4 +184,11 @@ test('真实老人页模板展示包装图、剂量和到点确认卡', () => {
   assert.match(pageTemplate, /showMedicationPrompt/)
   assert.match(pageTemplate, /takePrompt/)
   assert.match(pageTemplate, /10 分钟后提醒/)
+})
+
+test('老人页双列操作按钮在真机上受容器宽度约束', () => {
+  assert.match(styleRule('.reminder-actions'), /display\s*:\s*flex/)
+  assert.match(styleRule('.elder-actions'), /display\s*:\s*flex/)
+  assert.match(styleRule('.reminder-actions > .action-btn'), /min-width\s*:\s*0/)
+  assert.match(styleRule('.elder-actions > .elder-btn'), /min-width\s*:\s*0/)
 })
